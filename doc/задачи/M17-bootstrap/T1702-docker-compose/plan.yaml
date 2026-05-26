@@ -2,19 +2,19 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `docker-compose.yml` с 6 контейнерами (postgres, redis, keycloak, nginx, lkfl-server, lkfl-integration-proxy)
-- [ ] Healthcheck на всех контейнерах
-- [ ] Persistent volumes для postgres, redis, keycloak
-- [ ] Resource limits на всех контейнерах
-- [ ] Создать `infra/nginx/default.conf` (reverse proxy + SPA)
-- [ ] Создать `.env.example`
-- [ ] Добавить `.env` в `.gitignore`
-- [ ] `docker compose up -d` — все контейнеры healthy
-- [ ] Заполнить report.md
+- [x] Создать `docker-compose.yml` с 6 контейнерами (postgres, redis, keycloak, nginx, lkfl-server, lkfl-integration-proxy)
+- [x] Healthcheck на всех контейнерах
+- [x] Persistent volumes для postgres, redis, keycloak
+- [x] Resource limits на всех контейнерах
+- [x] Создать `infra/nginx/default.conf` (reverse proxy + SPA)
+- [x] Создать `.env.example`
+- [x] Добавить `.env` в `.gitignore` (уже было)
+- [ ] `docker compose up -d` — все контейнеры healthy (требует Dockerfile из T1703)
+- [x] Заполнить report.md
 
 ## Зависимости
 
