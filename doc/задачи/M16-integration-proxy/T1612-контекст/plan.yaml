@@ -1,0 +1,8 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] акторы.md: Админ интеграций → proxy
+  - [x] акторы.md: Внешние провайдеры → через proxy
+  - [x] negative-criteria.md: direct calls → только через proxy
+  - [x] настраиваемость.md: adapters → integration-proxy/adapters/
+  - [x] философия.md: check (Integrations Hub → Integration Proxy)

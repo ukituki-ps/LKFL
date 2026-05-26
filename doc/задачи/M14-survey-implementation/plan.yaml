@@ -1,0 +1,68 @@
+---
+task_id: "T1401"
+milestone: "M14"
+title: "Survey Engine Backend Implementation"
+depends_on:
+  - "T1301"
+status: "cancelled"
+progress: 0
+cancelled_at: "2026-05-26"
+cancelled_reason: "Решение команды — отложить реализацию кода до лучших времён. Архитектура (M13 T1301, ADR-025) сохранена."
+checklist:
+  # === Phase 0: Project Bootstrap ===
+  - id: "T1401-P0-01"
+    description: "Создать go.mod с зависимостями (pgx, chi, go-oidc, go-redis, asynq, cel-go, excelize, gofpdf)"
+    done: false
+  - id: "T1401-P0-02"
+    description: "Создать структуру проекта: cmd/server/main.go, cmd/worker/main.go, internal/ (пустые пакеты), shared/pkg/auth/, shared/pkg/celcontext/"
+    done: false
+  - id: "T1401-P0-03"
+    description: "Создать docker-compose.yml (PostgreSQL 17, Redis 7, Keycloak 25)"
+    done: false
+  - id: "T1401-P0-04"
+    description: "Создать Dockerfile multi-stage build для lkfl-server"
+    done: false
+  - id: "T1401-P0-05"
+    description: "Создать Makefile (build, test, lint, migrate, compose up/down)"
+    done: false
+  - id: "T1401-P0-06"
+    description: "Создать migrations/ (Atlas SQL-first) + первую миграцию P0 таблиц"
+    done: false
+  - id: "T1401-P0-07"
+    description: "Создать DI wiring в app/ (wire.hcl или ручной DI)"
+    done: false
+  - id: "T1401-P0-08"
+    description: "Создать GitHub Actions workflow (build + test + lint)"
+    done: false
+  # === Phase 1: Survey Engine ===
+  - id: "T1401-01"
+    description: "Создать DB миграции (surveys, survey_questions, survey_responses, survey_branches, user_survey_attributes)"
+    done: false
+  - id: "T1401-02"
+    description: "Реализовать SurveyEngine.Create() с validation schema"
+    done: false
+  - id: "T1401-03"
+    description: "Создать SurveyValidator (field-level + cross-question)"
+    done: false
+  - id: "T1401-04"
+    description: "Реализовать SurveyEngine.SubmitAnswer() + branch_on logic"
+    done: false
+  - id: "T1401-05"
+    description: "Добавить survey step type в FlowEngine.ExecuteStep()"
+    done: false
+  - id: "T1401-06"
+    description: "Реализовать TagMapper.Apply(survey_id) → user tags"
+    done: false
+  - id: "T1401-07"
+    description: "Расширить TagResolver.AggregateSurveyTags() для CEL context"
+    done: false
+  - id: "T1401-08"
+    description: "Создать SurveyAnalytics API (per-question, per-branch stats)"
+    done: false
+  # === Phase 2: Testing ===
+  - id: "T1401-09"
+    description: "Unit-test coverage 80%+ (mock strategy: DB, Redis, CEL evaluator; fixtures: survey JSON schemas)"
+    done: false
+  - id: "T1401-10"
+    description: "Integration test: survey creation → answer → tag mapping → CEL eval (testcontainers: PostgreSQL + Redis)"
+    done: false

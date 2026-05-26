@@ -1,0 +1,19 @@
+# T1101 — Provider Gateway — план
+
+## Статус: 0%
+
+## Checklist
+
+- [ ] Обновить `архитектура/модули.md` — Integrations:
+  - [ ] Заменить заголовок: "3. Integrations — единый шлюз внешних коммуникаций" → "3. Provider Gateway — gateway к провайдерам льгот"
+  - [ ] Пересписать описание: "Единственная точка контакта платформы с внешним миром" → "Gateway к внешним провайдерам льгот (активация, деактивация, каталоги, webhooks)"
+  - [ ] Убрать из таблицы модулей:
+    - [ ] hr-sync/ (перенесён в Platform, T1102)
+    - [ ] 1c/ (перенесён в Billing, T1103)
+    - [ ] external/ (SSO → Keycloak Identity Broker, document в модули.md Keycloak секция)
+  - [ ] Обновить ProviderAdapter interface — остаться без изменений
+  - [ ] Обновить "Системные адаптеры" → убрать hr-sync и 1C
+  - [ ] Обновить admin модули — sync control убрать из HR context
+  - [ ] Обновить "Зависимости между сервисами": Platform → Integrations (только engagement.*)
+- [ ] Обновить `архитектура/интеграции.md` — если есть references к hr-sync/1C
+- [ ] Обновить `архитектура/безопасность.md` — integrations PДн контроль (только providers)

@@ -1,0 +1,23 @@
+# T1206 — Обновление стек.md — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Backend table:
+  - [x] NATS JetStream → optional, note: "(future microservice split only)"
+  - [x] Redis → убрал "DB 0-4" description → key prefixes
+  - [x] Docker → one backend container
+- [x] Infrastructure table:
+  - [x] NATS → moved iz Infrastructure → "Optional (future)"
+- [x] Redis section:
+  - [x] Убил DB 0-4 mapping
+  - [x] Added key prefix mapping: jwt:, asynq:, catalog:, cel:, rate:
+- [x] Ports:
+  - [x] Backend: :8080 (lkfl-server), :8083 (asynq dashboard)
+  - [x] Removed: :8081, :8082, :8084, :8085
+  - [x] Updated all port references in tables
+- [x] Observability metrics:
+  - [x] Removed: nats_messages_published_total
+  - [x] Added: internal_package_calls_total — latency между internal пакетами
+  - [x] Updated CEL + LLM Dashboard description (more relevant without NATS)

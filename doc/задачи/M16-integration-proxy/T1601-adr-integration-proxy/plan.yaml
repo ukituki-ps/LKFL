@@ -1,0 +1,25 @@
+# T1601 — ADR-035: Integration Proxy
+
+progress: 100%
+depends_on: []
+
+checklist:
+  - [x] Контекст: 5 рисков прямых интеграций
+  - [x] Термины определены
+  - [x] 4 варианта рассмотрены
+  - [x] Архитектура: diagram + структура проекта
+  - [x] gRPC contract: protobuf definition
+  - [x] Sync vs Async операции
+  - [x] Flow активации (7 шагов)
+  - [x] Webhook handling
+  - [x] Circuit breaker параметры
+  - [x] Worker pool per provider
+  - [x] Credential storage
+  - [x] Database schema (lkfl_integration)
+  - [x] Fault tolerance сценарии
+  - [x] Мониторинг метрики
+  - [x] Nginx config
+  - [x] Ports + Docker Compose
+  - [x] Последствия (positive + negative)
+  - [x] Влияние на ADR-024
+  - [x] Связь с другими ADR

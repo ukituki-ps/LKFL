@@ -1,0 +1,11 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] TL;DR: 2 бинарника (mono + proxy), 1 go.mod
+  - [x] Diagram: mono → gRPC → proxy → providers
+  - [x] internal/integrations/ → integration-proxy/adapters/
+  - [x] gRPC communication (localhost, type-safe)
+  - [x] Port mapping: 8080, 8090, 8091, 8083
+  - [x] Docker compose: 6 контейнеров
+  - [x] Межмодульная коммуникация таблица обновлена
+  - [x] Frontend section (без изменений, note)

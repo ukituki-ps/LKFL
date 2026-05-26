@@ -1,0 +1,23 @@
+# T1003 — Shared CELContext pkg — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Обновить `архитектура/пакеты-platform.md`:
+  - [x] Добавить shared/pkg/cel-context описание (context.go, builder.go, tag_resolver.go)
+  - [x] CELContext schema: document all fields (User struct, Tags map, Benefit struct, Game struct)
+  - [x] Обновить зависимости cel/: "использует shared/pkg/cel-context" вместо собственной
+- [x] Обновить `архитектура/модули.md` — Billing:
+  - [x] rule_engine/ → dependency: shared/pkg/cel-context (не собственной копией)
+- [ ] Обновить `архитектура/cel-engine.md`:
+  - [ ] References shared/pkg/cel-context вместо platform/cel/
+- [ ] Обновить `архитектура/adr/021-cel-unified-rule-engine.md`:
+  - [ ] Добавить секцию "Shared Context Schema" (shared/pkg/cel-context)
+- [ ] Обновить `архитектура/модули.md` — Dependencies:
+  - [ ] "синхронный update platform + billing" → "Go compiler guarantees schema consistency"
+  - [ ] Remove "ADR-021" note о ручном синхронизации
+- [ ] Создать `архитектура/adr/025-shared-cel-context.md`
+- [ ] Обновить `архитектура/README.md`:
+  - [ ] ADR-025 в таблицу
+  - [ ] shared/ package reference (если есть)

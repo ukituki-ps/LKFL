@@ -1,0 +1,37 @@
+---
+task_id: "T0801"
+milestone: "M08"
+title: "Архитектурная спецификация: CEL Engine + LLM Proxy"
+depends_on:
+  - "T0701"
+  - "T0709"
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0801-01"
+    description: "Создать ADR-021 (CEL unified rule engine)"
+    done: true
+  - id: "T0801-02"
+    description: "Создать ADR-022 (LLM proxy service)"
+    done: true
+  - id: "T0801-03"
+    description: "Создать архитектура/cel-engine.md — детальное описание CEL"
+    done: true
+  - id: "T0801-04"
+    description: "Создать архитектура/llm-proxy.md — детальное описание LLM Proxy"
+    done: true
+  - id: "T0801-05"
+    description: "Обновить 9 файлов документации для консистентности"
+    done: true
+  - id: "T0801-06"
+    description: "Определить миграционную стратегию (3 фазы: A/B/C)"
+    done: true
+  - id: "T0801-07"
+    description: "Определить 12 точек интеграции CEL"
+    done: true
+  - id: "T0801-08"
+    description: "Определить API LLM Proxy и 3 CEL endpoints"
+    done: true
+  - id: "T0801-09"
+    description: "Обновить диаграмму архитектуры (LLM Proxy + cel/ пакет)"
+    done: true

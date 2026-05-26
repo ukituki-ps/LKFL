@@ -1,0 +1,32 @@
+---
+task_id: "T0704"
+milestone: "M07"
+title: "Generic REST adapter для providers/ (замена 11 hard-coded adapters)"
+depends_on: []
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0704-01"
+    description: "Заменить 11 hard-coded adapters на generic REST adapter + YAML config"
+    done: true
+  - id: "T0704-02"
+    description: "Упростить ProviderAdapter interface до 2 методов: Call, Transform"
+    done: true
+  - id: "T0704-03"
+    description: "Обновить модули.md — generic adapter вместо 11 модулей"
+    done: true
+  - id: "T0704-04"
+    description: "Обновить интеграции.md — формат config файла с примерами"
+    done: true
+  - id: "T0704-05"
+    description: "Обновить настраиваемость.md — новый REST-провайдер без кода"
+    done: true
+  - id: "T0704-06"
+    description: "Обновить акторы.md — Администратор интеграций: действия по подключению"
+    done: true
+  - id: "T0704-07"
+    description: "Создать ADR-017 (generic REST adapter)"
+    done: true
+  - id: "T0704-08"
+    description: "Обновить README архитектуры — ADR-017"
+    done: true

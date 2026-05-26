@@ -1,0 +1,15 @@
+# T1005 — Shared auth pkg — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Обновить `архитектура/модули.md` — Payment Gateway:
+  - [x] Заменить "same as platform" → "uses shared/pkg/auth"
+  - [x] Таблица модулей: auth/ → dependency: shared/pkg/auth
+- [x] Обновить `архитектура/пакеты-platform.md` — auth/:
+  - [x] Auth/ становится thin tenant wrapper → shared/pkg/auth
+  - [x] Верификатор и middleware → shared
+  - [x] RBAC guard → shared
+- [x] Обновить `архитектура/adr/011-monorepo.md`:
+  - [x] shared/ section: cel-context (T1003) + auth (T1005) — T1005 executes after T1003

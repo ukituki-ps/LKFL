@@ -1,0 +1,23 @@
+# T1205 — Переделка спецификация/api.md — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Убил секцию "Billing API" (/billing/v1/):
+  - [x] Перенёс endpoints в Platform `/api/v1/admin/billing/`
+  - [x] Rules CRUD → `/api/v1/admin/billing/rules`
+  - [x] Periods → `/api/v1/admin/billing/periods`
+- [x] Убил секцию "Payment Gateway API" (/payments/v1/):
+  - [x] Transactions → `/api/v1/payments/transactions`
+  - [x] Void/Refund → `/api/v1/payments/transactions/:id/*`
+- [x] Health endpoints: 4 → один `/api/healthz`
+- [x] Error codes:
+  - [x] Убил SERVICE_UNAVAILABLE для internal deps
+  - [x] Left for external deps (providers, Keycloak) — они реально могут падать
+- [x] Updated frontend API paths:
+  - [x] `api/billing.ts` → merged into `api/platform.ts`
+  - [x] Nginx routes: /billing/* removed
+- [x] Recount total endpoints — updated header comment
+- [x] Updated сводные таблицы — Backend → пакет mapping
+- [x] Added v4 version history note

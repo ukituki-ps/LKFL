@@ -1,0 +1,10 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] Credential isolation секция
+  - [x] AES-256-GCM encryption для credentials
+  - [x] Master key: Vault (prod) + env (dev)
+  - [x] Webhook attack surface → proxy only
+  - [x] gRPC security: localhost, no TLS
+  - [x] STRIDE analysis update (proxy component)
+  - [x] Threat model: proxy compromise scenario

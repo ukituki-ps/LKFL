@@ -1,0 +1,23 @@
+# T1803 — Tenant Middleware (resolver)
+
+## Прогресс
+
+0%
+
+## Checklist
+
+- [ ] Создать `internal/tenant/middleware.go` — chi middleware + context helpers
+- [ ] HostResolver (subdomain → slug)
+- [ ] PathResolver (/t/{slug}/)
+- [ ] Fallback: X-Tenant-ID header
+- [ ] Context keys typed
+- [ ] Skip paths: /healthz, /metrics, /admin/
+- [ ] Redis cache (tenant:resolve:{slug}, TTL 5min)
+- [ ] 401 при отсутствии tenant
+- [ ] Интеграция в app/server.go
+- [ ] Unit tests
+- [ ] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1802]

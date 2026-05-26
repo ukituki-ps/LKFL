@@ -1,0 +1,32 @@
+---
+task_id: "T0705"
+milestone: "M07"
+title: "Выделение payment-gateway/ из integrations/ (PCI DSS)"
+depends_on: []
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0705-01"
+    description: "Вынести payments/ в отдельный сервис payment-gateway/"
+    done: true
+  - id: "T0705-02"
+    description: "Оставить 1C (удержание из ЗП) в integrations/ (бухгалтерия, не платёж)"
+    done: true
+  - id: "T0705-03"
+    description: "Обновить модули.md — 4-й Go сервис: payment-gateway/"
+    done: true
+  - id: "T0705-04"
+    description: "Добавить NATS subjects: integration.payment.authorize, integration.payment.result"
+    done: true
+  - id: "T0705-05"
+    description: "Обновить интеграции.md — payments moved out, only 1C remains"
+    done: true
+  - id: "T0705-06"
+    description: "Обновить безопасность.md — PCI DSS isolation"
+    done: true
+  - id: "T0705-07"
+    description: "Обновить акторы.md — Пэйшлюз interacts with payment-gateway"
+    done: true
+  - id: "T0705-08"
+    description: "Создать ADR-018 (payment gateway service)"
+    done: true

@@ -1,0 +1,65 @@
+# plan.yaml — T1301
+
+progress: 100%
+status: done
+depends_on:
+  - T0801  # ADR-021 (CEL Engine) — TagResolver needed as expansion target
+  - T0501  # Unified Engagement abstraction — form_schema, flow steps, activity model
+  - T1207  # M12 consistency — documentation stable after modular monolith transition
+
+checklist:
+  - item: "1. ADR-025 — Survey Engine Architecture"
+    done: true
+    details: "doc/архитектура/adr/025-survey-engine.md: context (3 gaps), options (subpkg vs own pkg), decision, dependency diagram, key decisions table. Усилено после аудита: +4 секции (~300 строк). Аудит от 2026-05-25: было 59% → 100%."
+
+  - item: "2. Specify survey_schema в ADR"
+    done: true
+    details: "ADR: YAML spec, 4 типа вопросов (single_choice, multiple_choice, scale, text) с матрицей поддерживаемых фич; tag_mappings формат (базовый + расширенный); сравнительная таблица form_schema vs survey_schema; 5 правил валидации схемы. Добавлено на аудите."
+
+  - item: "3. Спроектировать Resolver API в ADR"
+    done: true
+    details: "ADR: полные Go-сигнатуры Resolver (NewResolverWithState, GetNextQuestion, SubmitAnswer, IsComplete, GetFinalAnswers, ValidateSchema); 5-шаговый алгоритм бранчинга; OR-union multiple_choice; text+branch_on=error; hydration flow 2 HTTP-вызова. Добавлено на аудите."
+
+  - item: "4. Спроектировать TagMapper API в ADR"
+    done: true
+    details: "ADR: SurveyTag struct, TagMapper сигнатуры (NewTagMapper, MapSurveyAnswers); 6-шаговый lifecycle (read schema → compute expected → get existing → delete orphaned → INSERT/UPDATE GREATEST → InvalidateCache); answer-change сценарий; cross-survey aggregation пример с SQL. Добавлено на аудите."
+
+  - item: "5. Описать расширение cel/TagResolver в ADR"
+    done: true
+    details: "ADR: AggregateSurveyTags с полной сигнатурой (ctx, tenantId, userId) + SQL источник; Resolve merge (profile + survey); tenantId из JWT middleware. Усилено на аудите."
+
+  - item: "6. Описать интеграцию FlowEngine.ExecuteStep"
+    done: true
+    details: "ADR описывает минимальный diff: form step + SurveyForm → hydrate → SubmitAnswer → persist → tag_mapper — без изменения flow.go"
+
+  - item: "7. Define DB schema в ADR"
+    done: true
+    details: "ADR описывает CREATE TABLE user_survey_attributes: columns, constraints, indexes — SQL-заготовка в миграции для будущего использования"
+
+  - item: "8. Описать Analytics API в ADR"
+    done: true
+    details: "ADR: SurveyAnalytics struct (TotalResponses, CompletionRate, Distribution, AvgScore, TopTags); AnswerCount, SurveyTagCount; AnalyticsEngine сигнатуры; таблица источников данных (поле → SQL); admin GET endpoint + RBAC; JSON-пример ответа. Добавлено на аудите."
+
+  - item: "9. Обновить doc/архитектура/модули.md"
+    done: true
+    details: "Добавлено engagement/survey/ в описание; DI graph updated; survey-analytics endpoint в Nginx routes"
+
+  - item: "10. Обновить doc/архитектура/пакеты-platform.md"
+    done: true
+    details: "Добавлен подраздел engagement/survey/ (будущая структура + зависимости) — как план, не как реализация"
+
+  - item: "11. Обновить doc/архитектура/теги.md"
+    done: true
+    details: "Новая категория survey-теги (источник, агрегация, инвалидация) — документация"
+
+  - item: "12. Обновить doc/архитектура/cel-engine.md"
+    done: true
+    details: "CELContext.Tags — комментарий про survey-теги как будущий источник"
+
+  - item: "13. Обновить doc/архитектура/engagement.md"
+    done: true
+    details: "Заметка про survey_schema при ui_component='SurveyForm'; backward compat form_schema"
+
+  - item: "14. Обновить doc/задачи/README.md"
+    done: true
+    details: "M13 статус → ✅ выполнено (документация и архитектура)"

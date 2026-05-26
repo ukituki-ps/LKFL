@@ -1,0 +1,22 @@
+# T1104 — NATS consumer update + namespace rename — план
+
+## Статус: 0%
+
+## Checklist
+
+- [ ] Обновить `архитектура/nats-subjects.md`:
+  - [ ] Namespace rename: `integration.engagement.activate` → `provider.engagement.activate`
+  - [ ] Namespace rename: `integration.engagement.deactivate` → `provider.engagement.deactivate`
+  - [ ] Namespace rename: `integration.status` → `provider.status`
+  - [ ] Namespace rename: `integration.catalog.sync` → `provider.catalog.sync`
+  - [ ] Namespace rename: `integration.payroll.submit` → `finance.payroll.submit`, consumer = billing
+  - [ ] Убрать `integration.hr.pull`
+  - [ ] Убрать `integration.hr.synced`
+- [ ] Обновить `архитектура/модули.md` — NATS sections:
+  - [ ] Provider Gateway section: 4 subjects (provider.engagement.activate, .deactivate, provider.status, provider.catalog.sync)
+  - [ ] Billing section: добавить finance.payroll.submit (6 billing subjects → 7)
+  - [ ] Убрать hr.* из всех секций
+- [ ] Создать `архитектура/adr/028-nats-rename.md`:
+  - [ ] Обоснование rename: `integration.*` → `provider.*` (provider-gateway identity after T1101)
+  - [ ] Обоснование rename: `integration.payroll.*` → `finance.payroll.*` (payroll moved to billing after T1103)
+  - [ ] Consumer remapping table (before → after)

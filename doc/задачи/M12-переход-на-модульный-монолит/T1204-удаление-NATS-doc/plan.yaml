@@ -1,0 +1,16 @@
+# T1204 — Удаление NATS doc — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Удалён `архитектура/nats-subjects.md` (файл)
+- [x] ADR-020 (`adr/020-nats-subjects-registry.md`):
+  - [x] Changed status: Accepted → Superseded
+  - [x] Added note: "M12: replaced by DI interfaces in modular monolith. See ADR-024."
+- [x] ADR-005 (`adr/005-nats.md`):
+  - [x] Added note: "M12: NATS оставлен как optional dependency для future microservice split. В mono-режиме — не используется."
+- [x] Updated `архитектура/README.md`:
+  - [x] Содержимое раздела: убрана строка nats-subjects.md
+  - [x] Таблица ADR: ADR-020 status → Superseded
+- [x] Updated M12 overview.md — добавил пояснение про DI interfaces

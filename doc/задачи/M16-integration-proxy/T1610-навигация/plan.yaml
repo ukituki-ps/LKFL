@@ -1,0 +1,9 @@
+progress: 100%
+depends_on: [T1603, T1604, T1605, T1606, T1607, T1608, T1609]
+checklist:
+  - [x] NAVIGATION.md: +Integration Proxy строка
+  - [x] NAVIGATION.md: +integrationclient/ в пакеты-platform
+  - [x] NAVIGATION.md: +критическое правило (no direct HTTP)
+  - [x] архитектура/README.md: +proxy в модули
+  - [x] архитектура/README.md: +ADR-035 в таблицу
+  - [x] архитектура/adr/README.md: +ADR-035

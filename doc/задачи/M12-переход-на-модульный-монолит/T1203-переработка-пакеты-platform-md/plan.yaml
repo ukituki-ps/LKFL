@@ -1,0 +1,29 @@
+# T1203 — Переработка пакеты-platform.md — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Added internal/billing/:
+  - [x] account/: GetBalance(), GetAccount()
+  - [x] transaction/: Credit(), Debit(), List(), Revert()
+  - [x] period/: Activate(), Expire(), Burn(), GetCurrent()
+  - [x] rule_engine/: EvaluateRule(), FilterRules() (ADR-021 CEL)
+  - [x] DB: одна tx, shared с platform
+- [x] Added internal/integrations/:
+  - [x] broker/: Go function routing (был NATS connection)
+  - [x] providers/: ProviderAdapter interface, YAML config adapters
+  - [x] hr-sync/: PullRegistry(), SyncStatus()
+  - [x] 1c/: SubmitPayroll()
+  - [x] external/: SSORedirect() (Ready4, PrimeZone)
+  - [x] webhook/: Handle(), VerifySignature()
+- [x] Added internal/payments/:
+  - [x] auth/: thin wrapper on shared/pkg/auth
+  - [x] gateway/: Authorize(), Capture(), Void()
+  - [x] api/: thin REST handlers
+- [x] Updated DI graph — 13 пакетов, billing через interface
+- [x] Updated Redis: один Redis, key prefixes (jwt:, asynq:, catalog:, cel:, rate:)
+- [x] Updated dependency table — 13 пакетов + shared/pkg
+- [x] Updated engagement/ BillingEvents section: NATS → direct call
+- [x] Updated FlowEngine DI: nats → billing.BillingService + integrations.ProviderGateway
+- [x] Updated PublicHandlerDeps & AdminHandlerDeps

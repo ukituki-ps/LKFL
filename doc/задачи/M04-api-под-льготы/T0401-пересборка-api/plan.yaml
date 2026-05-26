@@ -1,0 +1,23 @@
+# T0401 — Пересборка API-контрактов под новую архитектуру льгот
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Проанализировать текущий api.md, найти все устаревшие endpoints
+- [x] Переписать Catalog/Benefits → разделить на benefit + plan
+- [x] Добавить endpoints для benefit-plans, activation-flows
+- [x] Добавить endpoints для user-benefits (экземпляр сотрудника)
+- [x] Убрать DMS/matkapital как отдельные модули (generic)
+- [x] Обновить Admin Catalog → CRUD benefit + plan + flow + collection
+- [x] Обновить Collections → работать с plans, не benefits
+- [x] Обновить артефакты.md → S10a generic wizard, S10b обновлён
+- [x] Обновить сводную таблицу API
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on:
+  - T0301  # архитектура льгот — T0401 использует результат T0301

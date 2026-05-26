@@ -1,0 +1,21 @@
+# T1509 — Mobile + Forms архитектура
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Mobile: AprilMobileShellBar с MUST/MUST NOT правилами
+- [x] Mobile: модальности (AprilModal vs AprilVaulBottomSheet)
+- [x] Mobile: breakpoints + touch-ориентиры + safe area
+- [x] Mobile: жесты (Android back, iOS swipe-back)
+- [x] Forms: Zod + react-hook-form — бизнес-формы
+- [x] Forms: AprilJsonSchemaForm — admin-формы
+- [x] Forms: wizard — Zustand store + step validation
+- [x] Forms: survey — динамические вопросы + optimistic submit
+- [x] Создать `фронтенд-mobile-forms.md`
+
+## Зависимости
+
+depends_on: [T1501, T1508]

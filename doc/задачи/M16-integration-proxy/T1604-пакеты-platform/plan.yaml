@@ -1,0 +1,10 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] internal/integrations/ удалён из монолита
+  - [x] internal/integrationclient/ — gRPC client + Interface
+  - [x] integration-proxy/ структура (adapters, circuitbreaker, webhook, grpc, config)
+  - [x] DI graph: engagement/flow/ → integrationclient/ → gRPC → proxy
+  - [x] Зависимости integrationclient/ (google.golang.org/grpc)
+  - [x] Сводная таблица: 16 пакетов монолит + proxy
+  - [x] Asynq workers обновлены (catalog-sync → proxy)

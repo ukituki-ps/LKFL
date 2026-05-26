@@ -1,0 +1,8 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] Integrations Hub Admin API — note: mono → proxy delegation
+  - [x] Response schema + circuit_breaker_state, worker_pool_status
+  - [x] Error responses + gRPC codes (UNAVAILABLE, DEADLINE_EXCEEDED)
+  - [x] Backend package mapping: integrations → integrationclient → proxy
+  - [x] External providers section updated

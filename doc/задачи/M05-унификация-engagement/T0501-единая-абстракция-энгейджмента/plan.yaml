@@ -1,0 +1,79 @@
+# T0501 — Единая абстракция «Энгейджмент»
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Этап 1: Проектирование модели (до файлов)
+
+- [x] Составить дизайн 5 сущностей EngagementType/EngagementOffer/EngagementFlow/UserEngagement/Eligibility
+- [x] Определить поле-дискриминатор `type: "benefit" | "activity"` в EngagementType
+- [x] Определить поле `billing_direction: debit | credit` в EngagementOffer
+- [x] Спроектировать unified EngagementFlow (заменяет ActivationFlow + completion_criteria)
+- [x] Спроектировать unified UserEngagement (заменяет UserBenefit + Completion)
+- [x] Спроектировать unified Eligibility (заменяет eligibility + target_audience)
+- [x] Нарисовать ASCII-диаграмму связей всех 5 сущностей
+- [x] Проверить: каждая старая сущность (Benefit, BenefitPlan, ActivationFlow, UserBenefit, Activity Type, Activity, Completion) имеет mapping → новая
+
+### Этап 2: Архитектура (6 файлов)
+
+- [x] Создать `архитектура/engagement.md` — полное описание унифицированной модели
+  - [x] YAML-схема EngagementType
+  - [x] YAML-схема EngagementOffer
+  - [x] YAML-схема EngagementFlow
+  - [x] YAML-схема UserEngagement
+  - [x] YAML-схема Eligibility
+  - [x] ASCII-диаграмма связей
+  - [x] 4 примера: ДМС (benefit), фитнес (benefit), опрос (activity), реферал (activity)
+  - [x] Таблица маппинга: Benefit→EngagementType (type=benefit), Activity Type→EngagementType (type=activity) и т.д.
+  - [x] RBAC таблица: доступ по type для каждой роли
+- [x] `архитектура/льготы.md` → заменить stub'ом (redirect → engagement.md)
+- [x] `архитектура/активности.md` → заменить stub'ом (redirect → engagement.md)
+- [x] `архитектура/модули.md` → обновить:
+  - [x] Platform модули: benefit/ + activity/ → engagement/
+  - [x] NATS subjects: benefit_activate → engagement_debit, activity_completed → engagement_credit
+  - [x] Asynq workers: engagement-specific workers
+- [x] `архитектура/биллинг-движок.md` → обновить event-контракты:
+  - [x] `event: "benefit_activate"` → `event: "engagement_debit"`
+  - [x] `event: "activity_completed"` → `event: "engagement_credit"`
+  - [x] Обновить примеры моделей (все через engagement)
+  - [x] Обновить Account.schema (currency пример)
+- [x] `архитектура/README.md` → nav-таблица: льготы.md + активности.md → engagement.md
+
+### Этап 3: Спецификация (4 файла)
+
+- [x] `спецификация/api.md` → полный реврайт:
+  - [x] Catalog endpoints: объединить benefits + activities → engagements
+  - [x] User endpoints: объединить user-benefits + activities/my → user-engagements
+  - [x] Admin endpoints: RBAC type guards (hr gets activity, catalog_manager gets benefit)
+  - [x] Activity Wizard + Benefit Wizard → единый Engagement Wizard
+  - [x] Update сводная таблица endpoints (131)
+- [x] `спецификация/артефакты.md` → обновить:
+  - [x] S09 (Активность) + S10a (Activation Wizard) → S09 (Engagement Wizard)
+  - [x] S04 (Каталог) — теперь включает benefits + activities
+  - [x] H03 (Геймификация) — admin/activity engagements
+  - [x] Обновить сводную таблицу (25 артефактов, 131 endpoints)
+- [x] `спецификация/критерии-приёмки.md` → обновитьjourneys-ссылки:
+  - [x] Критерии J02, J07, J12 через engagement (не separately)
+  - [x] Пересчитать итоги
+- [x] Journeys:
+  - [x] `journeys/сотрудник.md` — J02, J07 через engagement
+  - [x] `journeys/сотрудник.md` — J12 через engagement (activity type)
+  - [x] `journeys/hr.md` — J18, J20a через engagement admin
+  - [x] `journeys/менеджер-каталога.md` — J21–J30 type=benefit
+
+### Этап 4: Контекст + запуск
+
+- [x] `контекст/настраиваемость.md` → объединить строки:
+  - [x] «Каталог льгот» + «Тип активности» → «Энгейджмент (тип + офер)»
+  - [x] «Условия доступа» + «Target audience» → один Eligibility
+- [x] Создать `plan.yaml` + `report.md`
+- [x] Заполнить report.md по завершении
+
+## Зависимости
+
+depends_on:
+  - T0301  # M03 — пересборка льгот (5 сущностей)
+  - T0401  # M04 — API под льготы (128 endpoints)

@@ -1,0 +1,19 @@
+# T1201 — ADR-024: Modular Monolith rationale — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Создать `архитектура/adr/024-modular-monolith.md`:
+  - [x] Context: 4 микросервиса vs агентная разработка — несоответствие
+  - [x] Вариант 1: микросервисы — pros (независимый deploy, scale), cons (NATS contracts, 4x infra, agent context overhead) — отказ
+  - [x] Вариант 2: монолит без модульности — pros (простота), cons (god object, нет разделения ответственности) — отказ
+  - [x] Вариант 3: modular monolith — pros (typed interfaces, один go.mod, compile-time contracts, agent-friendly) — выбрано
+  - [x] Decision: modular monolith, future split через interface → gRPC
+  - [x] Consequences: один бинарник `lkfl-server`, один go.mod, 13 internal пакетов
+- [x] Обновить `архитектура/README.md`:
+  - [x] Таблица ADR → добавил строку для ADR-024
+  - [x] Count: 24 ADR → 25 ADR
+  - [x] "Содержимое раздела" → обновил описание
+  - [x] Диаграмма системы → переделана (M12)
+  - [x] Ключевые решения → обновлены (M12)

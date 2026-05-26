@@ -1,0 +1,12 @@
+progress: 100%
+depends_on: [T1610, T1611, T1612]
+checklist:
+  - [x] grep: 0 ссылок на internal/integrations/ как пакет монолита
+  - [x] grep: ProviderGateway → gRPC client
+  - [x] grep: "1 бинарник" → updated
+  - [x] ADR-024: exception секция добавлена
+  - [x] NAVIGATION.md: все ссылки актуальны
+  - [x] api.md: backend mapping актуален
+  - [x] schema.md: Go package → Table mapping актуален
+  - [x] модули.md: diagram актуален
+  - [x] 0 рассинхронов между файлами

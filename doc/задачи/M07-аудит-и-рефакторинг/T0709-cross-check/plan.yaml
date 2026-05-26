@@ -1,0 +1,40 @@
+---
+task_id: "T0709"
+milestone: "M07"
+title: "Общая проверка: перекрёстные ссылки и консистентность"
+depends_on:
+  - "T0701"
+  - "T0702"
+  - "T0703"
+  - "T0704"
+  - "T0705"
+  - "T0706"
+  - "T0707"
+  - "T0708"
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0709-01"
+    description: "Проверить все cross-references между файлами"
+    done: true
+  - id: "T0709-02"
+    description: "Убрать stale references к удалённым модулям"
+    done: true
+  - id: "T0709-03"
+    description: "Проверить circular references"
+    done: true
+  - id: "T0709-04"
+    description: "Проверить ADR список (ADR-001 → ADR-020) — нет пропусков, нет дубликатов"
+    done: true
+  - id: "T0709-05"
+    description: "Проверить status-таблицы в задачи/README.md"
+    done: true
+  - id: "T0709-06"
+    description: "Проверить настраиваемость.md — нет противоречий с архитектурными решениями"
+    done: true
+  - id: "T0709-07"
+    description: "Проверить service count consistently = 4"
+    done: true
+  - id: "T0709-08"
+    description: "Проверить namespace billing.* uniform"
+    done: true

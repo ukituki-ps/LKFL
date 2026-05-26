@@ -1,0 +1,35 @@
+# M16 — Integration Proxy
+
+## План вехи
+
+> **Цель:** вынос внешних интеграций из монолита в отдельный бинарник `lkfl-integration-proxy`.
+
+## Чеклист
+
+- [x] T1601 — ADR-035: Integration Proxy
+- [x] T1602 — gRPC proto definition
+- [x] T1603 — интеграции.md rewrite
+- [x] T1604 — пакеты-platform.md update
+- [x] T1605 — schema.md — lkfl_integration
+- [x] T1606 — api.md — admin endpoints → proxy
+- [x] T1607 — модули.md — +proxy binary
+- [x] T1608 — стек.md — +gRPC, 2 binaries
+- [x] T1609 — безопасность.md — credential isolation
+- [x] T1610 — NAVIGATION.md + README.md update
+- [x] T1611 — план/вехи.md + задачи.md + зависимости.md + критерии-вех.md
+- [x] T1612 — акторы.md + negative-criteria.md + настраиваемость.md
+- [x] T1613 — Final consistency check
+
+## Прогресс
+
+- **Задач:** 13/13 (100%)
+- **Статус:** ✅ Завершена
+
+## Зависимости
+
+- **Блокируется:** M12 (модульный монолит)
+- **Блокирует:** — (конечная веха документационного этапа)
+
+## Отчёт
+
+Все 13 задач выполнены. ADR-035 создан, gRPC proto определён, все архитектурные файлы обновлены, NAVIGATION.md и README.md синхронизированы. Final consistency check (T1613) подтвердил 0 рассинхронов.

@@ -1,0 +1,33 @@
+---
+task_id: "T0701"
+milestone: "M07"
+title: "Разбиение engagement/ на catalog/ + flow/ + collections/ + eligibility"
+depends_on:
+  - "T0601"
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0701-01"
+    description: "Вынести eligibility/ в отдельный пакет (engine.go, types.go)"
+    done: true
+  - id: "T0701-02"
+    description: "Разделить engagement/ на 4 подпакета: catalog/, flow/, collections/, survey/"
+    done: true
+  - id: "T0701-03"
+    description: "Обновить пакеты-platform.md — новый пакет eligibility/ с 3 публичными API"
+    done: true
+  - id: "T0701-04"
+    description: "Обновить DI граф (3 пакета зависят от eligibility): flow, recommendations, billing-rule-eval"
+    done: true
+  - id: "T0701-05"
+    description: "Обновить модули.md — Platform: 9 пакетов"
+    done: true
+  - id: "T0701-06"
+    description: "Обновить engagement.md — eligibility section → ссылка на eligibility/ пакет"
+    done: true
+  - id: "T0701-07"
+    description: "Создать ADR-014 (eligibility extraction)"
+    done: true
+  - id: "T0701-08"
+    description: "Обновить README архитектуры — ADR-014"
+    done: true

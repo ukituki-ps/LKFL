@@ -1,0 +1,26 @@
+# T1202 — Переделка модули.md — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Обновил tree structure: `backend/` вместо 4 директорий сервисов
+- [x] Убил секцию "1. Platform" → переименовал в "lkfl-server — единый бинарник"
+- [x] Убил "2. Billing" → перенес в internal/billing/ описание
+- [x] Убил "3. Integrations" → перенес в internal/integrations/ описание
+- [x] Убил "4. Payment Gateway" → перенес в internal/payments/ описание
+- [x] Убил "6. LLM — in-process" → оставил internal/llm/ (уже был in-process, без изменений)
+- [x] Заменил все NATS таблицы на interface контракты:
+  - [x] Billing interface: Credit(), Debit(), GetBalance()
+  - [x] Integrations interface: Activate(), Deactivate(), SyncCatalog()
+  - [x] Payments interface: Authorize(), Capture(), Void()
+- [x] Обновил Nginx routes:
+  - [x] Убил `/billing/v1/` → `/api/v1/billing/`
+  - [x] Убил `/payments/v1/` → `/api/v1/payments/`
+  - [x] Осталось: `/` → SPA, `/api/` → lkfl-server, `/webhooks/` → lkfl-server
+- [x] Обновил Ports:
+  - [x] :8080 — lkfl-server HTTP API
+  - [x] :8083 — Asynq dashboard
+  - [x] Удалено: :8081, :8082, :8084, :8085
+- [x] Обновил release policy → один бинарник, один deploy
+- [x] Обновил диаграмму DI graph

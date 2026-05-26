@@ -1,0 +1,22 @@
+# T1905 — internal/user/ (CRUD + Profile)
+
+## Прогресс
+
+0%
+
+## Checklist
+
+- [ ] Создать `internal/user/model.go`
+- [ ] Создать `internal/user/repository.go`
+- [ ] Создать `internal/user/service.go`
+- [ ] Создать `internal/user/handler.go`
+- [ ] Me, UpdateMe (employee)
+- [ ] AdminList, AdminGet, AdminUpdate, AdminDeactivate (admin/hr)
+- [ ] Search + pagination
+- [ ] Status transitions
+- [ ] Unit tests
+- [ ] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1901, T1904]

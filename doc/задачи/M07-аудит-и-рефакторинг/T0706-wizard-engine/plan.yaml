@@ -1,0 +1,32 @@
+---
+task_id: "T0706"
+milestone: "M07"
+title: "WizardEngine (JSON-driven generic wizard)"
+depends_on: []
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0706-01"
+    description: "Убрать DmsWizard.tsx и MatCapitalWizard.tsx из таблицы модальных окон"
+    done: true
+  - id: "T0706-02"
+    description: "Добавить Wizard.tsx как универсальный JSON-driven компонент"
+    done: true
+  - id: "T0706-03"
+    description: "Добавить WizardEngine store (wizards.ts) в src/store/"
+    done: true
+  - id: "T0706-04"
+    description: "Задокументировать JSON-schema wizard config"
+    done: true
+  - id: "T0706-05"
+    description: "Добавить /api/v1/wizards endpoint в спецификация/api.md"
+    done: true
+  - id: "T0706-06"
+    description: "Обновить модули.md — Wizard.tsx + WizardEngine"
+    done: true
+  - id: "T0706-07"
+    description: "Обновить настраиваемость.md — новый wizard без кода"
+    done: true
+  - id: "T0706-08"
+    description: "Создать ADR-019 (wizard engine)"
+    done: true

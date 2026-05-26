@@ -1,0 +1,14 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] TL;DR обновлён (proxy ref)
+  - [x] Архитектура diagram: Nginx → mono + proxy → providers
+  - [x] Принцип «Единый шлюз + Кэш» → proxy
+  - [x] Инвентарь интеграций (без изменений)
+  - [x] ProviderAdapter interface → в proxy
+  - [x] Generic REST adapter → в proxy
+  - [x] Admin endpoints → mono delegates to proxy via gRPC
+  - [x] Error handling → proxy structured errors
+  - [x] Синхронизация каталога → proxy worker
+  - [x] gRPC Contract секция (из T1602)
+  - [x] 0 прямых вызовов из монолита

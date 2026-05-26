@@ -1,0 +1,31 @@
+---
+task_id: "T0703"
+milestone: "M07"
+title: "Разбиение admin_handler.go по доменам (5 файлов)"
+depends_on:
+  - "T0701"
+  - "T0702"
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0703-01"
+    description: "Разделить admin_handler.go на 5 файлов: admin_user, admin_catalog, admin_recommendations, admin_analytics, admin_content"
+    done: true
+  - id: "T0703-02"
+    description: "Обновить пакеты-platform.md — новая структура admin handlers"
+    done: true
+  - id: "T0703-03"
+    description: "Обновить DI граф — middleware chain"
+    done: true
+  - id: "T0703-04"
+    description: "Обновить спецификация/api.md — группировка admin endpoints по доменам"
+    done: true
+  - id: "T0703-05"
+    description: "Обновить модули.md — comment о разделении admin"
+    done: true
+  - id: "T0703-06"
+    description: "Создать ADR-016 (admin handler split)"
+    done: true
+  - id: "T0703-07"
+    description: "Обновить README архитектуры — ADR-016"
+    done: true

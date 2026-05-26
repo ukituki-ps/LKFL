@@ -1,0 +1,33 @@
+---
+task_id: "T0702"
+milestone: "M07"
+title: "Выделение compliance (cascade + audit) из consent/"
+depends_on:
+  - "T0701"
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0702-01"
+    description: "Создать пакет compliance/ с 3 API: CascadeRevoke, AuditTrail, EnforceRetention"
+    done: true
+  - id: "T0702-02"
+    description: "Убрать CascadeRevoke из consent/ (остался lifecycle: Grant, Revoke, List, Check)"
+    done: true
+  - id: "T0702-03"
+    description: "Обновить пакеты-platform.md — compliance/ (9 пакетов вместо 8)"
+    done: true
+  - id: "T0702-04"
+    description: "Обновить DI граф — compliance → user, engagement, notification"
+    done: true
+  - id: "T0702-05"
+    description: "Обновить модули.md — Platform: 9 internal packages"
+    done: true
+  - id: "T0702-06"
+    description: "Обновить безопасность.md — audit trail section → compliance/"
+    done: true
+  - id: "T0702-07"
+    description: "Создать ADR-015 (compliance package)"
+    done: true
+  - id: "T0702-08"
+    description: "Обновить README архитектуры — ADR-015"
+    done: true

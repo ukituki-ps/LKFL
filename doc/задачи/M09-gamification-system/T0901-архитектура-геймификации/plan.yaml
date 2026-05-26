@@ -1,0 +1,47 @@
+# plan.yaml — T0901
+
+progress: 100%
+depends_on:
+  - T0801  # ADR-021 (CEL Engine) — нужен как источник условий присвоения
+  - T0501  # Единая абстракция Engagement — нужен как источник триггеров
+
+checklist:
+  - item: "1. Написать ADR-023 — Gamification System"
+    done: true
+    details: "doc/архитектура/adr/023-gamification-system.md: контекст, варианты (Tag Engine vs. CEL+факты), решение, последствия"
+
+  - item: "2. Определить DB schema (4 таблицы)"
+    done: true
+    details: "achievements, achievement_grants, loyalty_level_definitions, user_loyalty_levels, gamification_import_jobs"
+
+  - item: "3. Спроектировать модуль gamification/ (Go API)"
+    done: true
+    details: "models.go, achievement.go, grant_engine.go, loyalty.go, triggers.go, api_handlers.go, cel_integration.go, xlsx_import.go"
+
+  - item: "4. Описать интеграцию с CEL (расширение CELContext)"
+    done: true
+    details: "cel/context.go: вложенный блок game.* (achievements, achievement_count, engagement_count, engagement_by_category, benefit_categories_count, loyalty_level, loyalty_points, days_since_active, enps_submitted, has_family)"
+
+  - item: "5. Описать триггеры присвоения (Go-callback + Cron + Manual + XLSX)"
+    done: true
+    details: "FlowEngine.Complete() → TriggerHandler.OnEngagementCompleted(), monthly cron → Loyalty upgrade, manual API, xlsx API. НЕ NATS — gamification не подписана на billing subjects"
+
+  - item: "6. Описать XLSX import workflow (2 шаблона: badges + levels)"
+    done: true
+    details: "validate → preview → apply → import_jobs table → error report XLSX, Asynq worker gamification-import-xlsx"
+
+  - item: "7. Обновить doc/архитектура/модули.md (новый пакет gamification/)"
+    done: true
+    details: "таблица пакетов, DI граф, Asynq workers"
+
+  - item: "8. Обновить doc/архитектура/пакеты-platform.md"
+    done: true
+    details: "добавить описание gamification/ в список пакетов, показать зависимости"
+
+  - item: "9. Обновить doc/архитектура/cel-engine.md (CELContext extension)"
+    done: true
+    details: "добавить поля геймификации, добавить gamification в таблицу доменов CEL"
+
+  - item: "10. Обновить doc/архитектура/engagement.md (интеграция триггеров)"
+    done: true
+    details: "FlowEngine.Complete() запускает TriggerHandler.OnEngagementCompleted() как Go-callback (не NATS, не event bus)"

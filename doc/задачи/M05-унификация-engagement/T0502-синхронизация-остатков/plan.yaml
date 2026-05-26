@@ -1,0 +1,38 @@
+# T0502 — Синхронизация остатков после M05/M06
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Этап 1: Группа P0 (критические)
+
+- [x] `спецификация/api.md` стр. 511-512: `generic BenefitPlan + ActivationFlow` → `Unified EngagementType + EngagementOffer`
+- [x] `спецификация/api.md` стр. 137: описание UserBenefit → корректная формулировка (UserEngagement заменяет)
+- [x] `спецификация/journeys/tenant-onboarding.md` стр. 91-97:
+  - [x] `trigger=event:activity_completed` → `trigger=event:engagement_credit`
+  - [x] `trigger=event:benefit_activate` → `trigger=event:engagement_debit`
+
+### Этап 2: Группа P1 (терминология в примерах)
+
+- [x] `архитектура/интеграции.md` стр. 271: `[]Benefit` → `[]EngagementOffer` в ProviderAdapter.SyncCatalog
+- [x] `архитектура/безопасность.md` стр. 197: `benefit_id` → `engagement_id` в audit trail
+- [x] `архитектура/стек.md` стр. 98-99: пример лога `"benefit activated"` → `"engagement.debit.confirm"`
+
+### Этап 3: Группа P2 (счётчики и навигация)
+
+- [x] `спецификация/README.md` стр. 26: «27 артефактов» → «25 артефактов»
+- [x] `спецификация/README.md` стр. 30: «116 REST API endpoints» → «131 REST API endpoints»
+- [x] `план/README.md`: M00-создание-описания → M06-разбиение-platform
+
+### Этап 4: Финальная проверка
+
+- [x] Глобальный grep `BenefitPlan|ActivationFlow|UserBenefit` за пределами stub'ов и M01-M04 → 0 лишних совпадений (47 hits, все исторические)
+- [x] Глобальный grep `event:benefit_activate|event:activity_completed` за пределами исторических report'ов → 0 лишних совпадений (3 hits, только brief T0502)
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on:
+  - T0501  # M05 — единая абстракция Engagement (исполнено)

@@ -1,0 +1,30 @@
+---
+task_id: "T0708"
+milestone: "M07"
+title: "Детализация Integrations Hub API spec (12 endpoints)"
+depends_on:
+  - "T0704"
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0708-01"
+    description: "Написать полную таблицу 12 endpoints Integrations Hub"
+    done: true
+  - id: "T0708-02"
+    description: "Описать response schemas для каждого endpoint"
+    done: true
+  - id: "T0708-03"
+    description: "Добавить RBAC guard: integration_admin только"
+    done: true
+  - id: "T0708-04"
+    description: "Добавить раздел в спецификация/api.md"
+    done: true
+  - id: "T0708-05"
+    description: "Обновить модули.md — full endpoint table для Integrations Hub"
+    done: true
+  - id: "T0708-06"
+    description: "Обновить интеграции.md — conceptual → full spec"
+    done: true
+  - id: "T0708-07"
+    description: "Обновить акторы.md — Администратор интеграций: endpoints"
+    done: true

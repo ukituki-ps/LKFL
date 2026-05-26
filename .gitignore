@@ -1,0 +1,41 @@
+# Go
+*.exe
+*.exe~
+*.test
+*.out
+/bin/
+/vendor/
+*.tar.gz
+
+# Build output
+dist/
+build/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Go build cache
+go-build/
+
+# Node modules (frontend)
+node_modules/
+
+# Logs
+*.log
+
+# Temporary
+tmp/
+temp/

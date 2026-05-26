@@ -1,0 +1,14 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] Backend: 2 бинарника, 1 go.mod
+  - [x] Communication: Go interfaces + gRPC (localhost)
+  - [x] Dependencies: +google.golang.org/grpc
+  - [x] Dependencies: +google.golang.org/protobuf
+  - [x] Metrics: +integration_provider_latency_seconds
+  - [x] Metrics: +integration_provider_errors_total
+  - [x] Metrics: +integration_circuit_breaker_state
+  - [x] Metrics: +integration_sync_duration_seconds
+  - [x] Metrics: +integration_webhook_total
+  - [x] Metrics: +integration_dead_letters_total
+  - [x] Docker: 6 контейнеров

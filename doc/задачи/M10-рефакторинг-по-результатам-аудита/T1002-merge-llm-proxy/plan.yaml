@@ -1,0 +1,33 @@
+# T1002 — Merge LLM Proxy → Platform internal/llm/ — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Обновить `архитектура/модули.md`:
+  - [x] Удалить секцию "6. LLM Proxy" как отдельного сервиса
+  - [x] Изменить заголовок: "пять независимых Go-сервисов" → "четыре независимых Go-сервиса"
+  - [x] Убрать llm-proxy из tree structure
+  - [x] Убрав из таблиц "Зависимости между сервисами" (Platform + Billing → LLM Proxy → internal/llm/)
+  - [x] Обновить Nginx routes: убрать `/llm/v1/` → platform:8085
+  - [x] Обновить PostgreSQL таблицу: убрать lkfl_llm
+  - [x] Обновить Redis table: убрать "LLM Proxy rate limiting" из DB 4
+  - [x] Обновить релизную политику: убрать LLM Proxy
+- [x] Обновить `архитектура/пакеты-platform.md`:
+  - [x] Добавить llm/ как internal пакет (4 файла: router, providers, audit, rate_limiter)
+  - [x] Зависимости llm/: platform (cel/ → llm/ через internal call, не HTTP)
+  - [x] cel_handler → internal call (не HTTP POST /llm/v1/)
+- [x] Обновить `архитектура/модули.md` Keycloak:
+  - [x] Убрать lkfl-llm-proxy из clients
+  - [x] "Все 6 сервисов" → "Все 5 сервисов"
+- [ ] Обновить `архитектура/стек.md`:
+  - [ ] LLM Proxy → "встроенный в Platform"
+- [ ] Обновить `архитектура/adr/022-llm-proxy-service.md`:
+  - [ ] Добавить Superceded notice → ADR-024
+- [ ] Создать `архитектура/adr/024-llm-in-process.md`:
+  - [ ] Обоснование: 1 active agent, не hot path, audit → Loki
+  - [ ] When to extract: 2+ active agents OR hot path usage
+  - [ ] LLMProvider interface for future extraction
+- [x] Обновить `архитектура/README.md`:
+  - [x] 5 → 4 сервиса
+  - [ ] ADR-024 добавить в таблицу

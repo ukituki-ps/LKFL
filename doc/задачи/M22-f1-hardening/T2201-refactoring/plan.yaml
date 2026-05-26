@@ -1,0 +1,22 @@
+# T2201 — Рефакторинг F1
+
+## Прогресс
+
+0%
+
+## Checklist
+
+- [ ] golangci-lint strict
+- [ ] ESLint strict
+- [ ] go vet
+- [ ] go fmt
+- [ ] Error wrapping
+- [ ] Context propagation
+- [ ] Logger injection
+- [ ] Godoc
+- [ ] TypeScript strict
+- [ ] Заполнить report.md
+
+## Зависимости
+
+depends_on: [M17, M18, M19, M20, M21]

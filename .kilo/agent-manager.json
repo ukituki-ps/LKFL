@@ -1,0 +1,25 @@
+{
+  "worktrees": {},
+  "sessions": {
+    "ses_19c2c954affeS920a5yjUkjlat": {
+      "worktreeId": null,
+      "createdAt": "2026-05-26T10:27:40.349Z"
+    },
+    "ses_19c1b1b9fffeoPLJxDwO29l4Ml": {
+      "worktreeId": null,
+      "createdAt": "2026-05-26T10:46:45.629Z"
+    },
+    "ses_19c12d9d4ffebdEZYy1SiFqa1L": {
+      "worktreeId": null,
+      "createdAt": "2026-05-26T10:55:46.760Z"
+    }
+  },
+  "tabOrder": {
+    "local": [
+      "pending:1",
+      "ses_19c2c954affeS920a5yjUkjlat",
+      "ses_19c1b1b9fffeoPLJxDwO29l4Ml",
+      "ses_19c12d9d4ffebdEZYy1SiFqa1L"
+    ]
+  }
+}

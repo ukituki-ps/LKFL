@@ -1,0 +1,21 @@
+# T1001 — Отложенный recommendations/ → stub — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Обновить `архитектура/пакеты-platform.md` — recommendations/:
+  - [x] Заменить описание на stub (2 метода: Recommend→empty, Debug→nil)
+  - [x] Убрать 4 файла из структуры (rules.go, evaluation.go, debug.go, storage.go)
+  - [x] Убрать hit counting, conversion_rate documentation
+  - [x] Zависимости: убрать cel/, Redis, PostgreSQL — оставить только pkg/
+- [x] Обновить `архитектура/пакеты-platform.md` — HandlerDeps:
+  - [x] Убрать поле Recommendations из DI struct
+  - [x] Убрать recommendation_handler.go из handler table (→ stub comment)
+- [x] Обновить `архитектура/модули.md`:
+  - [x] Таблица пакетов: recommendations → stub comment
+  - [x] DI граф: убрать recommendations/ из dependency chain
+- [x] Обновить `контекст/настраиваемость.md`:
+  - [x] «Рекомендации (правила)» → Phase 2 (frontend integration required)
+- [x] Обновить `архитектура/README.md`:
+  - [x] Ссылки на recommendations/ обновлены

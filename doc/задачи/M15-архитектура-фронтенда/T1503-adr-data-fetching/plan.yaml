@@ -1,0 +1,15 @@
+# T1503 — ADR-031: Data Fetching Strategy
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Рассмотреть варианты (React Query, SWR, Zustand, RTK Query)
+- [x] Обосновать выбор по кейсам
+- [x] Записать ADR-031
+
+## Зависимости
+
+depends_on: []

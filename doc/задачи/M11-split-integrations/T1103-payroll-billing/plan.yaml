@@ -1,0 +1,19 @@
+# T1103 — 1C → Billing payroll — план
+
+## Статус: 0%
+
+## Checklist
+
+- [ ] Обновить `архитектура/модули.md` — Billing:
+  - [ ] Добавить payroll/ как модуль (SubmitPayroll, ListPayrollStatements, GetPayrollStatus)
+  - [ ] Зависимости payroll/: REST API (1C)
+- [ ] Обновить `архитектура/модули.md` — Integrations:
+  - [ ] Убрать 1c/ из таблицы модулей
+  - [ ] Убрать 1c/ из "Системные адаптеры"
+  - [ ] Изменить comment: "1C остался (T1103 → Billing)" → (удалить)
+- [ ] Обновить `архитектура/nats-subjects.md` (T1104 делает namespace rename):
+  - [ ] payroll subject: consumer → billing (было integrations) — payload description обновить
+- [ ] Обновить `архитектура/биллинг-движок.md`:
+  - [ ] Добавить section: Payroll (1C integration) — удержание из ЗП, flow с payment-gateway
+- [ ] Создать `архитектура/adr/027-payroll-in-billing.md`
+- [ ] Обновить `архитектура/README.md` — ADR-027

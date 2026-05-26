@@ -1,0 +1,16 @@
+# T1401 — Survey Engine Implementation
+
+## Статус
+
+⛔ Отменено
+
+## Чеклист
+
+- [ ] Bootstrap Go-проекта
+- [ ] Реализация engagement/survey/*.go
+- [ ] TagResolver.AggregateSurveyTags
+- [ ] FlowEngine.ExecuteStep integration
+- [ ] Admin survey-analytics endpoint
+- [ ] Unit-тесты
+
+> Все пункты отменены. Архитектура (M13, ADR-025) сохранена.

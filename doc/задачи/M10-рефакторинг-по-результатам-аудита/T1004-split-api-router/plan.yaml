@@ -1,0 +1,21 @@
+# T1004 — Split api/ → public router + admin router — план
+
+## Статус: 100%
+
+## Checklist
+
+- [x] Обновить `архитектура/пакеты-platform.md`:
+  - [x] Заменить HandlerDeps (12 полей) на 2 struct:
+    - [x] PublicHandlerDeps (10 полей: Auth, User, Consent, Engagement, Notification, Gamification, DB, NATS, Redis, Logger)
+    - [x] AdminHandlerDeps (7 полей: User, Consent, Engagement, Notification, Gamification, DB, Logger)
+  - [x] Добавить 2 middleware chain descriptions:
+    - [x] Public: Recovery → Logger → RateLimiter(high) → JWT → Tenant → RBAC(any) → Handler
+    - [x] Admin: Recovery → Logger → RateLimiter(low) → JWT → Tenant → RBAC(admin) → Audit → Handler
+  - [x] Перестроить handler table:
+    - [x] Public handlers (10): auth_handler, user_handler, consent_handler, engagement_handler, collections_handler, notification_handler, recommendation_handler, balance_handler, document_handler, support_handler
+    - [x] Admin handlers (5): admin_user.go, admin_catalog.go, admin_recommendations.go, admin_analytics.go, admin_content.go
+- [x] Обновить DI граф ASCII диаграмму:
+  - [x] api/ → PublicHandlerDeps/PublicRouter
+  - [x] api/ → AdminHandlerDeps/AdminRouter
+- [x] Обновить `архитектура/модули.md`:
+  - [x] Комментарий о разделении: "api/ = 2 router'а (public + admin), T1004"

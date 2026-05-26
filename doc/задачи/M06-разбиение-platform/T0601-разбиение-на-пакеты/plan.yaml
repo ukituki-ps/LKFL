@@ -1,0 +1,96 @@
+# T0601 — Разбиение Platform на 3 внутренних пакета
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Этап 1: Проектирование структуры пакетов (до файлов документации)
+
+- [x] определить public API `internal/engagement/`: List, Get, CheckEligibility, Activate, Complete, Revert, CollectionsList, CollectionEngage
+- [x] определить public API `internal/notification/`: Send, ListUnread, MarkRead, MarkAllRead, Channel interface
+- [x] определить public API `internal/recommendations/`: Recommend, Debug, CRUD правил
+- [x] определить DI граф: какие пакеты от каких зависят
+- [x] решить: worker → пакет mapping (notification-send → notification/, engagement-* → engagement/)
+- [x] решить: что остаётся в `api/` (thin handlers) vs что переезжает в business-пакеты
+
+### Этап 2: Основной документ — архитектура/пакеты-platform.md
+
+- [x] создать `архитектура/пакеты-platform.md` (~300 строк)
+  - [x] описание 7 пакетов (auth, user, consent, engagement, notification, recommendations, api)
+  - [x] для каждого пакета: назначение, структура .go файлов, public API, зависимости
+  - [x] DI граф (ASCII): какие пакеты импортируют какие
+  - [x] Asynq workers → пакет mapping
+  - [x] таблица «что НЕ меняется» (2 бинарника, NATS, Redis)
+  - [x] секция «почему пакеты, не gRPC-микросервисы»
+
+### Этап 3: ADR — архитектура/adr/013-пакеты-platform.md
+
+- [x] создать ADR-013 в формате ХАДД
+  - [x] Context: God Object в engagement/, notification scattered, recommendations невидимы
+  - [x] Decision: 3 новых internal пакета (engagement, notification, recommendations)
+  - [x] Status: Accepted
+  - [x] Consequences: плюсы (test isolation, SRP compliance, readability) и минусы (перемещение кода, временная сложность миграции)
+
+### Этап 4: Архитектура (3 файла)
+
+- [x] `архитектура/модули.md` → полная перерисовка Platform:
+  - [x] убрать старую таблицу «Модули: app/, auth/, user/, engagement/»
+  - [x]  новая таблица: 7 пакетов с назначением и public API
+  - [x] DI граф: auth → pkg, user → auth+pkg, consent → user+pkg, engagement → user+consent+pkg, notification → pkg, recommendations → user+pkg, api → все выше
+  - [x] Asynq workers remapped: notification-send → notification/, engagement-* → engagement/
+  - [x] оставить Billing и Integrations без изменений (они — отдельный сервис)
+- [x] `архитектура/README.md` → nav-table: добавить `пакеты-platform.md`
+- [x] `архитектура/engagement.md` → все ссылки на `engagement/` → `internal/engagement/`
+
+### Этап 5: Спецификация (2 файла)
+
+- [x] `спецификация/api.md` → обновление:
+  - [x] таблица «Модули | Endpoints | Roles»: заменить «Platform: engagement/» → 3 пакета
+  - [x] сводная таблица (131 endpoints): распределить endpoints по пакетам
+  - [x] section «Engagements»: добавить комментарий что backend = `internal/engagement/`
+  - [x] section «Notifications»: добавить комментарий что backend = `internal/notification/`
+  - [x] section «Recommendations»: добавить комментарий что backend = `internal/recommendations/`
+- [x] `спецификация/критерии-приёмки.md` → добавить критерии test isolation:
+  - [x] критерий: `internal/engagement/` имеет unit-тест eligibility (AND/OR/groups) без запуска Platform
+  - [x] критерий: `internal/notification/` имеет unit-тест Channel interface (mock)
+  - [x] критерий: `internal/recommendations/` имеет unit-тест debug engine
+
+### Этап 6: Контекст (2 файла — проверить согласованность)
+
+- [x] `контекст/акторы.md` → раздел «Платформа льгот»:
+  - [x] замена «3 сервиса» → уточнение: «Platform — 7 внутренних пакетов, Billing — 4 модуля, Integrations — N адаптеров»
+  - [x] матрица взаимодействий: Platform актуальна
+- [x] `контекст/настраиваемость.md` → проверить на согласованность (бизнес-логика не изменилась → изменения НЕ нужны)
+
+### Этап 7: README и навигация (3 файла — проверить согласованность)
+
+- [x] `doc/README.md` → метрическая таблица:
+  - [x] «Сервисов: 4» — остается 4 (Platform, Billing, Integrations, Frontend) — НЕ менять
+  - [x] «API endpoints: 116» → проверить: сейчас 131 после M05, обновить на 131
+- [x] `doc/спецификация/README.md` → проверить ссылки на `api.md` (131 endpoints, не 116)
+- [x] `doc/архитектура/биллинг-движок.md` → проверить на согласованность (Billing — отдельный сервис → изменений НЕ нужно)
+
+### Этап 8: Journeys — проверить согласованность
+
+- [x] `спецификация/journeys/сотрудник.md` → разбор на пакеты не меняет user-facing → изменений НЕ нужно, проверить ссылки
+- [x] `спецификация/journeys/hr.md` → изменений НЕ нужно, проверить ссылки
+- [x] `спецификация/journeys/менеджер-каталога.md` → изменений НЕ нужно, проверить ссылки
+
+### Этап 9: Остальные файлы архитектуры — проверить согласованность
+
+- [x] `архитектура/интеграции.md` → нет прямых изменений (Integrations = отдельный сервис)
+- [x] `архитектура/безопасность.md` → нет прямых изменений
+- [x] `архитектура/стек.md` → нет прямых изменений
+
+### Этап 10: Завершение
+
+- [x] создать `overview.md` вехи M06
+- [x] заполнить `report.md`
+- [x] обновить `задачи/README.md` → M06 в таблице вех
+
+## Зависимости
+
+depends_on:
+  - T0501  # M05 — унификация Engagement (обязательна — без неё нет модели для разбиения)

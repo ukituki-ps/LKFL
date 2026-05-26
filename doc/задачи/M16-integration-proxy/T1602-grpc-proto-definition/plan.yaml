@@ -1,0 +1,17 @@
+progress: 100%
+depends_on: [T1601]
+checklist:
+  - [x] IntegrationService: 8 RPC methods
+  - [x] ActivateRequest/Response
+  - [x] DeactivateRequest/Response
+  - [x] ProviderStatusRequest/Response
+  - [x] CatalogRequest/Response
+  - [x] HealthCheckRequest/Response
+  - [x] ListProvidersRequest/Response
+  - [x] GetProviderRequest/Response
+  - [x] UpdateProviderRequest/Response
+  - [x] TriggerSyncRequest/Response
+  - [x] GetSyncLogsRequest/Response
+  - [x] Enum: ProviderStatus
+  - [x] Enum: CircuitBreakerState
+  - [x] Комментарии к полям

@@ -1,0 +1,39 @@
+# T0503 — Глубокая синхронизация M05 (аудит 2)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Этап 1: П0 — кодовые интерфейсы и конфигурация (модули.md)
+
+- [x] ProviderAdapter.SyncCatalog ([]Benefit → []EngagementOffer)
+- [x] БД lkfl_platform: benefits → engagements
+- [x] Redis DB 2: Benefit catalog cache → Engagement catalog cache
+- [x] NATS billing.credit/debit: activity completion/benefit activate → engagement credit/debit
+
+### Этап 2: П1 — биллинг-движок YAML-примеры
+
+- [x] benefit_cost * 0.7 → engagement_offer_cost * 0.7
+- [x] event: "benefit_activate" → "engagement_debit"
+- [x] context benefit_id, benefit_cost → engagement_offer_id, engagement_offer_cost
+- [x] benefit_active, benefit_provider → engagement_active, engagement_provider
+
+### Этап 3: П2 — ADR + глоссарий + journeys
+
+- [x] hr.md J20a: activity_types → engagement-types
+- [x] adr/011-monorepo.md: Benefit → Engagement
+- [x] adr/004-redis.md: Benefit catalog cache → Engagement catalog cache
+- [x] глоссарий.md: Активность → Активность (Engagement type=activity)
+
+### Этап 4: Финальная проверка
+
+- [x] Глобальный grep по 13 паттернам → 0 совпадений
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on:
+  - T0501  # M05 — единая абстракция Engagement
+  - T0502  # Superficial sync

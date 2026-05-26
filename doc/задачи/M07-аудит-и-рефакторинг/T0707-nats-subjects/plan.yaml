@@ -1,0 +1,33 @@
+---
+task_id: "T0707"
+milestone: "M07"
+title: "Унификация NATS subjects registry (включая billing namespace)"
+depends_on:
+  - "T0705"
+status: "completed"
+progress: 100
+checklist:
+  - id: "T0707-01"
+    description: "Создать архитектура/nats-subjects.md — полный registry всех subjects"
+    done: true
+  - id: "T0707-02"
+    description: "Каждый subject: имя, direction, trigger, payload schema, consumer, response/ack, DLQ"
+    done: true
+  - id: "T0707-03"
+    description: "Обновить модули.md — inline tables → ссылка на nats-subjects.md"
+    done: true
+  - id: "T0707-04"
+    description: "Обновить биллинг-движок.md — billing-events section → ссылка на registry"
+    done: true
+  - id: "T0707-05"
+    description: "Обновить engagement.md — billing events → billing.* namespace + link"
+    done: true
+  - id: "T0707-06"
+    description: "billing.debit разбит на billing.debit.reserve + billing.debit.confirm"
+    done: true
+  - id: "T0707-07"
+    description: "Создать ADR-020 (NATS subjects registry)"
+    done: true
+  - id: "T0707-08"
+    description: "Обновить README архитектуры — ADR-020 + nats-subjects.md"
+    done: true

@@ -1,0 +1,38 @@
+# T1207 — Финальная консистентность — план
+
+## Статус: 100%
+
+## Checklist
+
+### ADR pass (001–023)
+- [x] ADR-006 (billing): "отдельный сервис" → note "[M12: merged, see ADR-024]"
+- [x] ADR-010 (nginx): routes table → updated paths
+- [x] ADR-011 (monorepo): reference to 4 services → note "[M12: one binary]"
+- [x] ADR-013 (пакеты): reference to 4 services → note "[M12: 13 pkg]"
+- [x] ADR-018 (payment-gateway): "4-й Go-сервис" → note "[M12: merged into internal/payments/]"
+- [x] ADR-020 (NATS registry): status → Superseded (done in T1204)
+- [x] ADR-021 (CEL): "Billing Rule Engine" → still valid (internal package)
+- [x] ADR-022 (LLM Proxy): already superseded by M10 T1002 — verify consistent
+- [x] ADR-023 (gamification): verify no NATS references
+- [x] Остальные ADR — quick scan для mentions "сервис billing", "NATS", "billing:8081"
+
+### Диаграмма и README
+- [x] `архитектура/README.md`:
+  - [x] Диаграмма системы: переделана (lkfl-server)
+  - [x] "Из каких сервисов" → "lkfl-server (Go API) + React SPA"
+  - [x] Ключевые решения → updated "Monorepo" → "одина бинарник"
+- [x] `задачи/README.md`:
+  - [x] Добавана M12 в таблицу вех
+
+### Grep checks
+- [x] grep -r "8081|8082|8084|8085" ./doc/**/*md — remaining are historical notes
+- [x] grep -r "billing service|billing сервис" ./doc/**/*md — only in notes about M12
+- [x] grep -r "billing:8081" ./doc/**/*md — only historical context
+- [x] grep -r "payment-gateway:8084" ./doc/**/*md — only historical context
+- [x] grep -r "integrations:8082" ./doc/**/*md — only historical context
+- [x] `спецификация/критерии-приёмки.md` — no "service up" criteria для billing/payments
+
+### Файлы изменены дополнительно T1207
+- [x] cel-engine.md: LLM Proxy ref → internal/llm/
+- [x] биллинг-движок.md: NATS flow → direct call
+- [x] спецификация/api.md: LLM Proxy ref → internal/llm/

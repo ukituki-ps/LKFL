@@ -1,0 +1,22 @@
+# T1502 — `архитектура/фронтенд.md`
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Раздел A — Обзор (ADR, DS, Density, тёмная тема)
+- [x] Раздел B — Routing (employee + admin, guards, lazy)
+- [x] Раздел C — Структура (tree src/ по T1501)
+- [x] Раздел D — API Layer (fetch, error, retry, cache)
+- [x] Раздел E — State Management (Zustand)
+- [x] Раздел F — Компоненты (shared, layout, modal, admin CRUD)
+- [x] Раздел G — White-label
+- [x] Раздел H — Performance (Sentry, PWA, Lighthouse)
+- [x] Раздел I — Mobile (краткое + ссылка)
+- [x] Раздел J — Формы (краткое + ссылка)
+
+## Зависимости
+
+depends_on: [T1501, T1508, T1509]

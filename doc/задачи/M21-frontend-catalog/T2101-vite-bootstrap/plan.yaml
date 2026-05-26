@@ -1,0 +1,21 @@
+# T2101 — Vite + React 18 Bootstrap
+
+## Прогресс
+
+0%
+
+## Checklist
+
+- [ ] `frontend/package.json` с зависимостями
+- [ ] `frontend/vite.config.ts` с proxy
+- [ ] `frontend/src/` структура
+- [ ] `npm install` без ошибок
+- [ ] `npm run dev` запускает
+- [ ] `npm run build` собирает
+- [ ] `npm run lint` без ошибок
+- [ ] TypeScript strict mode
+- [ ] Заполнить report.md
+
+## Зависимости
+
+depends_on: []
