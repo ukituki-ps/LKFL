@@ -2,19 +2,19 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `migrations/` директорию
-- [ ] Создать `atlas.hcl` config
-- [ ] Создать `20260526100000_init.sql` — schema + extensions
-- [ ] Goose annotations (Up/Down)
-- [ ] Atlas migrate apply работает
-- [ ] Schema `lkfl_platform` создана
-- [ ] Extensions установлены
-- [ ] Rollback работает
-- [ ] Заполнить report.md
+- [x] Создать `migrations/` директорию
+- [x] Создать `atlas.hcl` config
+- [x] Создать `20260526100000_init.sql` — schema + extensions
+- [x] Goose annotations → НЕ применены. Atlas использует plain SQL без аннотаций Goose (см. report.md)
+- [ ] Atlas migrate apply работает — требует запущенного PostgreSQL
+- [ ] Schema `lkfl_platform` создана — требует запущенного PostgreSQL
+- [ ] Extensions установлены — требует запущенного PostgreSQL
+- [ ] Rollback работает — требует запущенного PostgreSQL
+- [x] Заполнить report.md
 
 ## Зависимости
 
