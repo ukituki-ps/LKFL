@@ -2,19 +2,19 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `cmd/server/main.go`
-- [ ] Load config → Provide() → Start server
-- [ ] Graceful shutdown (SIGINT/SIGTERM, 30s timeout)
-- [ ] Error handling (os.Stderr + exit 1)
-- [ ] `go run ./cmd/server/` запускает server
-- [ ] `/healthz` → 200 OK
-- [ ] SIGINT → graceful shutdown
-- [ ] Config error → exit 1
-- [ ] Заполнить report.md
+- [x] Создать `cmd/server/main.go`
+- [x] Load config → Provide() → Start server
+- [x] Graceful shutdown (SIGINT/SIGTERM, 30s timeout)
+- [x] Error handling (os.Stderr + exit 1)
+- [x] `go run ./cmd/server/` запускает server
+- [x] `/healthz` → 200 OK
+- [x] SIGINT → graceful shutdown
+- [x] Config error → exit 1
+- [x] Заполнить report.md
 
 ## Зависимости
 
