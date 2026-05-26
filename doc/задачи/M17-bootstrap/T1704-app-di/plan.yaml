@@ -2,23 +2,23 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `app/config.go` — Config struct + viper loading + validation
-- [ ] Создать `app/wire.go` — Provide() функция
-- [ ] Создать `app/server.go` — chi router + middleware chain
-- [ ] Config: `.env` → ENV → defaults
-- [ ] DB pool (pgxpool) с connection limits
-- [ ] Redis client (go-redis/v9) с retry
-- [ ] OIDC verifier (go-oidc)
-- [ ] Logger (structured JSON)
-- [ ] Prometheus custom registry
-- [ ] CORS configurable
-- [ ] `/healthz` → 200 OK
-- [ ] `/metrics` → Prometheus endpoint
-- [ ] Заполнить report.md
+- [x] Создать `app/config.go` — Config struct + viper loading + validation
+- [x] Создать `app/wire.go` — Provide() функция
+- [x] Создать `app/server.go` — chi router + middleware chain
+- [x] Config: `.env` → ENV → defaults
+- [x] DB pool (pgxpool) с connection limits
+- [x] Redis client (go-redis/v9) с retry
+- [x] OIDC verifier (go-oidc)
+- [x] Logger (structured JSON)
+- [x] Prometheus custom registry
+- [x] CORS configurable
+- [x] `/healthz` → 200 OK
+- [x] `/metrics` → Prometheus endpoint
+- [x] Заполнить report.md
 
 ## Зависимости
 
