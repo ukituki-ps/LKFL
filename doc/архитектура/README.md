@@ -103,6 +103,7 @@
 | `schema.md` | **P0:** Полная модель PostgreSQL 17 — 47 таблиц (41 `lkfl_platform` + 6 `lkfl_integration`), ER-диаграмма, индексы, constraints, Go mapping, Redis layout, миграционная стратегия (Atlas). **M16:** +lkfl_integration schema. |
 | `adr/` | **35 архитектурных решений** в формате ADR (ХАДД). M12: ADR-024 (modular monolith). M15: ADR-031 (data fetching), ADR-032 (API types), ADR-033 (testing), ADR-034 (i18n). M16: ADR-035 (Integration Proxy). M13: ADR-025 (survey). ADR-023 (gamification), ADR-029 (DS gap), ADR-030 (CI/CD). **4 ❌ Superseded, 5 ⚠️ Note.** |
 | `безопасность.md` | OWASP Top 10, 152-ФЗ, ФСТЭК, consent, audit trail, rate limiting, PCI DSS (`internal/payments/`) |
+| `инфраструктура.md` | Dev стенд: архитектура деплоя, 11 багов (Б-001→Б-008), чек-лист деплоя, troubleshooting |
 
 ## ADR
 
