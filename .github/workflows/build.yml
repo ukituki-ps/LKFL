@@ -143,8 +143,6 @@ jobs:
           tags: |
             ${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:${{ steps.tag.outputs.tag }}
             ${{ (github.ref == 'refs/heads/main' && format('{0}/{1}:main-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
-          cache-from: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:buildcache
-          cache-to: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:buildcache,mode=max
 
   # =========================================================================
   # 3. DEPLOY NOTIFICATION — только push в main
