@@ -47,6 +47,10 @@ jobs:
           cache: true
           cache-dependency-path: backend/go.sum
 
+      - name: Go mod tidy
+        working-directory: backend
+        run: go mod tidy
+
       - name: Go vet
         working-directory: backend
         run: go vet ./...
@@ -58,7 +62,7 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.62
+          version: v2.1
           working-directory: backend
           args: --timeout=5m
 
