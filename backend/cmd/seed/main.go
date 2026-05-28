@@ -36,13 +36,13 @@ func main() {
 		fmt.Fprintf(os.Stderr, "connect error: %v\n", err)
 		os.Exit(1)
 	}
-	defer conn.Close(context.Background())
+	defer func() { _ = conn.Close(context.Background()) }()
 
 	ctx := context.Background()
 
 	// ─── Миграции ───
 	fmt.Println("Running migrations...")
-	if err := runMigrations(ctx, conn); err != nil {
+	if mErr := runMigrations(ctx, conn); mErr != nil {
 		fmt.Fprintf(os.Stderr, "migrations error: %v\n", err)
 		os.Exit(1)
 	}
@@ -455,9 +455,9 @@ type seedEngagementType struct {
 	//   unit = "points" | "rub"
 	//   period = "month" | "day" | "year" | "once" | "included"
 	//   display = строка для фронтенда, например "3 500 ₽ / мес"
-	priceAmount int
-	priceUnit   string
-	pricePeriod string
+	priceAmount  int
+	priceUnit    string
+	pricePeriod  string
 	priceDisplay string
 	providerName string
 	iconName     string // Lucide icon name
@@ -482,21 +482,21 @@ func seedEngagementTypes(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID
 		// ── ДМС ──
 		{
 			slug: "dms-base", name: "ДМС — Базовая программа",
-			description: "Полис добровольного медицинского страхования. Включает амбулаторное лечение, стационар и скорую помощь.",
+			description:  "Полис добровольного медицинского страхования. Включает амбулаторное лечение, стационар и скорую помощь.",
 			categorySlug: "dms", typ: "benefit", status: "active",
 			priceAmount: 0, priceUnit: "rub", pricePeriod: "included", priceDisplay: "Включено в пакет",
 			providerName: "АльфаСтрахование", iconName: "heart-pulse", badge: "Активна", badgeColor: "green",
 		},
 		{
 			slug: "dms-extended", name: "ДМС — Расширенная программа",
-			description: "Расширенный пул клиник, стоматология, офтальмология и выезд врача на дом.",
+			description:  "Расширенный пул клиник, стоматология, офтальмология и выезд врача на дом.",
 			categorySlug: "dms", typ: "benefit", status: "active",
 			priceAmount: 3500, priceUnit: "rub", pricePeriod: "month", priceDisplay: "3 500 ₽ / мес",
 			providerName: "АльфаСтрахование", iconName: "shield-plus", badge: "Доступна", badgeColor: "gray",
 		},
 		{
 			slug: "dms-family", name: "ДМС Семья",
-			description: "Добавьте супруга, детей или родителей к программе ДМС с персональным покрытием.",
+			description:  "Добавьте супруга, детей или родителей к программе ДМС с персональным покрытием.",
 			categorySlug: "dms", typ: "benefit", status: "active",
 			priceAmount: 1800, priceUnit: "rub", pricePeriod: "month", priceDisplay: "от 1 800 ₽ / мес",
 			providerName: "АльфаСтрахование", iconName: "users", badge: "Доступна", badgeColor: "gray",
@@ -505,14 +505,14 @@ func seedEngagementTypes(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID
 		// ── Фитнес ──
 		{
 			slug: "fitness-worldclass", name: "Фитнес — World Class",
-			description: "Доступ в сеть фитнес-клубов World Class с групповыми занятиями и бассейном.",
+			description:  "Доступ в сеть фитнес-клубов World Class с групповыми занятиями и бассейном.",
 			categorySlug: "fitness", typ: "benefit", status: "active",
 			priceAmount: 500, priceUnit: "points", pricePeriod: "month", priceDisplay: "500 баллов / мес",
 			providerName: "World Class", iconName: "dumbbell", badge: "Активна", badgeColor: "green",
 		},
 		{
 			slug: "fitness-sbersport", name: "СберСпорт — мультиспорт",
-			description: "Доступ к 1 000+ спортивным объектам: фитнес, йога, бассейн, единоборства.",
+			description:  "Доступ к 1 000+ спортивным объектам: фитнес, йога, бассейн, единоборства.",
 			categorySlug: "fitness", typ: "benefit", status: "active",
 			priceAmount: 800, priceUnit: "points", pricePeriod: "month", priceDisplay: "800 баллов / мес",
 			providerName: "СберСпорт", iconName: "bike", badge: "Доступна", badgeColor: "gray",
@@ -521,14 +521,14 @@ func seedEngagementTypes(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID
 		// ── Питание ──
 		{
 			slug: "food-lunch", name: "Обеды в офисе",
-			description: "Компенсация обедов в офисе или доставки до рабочего места до 300 ₽ в день.",
+			description:  "Компенсация обедов в офисе или доставки до рабочего места до 300 ₽ в день.",
 			categorySlug: "food", typ: "benefit", status: "active",
 			priceAmount: 300, priceUnit: "rub", pricePeriod: "day", priceDisplay: "300 ₽ / день",
 			providerName: "Яндекс Еда for Business", iconName: "utensils", badge: "Доступна", badgeColor: "gray",
 		},
 		{
 			slug: "food-coffee", name: "Кофе и снеки",
-			description: "Компенсация покупки кофе и перекусов в офисе до 100 ₽ в день.",
+			description:  "Компенсация покупки кофе и перекусов в офисе до 100 ₽ в день.",
 			categorySlug: "food", typ: "benefit", status: "active",
 			priceAmount: 100, priceUnit: "rub", pricePeriod: "day", priceDisplay: "100 ₽ / день",
 			providerName: "Яндекс Еда for Business", iconName: "coffee", badge: "Доступна", badgeColor: "gray",
@@ -537,21 +537,21 @@ func seedEngagementTypes(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID
 		// ── Развитие ──
 		{
 			slug: "edu-skillbox", name: "Обучение — Skillbox",
-			description: "Доступ к профессиональным курсам: разработка, дизайн, маркетинг, управление проектами.",
+			description:  "Доступ к профессиональным курсам: разработка, дизайн, маркетинг, управление проектами.",
 			categorySlug: "edu", typ: "benefit", status: "active",
 			priceAmount: 1200, priceUnit: "points", pricePeriod: "once", priceDisplay: "1 200 баллов",
 			providerName: "Skillbox", iconName: "graduation-cap", badge: "Доступна", badgeColor: "gray",
 		},
 		{
 			slug: "edu-psychologist", name: "Психолог онлайн",
-			description: "4 сессии с профессиональным психологом онлайн. Анонимно и конфиденциально.",
+			description:  "4 сессии с профессиональным психологом онлайн. Анонимно и конфиденциально.",
 			categorySlug: "edu", typ: "benefit", status: "active",
 			priceAmount: 600, priceUnit: "points", pricePeriod: "once", priceDisplay: "600 баллов",
 			providerName: "Яндекс Психотерапия", iconName: "brain", badge: "Ожидает", badgeColor: "yellow",
 		},
 		{
 			slug: "edu-english", name: "Английский язык",
-			description: "Индивидуальные онлайн-занятия с преподавателем. Уровни от Beginner до Advanced.",
+			description:  "Индивидуальные онлайн-занятия с преподавателем. Уровни от Beginner до Advanced.",
 			categorySlug: "edu", typ: "benefit", status: "active",
 			priceAmount: 1500, priceUnit: "points", pricePeriod: "month", priceDisplay: "1 500 баллов / мес",
 			providerName: "Skyeng", iconName: "languages", badge: "Доступна", badgeColor: "gray",
@@ -560,7 +560,7 @@ func seedEngagementTypes(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID
 		// ── Мерч ──
 		{
 			slug: "merch-sdek", name: "Мерч СДЭК",
-			description: "Фирменная одежда и аксессуары СДЭК: худи, футболки, кружки, термосы.",
+			description:  "Фирменная одежда и аксессуары СДЭК: худи, футболки, кружки, термосы.",
 			categorySlug: "merch", typ: "benefit", status: "active",
 			priceAmount: 200, priceUnit: "points", pricePeriod: "once", priceDisplay: "от 200 баллов",
 			providerName: "СДЭК Store", iconName: "shopping-bag", badge: "Доступна", badgeColor: "gray",
@@ -569,14 +569,14 @@ func seedEngagementTypes(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID
 		// ── Стоматология (в категории ДМС) ──
 		{
 			slug: "dms-dental", name: "Стоматология",
-			description: "Профилактические осмотры, чистка и лечение в сети стоматологических клиник.",
+			description:  "Профилактические осмотры, чистка и лечение в сети стоматологических клиник.",
 			categorySlug: "dms", typ: "benefit", status: "promo",
 			priceAmount: 950, priceUnit: "points", pricePeriod: "year", priceDisplay: "950 баллов / год",
 			providerName: "Мать и дитя", iconName: "smile", badge: "Новинка", badgeColor: "blue",
 		},
 	}
 
-count := 0
+	count := 0
 	for _, t := range types {
 		var categoryID uuid.UUID
 		err := conn.QueryRow(ctx, `
@@ -700,8 +700,4 @@ func seedEngagementOffers(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUI
 
 	fmt.Printf("  Engagement offers: %d inserted\n", totalInserted)
 	return nil
-}
-
-func int64Ptr(v int64) *int64 {
-	return &v
 }

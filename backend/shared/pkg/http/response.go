@@ -21,17 +21,17 @@ type ErrorResponse struct {
 // SuccessResponse — унифицированный формат успешного ответа.
 // Используется когда нужно вернуть метаданные (пагинация, count и т.д.).
 type SuccessResponse[T any] struct {
-	Data       T                `json:"data"`
-	Pagination *PaginationMeta  `json:"pagination,omitempty"`
-	Meta       *ResponseMeta    `json:"meta,omitempty"`
+	Data       T               `json:"data"`
+	Pagination *PaginationMeta `json:"pagination,omitempty"`
+	Meta       *ResponseMeta   `json:"meta,omitempty"`
 }
 
 // PaginationMeta — метаданные пагинации.
 type PaginationMeta struct {
-	Page       int  `json:"page"`
-	PerPage    int  `json:"per_page"`
+	Page       int   `json:"page"`
+	PerPage    int   `json:"per_page"`
 	Total      int64 `json:"total"`
-	TotalPages int  `json:"total_pages"`
+	TotalPages int   `json:"total_pages"`
 }
 
 // ResponseMeta — дополнительные метаданные ответа.
