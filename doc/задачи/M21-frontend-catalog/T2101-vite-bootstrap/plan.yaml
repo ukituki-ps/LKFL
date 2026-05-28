@@ -2,19 +2,19 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] `frontend/package.json` с зависимостями
-- [ ] `frontend/vite.config.ts` с proxy
-- [ ] `frontend/src/` структура
-- [ ] `npm install` без ошибок
-- [ ] `npm run dev` запускает
-- [ ] `npm run build` собирает
-- [ ] `npm run lint` без ошибок
-- [ ] TypeScript strict mode
-- [ ] Заполнить report.md
+- [x] `frontend/package.json` с зависимостями
+- [x] `frontend/vite.config.ts` с proxy
+- [x] `frontend/src/` структура
+- [x] `npm install` без ошибок
+- [x] `npm run dev` запускает
+- [x] `npm run build` собирает
+- [x] `npm run lint` без ошибок
+- [x] TypeScript strict mode
+- [x] Заполнить report.md
 
 ## Зависимости
 

@@ -1,4 +1,4 @@
-# T2102-T2111 — Frontend F1 (оставшиеся задачи)
+# T2102 — AprilProviders
 
 ## Веха
 
@@ -8,77 +8,88 @@ M21-frontend-catalog
 
 code
 
-## Краткое описание оставшихся задач
+## Контекст
 
-### T2102 — AprilProviders
-- `src/main.tsx` — `AprilProviders` корневой провайдер, `createAprilTheme()`
-- DensityProvider, ColorScheme
-- Brand CSS variables override из API
+Корневой провайдер для React-приложения на базе @ukituki-ps/april-ui и Mantine.
+Зависит от T2101 (Vite bootstrap — package.json, vite.config.ts, структура src/).
 
-### T2103 — Routing
-- `src/routes/employee.tsx` — employee routes с guards
-- `src/routes/admin.tsx` — admin routes с RBAC guards
-- `RequireAuth` component (role check)
-- Lazy loading (`React.lazy` + `Suspense`)
+Исходник: `doc/архитектура/фронтенд.md` §A (Обзор).
 
-### T2104 — Auth Flow
-- Keycloak redirect login
-- Token storage (memory, не localStorage — security)
-- `useAuthStore` (Zustand): user, roles, token, login, logout
-- Token refresh logic
-- Logout → Keycloak end_session
+## Что сделать
 
-### T2105 — Layout
-- `AprilShellBar` (sidebar + header)
-- Navigation menu (employee: Dashboard, Catalog, Points, Documents, Support)
-- Navigation menu (admin: HR, Catalog, Content, Billing)
-- Responsive breakpoints (desktop first)
+### `src/main.tsx` — точка входа
 
-### T2106 — /catalog страница
-- Список карточек.engagements
-- Фильтры: category, type, status
-- Поиск (debounced)
-- Pagination
-- Loading states, empty states, error states
-- React Query для data fetching
+```tsx
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import App from './App'
+import { AprilProviders } from './lib/providers'
 
-### T2107 — Карточка льготы
-- `EngagementCard` компонент
-- Название, описание, стоимость
-- Бейдж статуса (Активна/Доступна/Новинка/Промо)
-- Кнопка «Подробнее»
-- Provider name, image
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <AprilProviders>
+      <App />
+    </AprilProviders>
+  </React.StrictMode>,
+)
+```
 
-### T2108 — / Dashboard stub
-- Greeting (Hello, {name})
-- Placeholder stat cards (баланс, активные льготы)
-- Placeholder event feed
-- Placeholder quick actions
+### `src/lib/providers.tsx` — AprilProviders
 
-### T2109 — API Layer
-- `src/api/client.ts` — fetch wrapper
-- Error handling (401 → redirect login, 403 → forbidden page)
-- Retry logic (exponential backoff для 5xx)
-- Tenant header injection
-- Timeout (30s)
+Компонент-обёртка, объединяющий:
+- `MantineProvider` с темой `createAprilTheme()`
+- `QueryClientProvider` из @tanstack/react-query
+- `DensityProvider` из @mantine/core
 
-### T2110 — OpenAPI Codegen
-- `openapi-typescript` → типизация API responses
-- Script в package.json: `npm run generate-types`
-- Types в `src/api/types.ts`
+```tsx
+import { MantineProvider, MantineTheme, createTheme } from '@mantine/core'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 
-### T2111 — Unit Tests
-- Vitest setup
-- `authStore.test.ts` — login, logout, token refresh
-- `api/client.test.ts` — error handling, retry
-- `EngagementCard.test.tsx` — rendering, badge display
-- `RequireAuth.test.tsx` — role check
+// Создаём тему на основе April tokens
+export function createAprilTheme(): MantineTheme {
+  return createTheme({
+    // April tokens будут подтягиваться из CSS variables
+    // (переопределяются brand CSS из API tenant'а)
+  })
+}
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 min
+      retry: 1,
+    },
+  },
+})
+
+export function AprilProviders({ children }: { children: React.ReactNode }) {
+  return (
+    <MantineProvider theme={createAprilTheme()}>
+      <QueryClientProvider client={queryClient}>
+        {children}
+      </QueryClientProvider>
+    </MantineProvider>
+  )
+}
+```
+
+### Brand CSS variables
+
+CSS переменные бренда загружаются с backend (endpoint `GET /admin/tenants/{id}/brand` — M20).
+В M21 заглушка: используем default April tokens.
+
+## Требования
+
+- @ukituki-ps/april-ui ≥ 0.1.13
+- @ukituki-ps/april-tokens ≥ 0.1.13
+- @mantine/core ≥ 7.17.8
+- @tanstack/react-query ≥ 5.50.0
+- React.StrictMode включён
 
 ## Критерии приёмки
 
-- [ ] Все 10 задач реализованы
-- [ ] `npm run dev` → SPA работает
-- [ ] Login через Keycloak
-- [ ] Каталог загружается
-- [ ] Фильтры работают
-- [ ] Unit tests зелёные
+- [ ] `src/main.tsx` с ReactDOM.createRoot
+- [ ] `src/lib/providers.tsx` — AprilProviders с MantineProvider + QueryClientProvider
+- [ ] `createAprilTheme()` возвращает MantineTheme
+- [ ] App рендерится внутри AprilProviders
+- [ ] `npm run dev` → страница загружается без ошибок

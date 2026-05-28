@@ -2,17 +2,17 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Route groups по ролям в app/server.go
-- [ ] Admin routes без tenant middleware
-- [ ] Employee routes с tenant middleware
-- [ ] Auth routes public
-- [ ] RBAC deny → 403
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Route groups по ролям в app/server.go
+- [x] Admin routes без tenant middleware (AdminTenantMiddleware)
+- [x] Employee routes с tenant middleware
+- [x] Auth routes public
+- [x] RBAC deny → 403
+- [x] Unit tests (через shared/pkg/auth/rbac_test.go)
+- [x] Заполнить report.md
 
 ## Зависимости
 

@@ -1,0 +1,23 @@
+# T2107 — Карточка льготы
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] `EngagementCard` компонент
+- [x] Display: name, description, cost (format cost_cents → currency)
+- [x] Badge: "Промо" (жёлтый), "Доступна" (зелёный)
+- [x] Category name
+- [x] Provider name
+- [x] Image URL (с fallback placeholder)
+- [x] Link к detail page (`/catalog/{slug}`)
+- [x] Responsive card sizing (CSS grid auto-fill)
+- [x] Offers count со склонением (вариант/варианта/вариантов)
+- [x] `EngagementGrid` вспомогательный компонент
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2102]

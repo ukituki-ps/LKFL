@@ -13,7 +13,8 @@
 - [x] Создать `infra/nginx/default.conf` (reverse proxy + SPA)
 - [x] Создать `.env.example`
 - [x] Добавить `.env` в `.gitignore` (уже было)
-- [ ] `docker compose up -d` — все контейнеры healthy (требует Dockerfile из T1703)
+- [x] Dockerfile создан (multi-stage, targets: server + proxy)
+- [ ] `docker compose up -d` — все контейнеры healthy (требует запущенной Docker среды)
 - [x] Заполнить report.md
 
 ## Зависимости

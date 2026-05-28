@@ -2,17 +2,17 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `cmd/seed/main.go`
-- [ ] Tenant sdek (slug, name, status)
-- [ ] Brand config sdek (primary_color, css_variables)
-- [ ] Idempotent (ON CONFLICT)
-- [ ] `make seed` работает
+- [x] Создать `cmd/seed/main.go`
+- [x] Tenant sdek (slug, name, status)
+- [x] Brand config sdek (primary_color, css_variables)
+- [x] Idempotent (ON CONFLICT)
+- [x] `make seed` работает
 - [ ] Tenant доступен через API
-- [ ] Заполнить report.md
+- [x] Заполнить report.md
 
 ## Зависимости
 

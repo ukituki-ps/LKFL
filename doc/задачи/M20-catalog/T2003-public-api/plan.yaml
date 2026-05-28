@@ -2,19 +2,19 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `internal/engagement/catalog/handler.go`
-- [ ] List — фильтры + pagination
-- [ ] Get — детали с category + offers
-- [ ] Categories — список категорий
-- [ ] Badge computation
-- [ ] Pagination response format
-- [ ] Error handling
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Создать `internal/engagement/catalog/handler.go`
+- [x] List — фильтры + pagination
+- [x] Get — детали с category + offers
+- [x] Categories — список категорий
+- [x] Badge computation (stub: "Доступна" → TODO M26)
+- [x] Pagination response format
+- [x] Error handling
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 

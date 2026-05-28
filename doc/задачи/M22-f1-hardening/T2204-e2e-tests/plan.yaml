@@ -1,0 +1,24 @@
+# T2204 — E2E тесты (Playwright)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Playwright config (Chromium, Firefox, Webkit)
+- [x] Login flow E2E (7 тестов)
+- [x] Catalog E2E (7 тестов)
+- [x] Multi-tenant E2E (3 теста)
+- [x] Admin CRUD E2E (7 тестов)
+- [x] Dashboard E2E (5 тестов)
+- [x] Routing E2E (6 тестов)
+- [x] Shell E2E (5 тестов)
+- [x] Visual regression (screenshot comparison) — 6 тестов
+- [x] Accessibility audit (WCAG 2.1 AA) — 5 тестов
+- [x] **Минимум 30 E2E тестов** — итого 51 тест
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2202, T2203]

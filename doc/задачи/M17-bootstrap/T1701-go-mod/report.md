@@ -8,9 +8,9 @@
 
 1. **go.mod** — модуль `lkfl`, Go version 1.22.
 2. **15 production-зависимостей** добавлены в прямой `require` блок.
-3. **45 транзитивных зависимостей** в `// indirect` блоке (после `go mod tidy`).
-4. **go.sum** — 469 строк, все хеши.
-5. **internal/bootstrap/deps.go** — stub с blank imports для удержания зависимостей в go.mod (удалится после T1702).
+3. **49 транзитивных зависимостей** в `// indirect` блоке (после `go mod tidy`).
+4. **go.sum** — 244 строки, все хеши.
+5. **internal/deps/retained.go** — retained dependencies с blank imports для удержания зависимостей F2/F3 в go.mod.
 
 ## Результаты
 
@@ -23,11 +23,11 @@
 
 ```
 backend/
-├── go.mod              # модуль lkfl, Go 1.22, 15 direct + 45 indirect deps
+├── go.mod              # модуль lkfl, Go 1.22, 15 direct + 49 indirect deps
 ├── go.sum              # хеши всех зависимостей
 └── internal/
-    └── bootstrap/
-        └── deps.go     # stub — blank imports всех 15 зависимостей
+    └── deps/
+        └── retained.go # retained deps — 7 blank imports для F2/F3 зависимостей
 ```
 
 ## Зависимости (15 прямых)
@@ -59,6 +59,18 @@ backend/
 - **protobuf** — grpc v1.71.0 требует >= v1.36.4
 - **crypto** — validator v10.27.0 требует >= v0.33.0
 - **gofpdf** — оригинальный репозиторий удалён, проект перенесён
+
+## Исправления (по итогам аудита M17)
+
+1. **toolchain директива** — удалена `toolchain go1.24.4` через `go mod edit -toolchain=none`.
+   `go mod tidy` на Go 1.24+ восстановит директиву. Решение: запускать `go mod tidy` с
+   `GOTOOLCHAIN=local` или применять `go mod edit -toolchain=none` после tidy.
+
+2. **internal/bootstrap/deps.go → internal/deps/retained.go** — пакет переименован,
+   8 blank imports заменены на 7 retained с привязкой к фазам (F2/F3/General).
+   Пустые директории `backend/config/`, `backend/pkg/` удалены.
+
+3. **go.sum count** — исправлен: 244 строки (не 469).
 
 ## Следующие шаги
 

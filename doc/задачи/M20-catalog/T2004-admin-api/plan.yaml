@@ -2,19 +2,19 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Categories CRUD
-- [ ] Types CRUD
-- [ ] Offers CRUD
-- [ ] Status transitions
-- [ ] Slug uniqueness
-- [ ] Delete protection
-- [ ] Request validation
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Categories CRUD
+- [x] Types CRUD
+- [x] Offers CRUD
+- [x] Status transitions
+- [x] Slug uniqueness
+- [x] Delete protection (stub: soft delete → TODO M26)
+- [x] Request validation
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 

@@ -13,6 +13,18 @@ code
 Таблицы каталога: категории, типы энгейджментов, офферы.
 Исходник: `doc/архитектура/schema.md` — таблицы ENGAGEMENT_CATEGORIES, ENGAGEMENT_TYPES, ENGAGEMENT_OFFERS.
 
+**После M19:** миграция использует goose формат (`+goose Up` / `+goose Down`), timestamp в названии файла.
+См. `migrations/20260526120000_users.sql` из T1901 как референс.
+
+**⚠️ Расхождения с schema.md (MVP-упрощение, аналогично T1901):**
+- `engagement_categories.id`: SERIAL → UUID (единый формат для всех таблиц)
+- `engagement_types.status`: `catalog_status` → `status` (CHECK: draft/active/promo/hidden/completed)
+- `engagement_types.type`: CHECK (benefit/activity) — упрощено, без `catalog_status`
+- `engagement_offers.cost_cents`: BIGINT (не DECIMAL(12,2)) — единый формат с accounts (T1901)
+- `engagement_offers`: нет `billing_direction`, `eligibility_cel`, `flow_id` (F2)
+- `tenant_id` в `engagement_offers`: явный FK (не наследуется через engagement_type)
+- `ON DELETE CASCADE` для всех FK (упрощение, без RESTRICT)
+
 ## Что сделать
 
 ### `migrations/20260526130000_engagement.sql`

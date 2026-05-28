@@ -2,20 +2,20 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `migrations/20260526130000_engagement.sql`
-- [ ] `engagement_categories` таблица
-- [ ] `engagement_types` таблица
-- [ ] `engagement_offers` таблица
-- [ ] CHECK на type (benefit/activity)
-- [ ] CHECK на status (draft/active/promo/hidden/completed)
-- [ ] Unique indexes
-- [ ] Filter indexes
-- [ ] Migration apply + rollback OK
-- [ ] Заполнить report.md
+- [x] Создать `migrations/20260526130000_engagement.sql`
+- [x] `engagement_categories` таблица
+- [x] `engagement_types` таблица
+- [x] `engagement_offers` таблица
+- [x] CHECK на type (benefit/activity)
+- [x] CHECK на status (draft/active/promo/hidden/completed)
+- [x] Unique indexes
+- [x] Filter indexes
+- [x] Migration apply + rollback OK
+- [x] Заполнить report.md
 
 ## Зависимости
 

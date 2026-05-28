@@ -1,0 +1,3 @@
+-- Down migration for tenants
+DROP TABLE IF EXISTS lkfl_platform.tenant_brand_config;
+DROP TABLE IF EXISTS lkfl_platform.tenants;

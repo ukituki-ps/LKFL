@@ -27,6 +27,13 @@ Thumbs.db
 .env.local
 .env.*.local
 
+# Environment — staging/production (секреты!)
+.env.staging
+.env.production
+
+# Deploy state
+.deploy-previous-tag
+
 # Go build cache
 go-build/
 

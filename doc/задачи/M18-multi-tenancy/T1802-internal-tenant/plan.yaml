@@ -2,21 +2,21 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `internal/tenant/model.go` — Tenant + BrandConfig structs
-- [ ] Создать `internal/tenant/repository.go` — Repository interface + pgx impl
-- [ ] Создать `internal/tenant/service.go` — business logic
-- [ ] Создать `internal/tenant/handler.go` — admin HTTP handlers
-- [ ] Slug validation regex
-- [ ] Slug uniqueness check
-- [ ] Status check (suspended tenant)
-- [ ] Pagination (page/per_page)
-- [ ] Custom error types
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Создать `internal/tenant/model.go` — Tenant + BrandConfig structs
+- [x] Создать `internal/tenant/repository.go` — Repository interface + pgx impl
+- [x] Создать `internal/tenant/service.go` — business logic
+- [x] Создать `internal/tenant/handler.go` — admin HTTP handlers
+- [x] Slug validation regex
+- [x] Slug uniqueness check
+- [x] Status check (suspended tenant)
+- [x] Pagination (page/per_page)
+- [x] Custom error types
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 

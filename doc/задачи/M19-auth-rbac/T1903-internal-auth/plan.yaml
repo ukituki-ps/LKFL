@@ -2,20 +2,20 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `internal/auth/handler.go`
-- [ ] Создать `internal/auth/service.go`
-- [ ] LoginRedirect → Keycloak authorize
-- [ ] LoginCallback → verify → create/update → session
-- [ ] Logout → session removal
-- [ ] Me → user profile
-- [ ] State parameter CSRF
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Создать `internal/auth/handler.go`
+- [x] Создать `internal/auth/service.go`
+- [x] LoginRedirect → Keycloak authorize
+- [x] LoginCallback → verify → create/update → session
+- [x] Logout → session removal
+- [x] Me → user profile
+- [x] State parameter CSRF
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 
-depends_on: [T1901, T1902]
+depends_on: [T1901, T1902, T1802]

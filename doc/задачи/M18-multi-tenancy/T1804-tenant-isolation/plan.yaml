@@ -2,16 +2,16 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `internal/tenant/isolation.go` — WithTenantID()
-- [ ] Добавление WHERE/AND clause
-- [ ] uuid.Nil → без фильтра
-- [ ] Usage pattern документация
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Создать `internal/tenant/isolation.go` — WithTenantID()
+- [x] Добавление WHERE/AND clause
+- [x] uuid.Nil → без фильтра
+- [x] Usage pattern документация
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 

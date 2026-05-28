@@ -1,4 +1,4 @@
-# T2204-T2212 — Hardening F1 (оставшиеся задачи)
+# T2204 — E2E тесты (Playwright)
 
 ## Веха
 
@@ -8,76 +8,44 @@ M22-f1-hardening
 
 code
 
-## Краткое описание
+## Контекст
 
-### T2204 — E2E тесты (Playwright)
-- Login flow: success, failed credentials, password reset
-- Catalog: load, filter by category, filter by type, search, pagination
-- Multi-tenant: switch tenant, verify isolation
-- Admin: create category, create type, update status, delete protection
-- Config: `playwright.config.ts`, browsers: Chromium, Firefox
+E2E тестирование всех user journeys F1 с помощью Playwright.
+Покрытие всех ключевых сценариев использования в трёх браузерах.
 
-### T2205 — Нагрузочное тестирование (k6)
-- Catalog query: 500 RPS, P95 < 200ms
-- Auth callback: 100 RPS, P95 < 500ms
-- User profile: 200 RPS, P95 < 100ms
-- Script: `loadtest/catalog.js`, `loadtest/auth.js`
-- Report: HTML + JSON
+## Что сделать
 
-### T2206 — Мониторинг (Prometheus + Grafana)
-- Prometheus metrics: `http_requests_total`, `http_request_duration_seconds`
-- Custom metrics: `catalog_query_total`, `tenant_resolve_total`
-- Grafana dashboard JSON: Platform Overview F1
-- Alerting rules: error rate > 1%, P95 > 500ms
+> **🔴 Критическое требование:** 100% покрытие всех user journeys F1. Каждый путь пользователя от входа до выхода — покрыт E2E тестом.
 
-### T2207 — Logging (Loki)
-- Structured JSON logs: `{"ts", "level", "svc", "tenant_id", "user_id", "msg"}`
-- Log levels по пакету
-- Loki config в docker-compose
-- Grafana Explore query test
+### Сценарии E2E тестов
 
-### T2208 — CI Pipeline (GitHub Actions)
-- Workflow: `.github/workflows/ci.yml`
-- Stages: lint → unit test → integration test → build → docker push
-- Coverage gate: > 60%
-- Caching: go modules, npm dependencies, docker layers
+- **Login flow:** success, failed credentials, password reset, expired session, concurrent login, mobile login
+- **Catalog:** load, filter by category, filter by type, search, pagination, empty state, error state, slow network, offline
+- **Multi-tenant:** switch tenant, verify isolation, cross-tenant access blocked
+- **Admin CRUD:** create category, create type, update status, delete protection, concurrent admin operations
+- **Dashboard:** load, greeting by time of day, stat cards, quick actions, profile loading error
+- **Routing:** protected routes redirect to login, admin routes redirect to forbidden, lazy loading, 404
+- **Shell:** mobile navigation, admin navigation, user menu, logout flow, role-based visibility
 
-### T2209 — Docker Production
-- Multi-stage Dockerfile: Go build → distroless
-- Non-root user
-- Read-only filesystem
-- Healthcheck endpoint
-- Image signing (cosign)
+### Конфигурация
 
-### T2210 — Деплой на стенд
-- Staging docker-compose
-- Nginx config (TLS self-signed)
-- Environment variables
-- Healthcheck verification
+- **Config:** `playwright.config.ts`, browsers: Chromium, Firefox, Webkit
+- **Visual regression:** screenshot comparison для catalog page, dashboard, card component
+- **Accessibility:** a11y audit (WCAG 2.1 AA) для ключевых страниц
 
-### T2211 — Security Audit
-- OWASP Top 10 check
-- Rate limiting на auth endpoints
-- CORS policy verification
-- Dependency audit: govulncheck + npm audit
-- SQL injection test
-- XSS test
-
-### T2212 — Пакет F1
-- git tag `f1-complete`
-- Changelog
-- API documentation (Redocly)
-- Release notes
+**Минимум 30 E2E тестов, каждый user journey покрыт 2+ тестами (happy path + error path).**
 
 ## Критерии приёмки
 
-- [ ] Все 9 задач реализованы
-- [ ] E2E тесты зелёные (Chromium + Firefox)
-- [ ] Load test: 500 RPS catalog, P95 < 200ms
-- [ ] Prometheus metrics active
-- [ ] Grafana dashboard
-- [ ] CI pipeline зелёный
-- [ ] Docker production image
-- [ ] Staging deployed
-- [ ] Security audit passed
-- [ ] Release package готов
+- [ ] Playwright config (Chromium, Firefox, Webkit)
+- [ ] Login flow E2E (5+ тестов)
+- [ ] Catalog E2E (5+ тестов)
+- [ ] Multi-tenant E2E (3+ тестов)
+- [ ] Admin CRUD E2E (5+ тестов)
+- [ ] Dashboard E2E (3+ тестов)
+- [ ] Routing E2E (3+ тестов)
+- [ ] Shell E2E (3+ тестов)
+- [ ] Visual regression (screenshot comparison)
+- [ ] Accessibility audit (WCAG 2.1 AA)
+- [ ] **Минимум 30 E2E тестов**
+- [ ] Все три браузера: Chromium + Firefox + Webkit

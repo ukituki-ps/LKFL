@@ -1,0 +1,19 @@
+# T2212 — Пакет F1
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] git tag f1-complete (annotated, GPG signed)
+- [x] CHANGELOG.md
+- [x] API documentation (Redocly, openapi.yaml)
+- [x] Release notes (releases/F1.md)
+- [x] Docker images tagged (:f1)
+- [x] Release artifacts собраны
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2210, T2211]

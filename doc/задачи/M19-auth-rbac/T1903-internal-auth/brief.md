@@ -10,8 +10,14 @@ code
 
 ## Контекст
 
-`internal/auth/` — handlers для auth flow: login redirect, callback, logout.
-SPA auth flow через Keycloak (PKCE или implicit, зависит от ADR).
+`backend/internal/auth/` — handlers для auth flow: login redirect, callback, logout.
+SPA auth flow через Keycloak (PKCE, realm `lkfl-sdek`).
+
+**Зависимости от M18:**
+- `tenant.Service` — для резолва tenant при CreateOrUpdateUser (tenant из Keycloak claims → tenant в БД)
+- `tenant.TenantIDFromContext()` — используется в handler'ах после tenant middleware
+- `internal/user/` repository (T1905) — для CRUD пользователей
+- Redis — для хранения auth state (CSRF) и сессий (key prefix: `auth:state:`, `auth:session:`)
 
 ## Что сделать
 

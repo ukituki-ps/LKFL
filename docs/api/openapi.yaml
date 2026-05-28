@@ -1,0 +1,1227 @@
+openapi: 3.0.3
+info:
+  title: LKFL Platform API — F1
+  version: 1.0.0-f1
+  description: |
+    White-label multi-tenant платформа корпоративных льгот.
+
+    **F1 Release** — Working Catalog: multi-tenant architecture, Keycloak OIDC auth,
+    RBAC, engagement catalog, Redis cache, React SPA frontend.
+
+    ## Auth
+    Все защищённые endpoints требуют Bearer JWT-токен, полученный через Keycloak OIDC.
+
+    ## Multi-tenancy
+    Tenant определяется автоматически из subdomain или заголовка `X-Tenant-Slug`.
+    Все запросы изолированы по tenant.
+
+    ## Roles
+    - `employee` — базовый доступ (каталог, профиль)
+    - `catalog_manager` — управление каталогом
+    - `hr` — управление пользователями
+    - `admin` — полный доступ
+
+servers:
+  - url: https://lkfl.example.com/api/v1
+    description: Production
+  - url: https://staging.lkfl.example.com/api/v1
+    description: Staging
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+tags:
+  - name: engagements
+    description: Public catalog endpoints (employee+)
+  - name: users
+    description: User profile endpoints (employee+)
+  - name: auth
+    description: Authentication endpoints
+  - name: admin
+    description: Admin endpoints (admin/hr/catalog_manager)
+  - name: tenants
+    description: Tenant management (admin only)
+
+paths:
+  # ==================== PUBLIC CATALOG ====================
+
+  /api/v1/engagements/categories:
+    get:
+      summary: Список категорий каталога
+      description: Возвращает все категории для текущего tenant.
+      operationId: getCategories
+      tags: [engagements]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список категорий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EngagementCategoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/engagements:
+    get:
+      summary: Список энгейджментов (каталог)
+      description: |
+        Возвращает пагинированный список энгейджментов с фильтрацией.
+        Результат кэшируется в Redis (TTL 5 мин).
+      operationId: getEngagements
+      tags: [engagements]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          description: Фильтр по типу (benefit или activity)
+          schema:
+            type: string
+            enum: [benefit, activity]
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum: [draft, active, promo, hidden, completed]
+            default: active
+        - name: category
+          in: query
+          description: Фильтр по slug категории
+          schema:
+            type: string
+        - name: search
+          in: query
+          description: Полнотекстовый поиск по названию и описанию
+          schema:
+            type: string
+        - name: page
+          in: query
+          description: Номер страницы
+          schema:
+            type: integer
+            default: 1
+            minimum: 1
+        - name: per_page
+          in: query
+          description: Количество элементов на странице
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+      responses:
+        '200':
+          description: Список энгейджментов с пагинацией
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+          headers:
+            X-Cache:
+              description: "cache HIT/MISS"
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/engagements/{id}:
+    get:
+      summary: Детали энгейджмента
+      description: Возвращает детали одного энгейджмента включая категорию и офферы.
+      operationId: getEngagement
+      tags: [engagements]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: UUID энгейджмента
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Энгейджмент
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementTypeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== USER PROFILE ====================
+
+  /api/v1/users/me:
+    get:
+      summary: Профиль текущего пользователя
+      description: Возвращает профиль сотрудника, идентифицированного по JWT.
+      operationId: getUserProfile
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    put:
+      summary: Обновить профиль текущего пользователя
+      description: Сотрудник может обновить свой профиль (email, имя, телефон).
+      operationId: updateUserProfile
+      tags: [users]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Профиль обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Профиль деактивирован
+        '409':
+          description: Email уже занят
+        '422':
+          description: Неверный формат данных
+
+  # ==================== AUTH ====================
+
+  /api/v1/auth/me:
+    get:
+      summary: Данные текущего пользователя (auth endpoint)
+      description: Альтернативный endpoint для получения профиля через auth.
+      operationId: getAuthMe
+      tags: [auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/v1/auth/login:
+    get:
+      summary: Редирект на Keycloak для авторизации
+      description: |
+        Генерирует state-параметр, сохраняет в Redis (TTL 10 мин),
+        и редиректит на Keycloak authorize endpoint.
+      operationId: loginRedirect
+      tags: [auth]
+      parameters:
+        - name: redirect
+          in: query
+          description: URL для редиректа после авторизации
+          schema:
+            type: string
+            default: http://localhost:5173/
+      responses:
+        '302':
+          description: Redirect to Keycloak authorize endpoint
+        '500':
+          description: Ошибка генерации state
+
+  /api/v1/auth/callback:
+    get:
+      summary: Keycloak OAuth callback
+      description: |
+        Обработка callback от Keycloak: верификация state, извлечение id_token,
+        создание/обновление пользователя в БД, установка сессии в Redis.
+      operationId: authCallback
+      tags: [auth]
+      parameters:
+        - name: code
+          in: query
+          description: Authorization code от Keycloak
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          description: State-параметр (CSRF protection)
+          schema:
+            type: string
+        - name: id_token
+          in: query
+          description: ID token (implicit flow)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Авторизация успешна
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+                  roles:
+                    type: array
+                    items:
+                      type: string
+                    example: [employee, hr]
+        '400':
+          description: Неверный или истёкший state
+        '401':
+          description: Неверный id_token
+
+  /api/v1/auth/logout:
+    post:
+      summary: Логаут
+      description: Удаляет сессию из Redis и редиректит на Keycloak logout.
+      operationId: logout
+      tags: [auth]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: post_logout_redirect_uri
+          in: query
+          description: URL для редиректа после логаута
+          schema:
+            type: string
+            default: http://localhost:5173/
+        - name: id_token_hint
+          in: query
+          description: ID token для Keycloak logout
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Logged out
+        '302':
+          description: Redirect to Keycloak logout
+
+  # ==================== ADMIN: ENGAGEMENTS ====================
+
+  /admin/engagements/categories:
+    post:
+      summary: Создать категорию
+      description: Создаёт новую категорию для каталога текущего tenant.
+      operationId: createCategory
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Категория создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementCategoryResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Требуется роль admin или catalog_manager
+        '409':
+          description: Slug категории уже существует
+
+  /admin/engagements/categories/{id}:
+    put:
+      summary: Обновить категорию
+      operationId: updateCategory
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '200':
+          description: Категория обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementCategoryResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Удалить категорию
+      operationId: deleteCategory
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Категория удалена
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/engagements/types:
+    post:
+      summary: Создать энгейджмент
+      description: Создаёт новый энгейджмент (бенефит или активность) в каталоге tenant.
+      operationId: createEngagementType
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTypeRequest'
+      responses:
+        '201':
+          description: Энгейджмент создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementTypeResponse'
+        '409':
+          description: Slug уже существует
+
+  /admin/engagements/types/{id}/status:
+    patch:
+      summary: Сменить статус энгейджмента
+      description: |
+        Смена статуса (draft → active → promo → completed).
+        При изменении статуса инвалидируется Redis-кэш каталога.
+      operationId: updateEngagementStatus
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Статус обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementTypeResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/engagements/types/{id}/offers:
+    post:
+      summary: Создать оффер для энгейджмента
+      description: Добавляет оффер к существующему энгейджменту.
+      operationId: createOffer
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOfferRequest'
+      responses:
+        '201':
+          description: Оффер создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementOfferResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== ADMIN: USERS ====================
+
+  /admin/users:
+    get:
+      summary: Список пользователей (admin/hr)
+      description: |
+        Возвращает пагинированный список пользователей текущего tenant.
+        Требует роль admin или hr.
+      operationId: adminListUsers
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum: [active, deactivated, pending]
+        - name: search
+          in: query
+          description: Поиск по email
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserProfile'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+            X-Page:
+              schema:
+                type: integer
+            X-Per-Page:
+              schema:
+                type: integer
+        '403':
+          description: Требуется роль admin или hr
+
+  /admin/users/{id}:
+    get:
+      summary: Детали пользователя (admin/hr)
+      operationId: adminGetUser
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Пользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '403':
+          description: Пользователь принадлежит другому tenant
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Обновить пользователя (admin/hr)
+      operationId: adminUpdateUser
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateProfileRequest'
+      responses:
+        '200':
+          description: Пользователь обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '403':
+          description: Пользователь деактивирован
+        '409':
+          description: Email уже занят
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/users/{id}/deactivate:
+    post:
+      summary: Деактивировать пользователя (admin/hr)
+      description: Деактивирует пользователя. Деактивированный пользователь не может авторизоваться.
+      operationId: adminDeactivateUser
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Пользователь деактивирован
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '409':
+          description: Пользователь уже деактивирован
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # ==================== TENANTS ====================
+
+  /admin/tenants:
+    post:
+      summary: Создать tenant
+      description: Создаёт новый tenant. Доступно только системным администраторам.
+      operationId: createTenant
+      tags: [tenants]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTenantRequest'
+      responses:
+        '201':
+          description: Tenant создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '400':
+          description: Неверный формат slug
+        '409':
+          description: Slug tenant уже существует
+
+    get:
+      summary: Список tenants
+      description: Возвращает список всех tenants с пагинацией.
+      operationId: listTenants
+      tags: [tenants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: status
+          in: query
+          description: Фильтр по статусу
+          schema:
+            type: string
+            enum: [active, inactive, suspended]
+      responses:
+        '200':
+          description: Список tenants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TenantResponse'
+          headers:
+            X-Total-Count:
+              schema:
+                type: integer
+
+  /admin/tenants/{id}:
+    get:
+      summary: Детали tenant
+      operationId: getTenant
+      tags: [tenants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Tenant
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      summary: Обновить tenant
+      operationId: updateTenant
+      tags: [tenants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTenantRequest'
+      responses:
+        '200':
+          description: Tenant обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      summary: Удалить tenant
+      description: Удаляет tenant. Все связанные данные помечаются как удалённые.
+      operationId: deleteTenant
+      tags: [tenants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Tenant удалён
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /admin/tenants/{id}/brand:
+    get:
+      summary: Получить brand config
+      description: Возвращает конфигурацию бренда для tenant.
+      operationId: getBrandConfig
+      tags: [tenants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Brand config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandConfigResponse'
+        '404':
+          description: Brand config не найден
+
+    put:
+      summary: Обновить brand config
+      description: Upsert конфигурации бренда для tenant.
+      operationId: upsertBrandConfig
+      tags: [tenants]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BrandConfigRequest'
+      responses:
+        '200':
+          description: Brand config обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BrandConfigResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-токен, полученный через Keycloak OIDC
+
+  responses:
+    Unauthorized:
+      description: Не авторизован
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+            example:
+              error: unauthorized
+
+    NotFound:
+      description: Ресурс не найден
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+            example:
+              error: not found
+
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Сообщение об ошибке
+      required: [error]
+
+    # --- Engagement ---
+
+    EngagementCategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        sort_order:
+          type: integer
+        tenant_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+      required: [id, slug, name, sort_order]
+
+    EngagementOfferResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        engagement_type_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        cost_cents:
+          type: integer
+          description: Стоимость в центах
+        sort_order:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+      required: [id, name, cost_cents, sort_order]
+
+    EngagementTypeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [benefit, activity]
+          description: Тип: бенефит или активность
+        status:
+          type: string
+          enum: [draft, active, promo, hidden, completed]
+        cost_cents:
+          type: integer
+        provider_name:
+          type: string
+        image_url:
+          type: string
+        category:
+          $ref: '#/components/schemas/EngagementCategoryResponse'
+        offers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EngagementOfferResponse'
+        badge:
+          type: string
+          description: Бейдж (например, "new", "popular")
+        tenant_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, slug, name, type, status, badge]
+
+    # --- Pagination ---
+
+    PaginationResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+      required: [page, per_page, total, total_pages]
+
+    ListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EngagementTypeResponse'
+        pagination:
+          $ref: '#/components/schemas/PaginationResponse'
+      required: [data, pagination]
+
+    # --- User ---
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        phone:
+          type: string
+        tenant_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [active, deactivated, pending]
+        roles:
+          type: array
+          items:
+            type: string
+          example: [employee]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, email, first_name, last_name]
+
+    UpdateProfileRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        phone:
+          type: string
+      required: [first_name, last_name]
+
+    # --- Tenant ---
+
+    CreateTenantRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          description: Уникальный slug (lowercase alphanumeric с дефисами)
+          pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+          minLength: 2
+          maxLength: 63
+        name:
+          type: string
+          description: Отображаемое название tenant
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+          default: active
+      required: [slug, name]
+
+    UpdateTenantRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+          pattern: '^[a-z0-9]([-a-z0-9]*[a-z0-9])?$'
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+
+    TenantResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive, suspended]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, slug, name, status]
+
+    # --- Brand Config ---
+
+    BrandConfigRequest:
+      type: object
+      properties:
+        primary_color:
+          type: string
+          description: Основной цвет бренда (hex)
+          pattern: '^#[0-9A-Fa-f]{6}$'
+        secondary_color:
+          type: string
+          description: Вторичный цвет бренда (hex)
+        logo_url:
+          type: string
+          format: uri
+          description: URL логотипа
+        favicon_url:
+          type: string
+          format: uri
+          description: URL favicon
+        brand_name:
+          type: string
+          description: Название бренда
+        css_variables:
+          type: object
+          additionalProperties:
+            type: string
+          description: CSS custom properties
+        meta_title:
+          type: string
+          description: Meta title для SEO
+        meta_description:
+          type: string
+          description: Meta description для SEO
+
+    BrandConfigResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        tenant_id:
+          type: string
+          format: uuid
+        primary_color:
+          type: string
+        secondary_color:
+          type: string
+        logo_url:
+          type: string
+          format: uri
+        favicon_url:
+          type: string
+          format: uri
+        brand_name:
+          type: string
+        css_variables:
+          type: object
+          additionalProperties:
+            type: string
+        meta_title:
+          type: string
+        meta_description:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required: [id, tenant_id]
+
+    # --- Admin Requests ---
+
+    CreateCategoryRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+          description: Имя иконки или URL
+        sort_order:
+          type: integer
+      required: [slug, name, icon, sort_order]
+
+    CreateTypeRequest:
+      type: object
+      properties:
+        category_id:
+          type: string
+          format: uuid
+          description: ID категории
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [benefit, activity]
+        status:
+          type: string
+          enum: [draft, active, promo, hidden, completed]
+          default: draft
+        cost_cents:
+          type: integer
+        provider_name:
+          type: string
+        image_url:
+          type: string
+          format: uri
+      required: [category_id, slug, name, type]
+
+    UpdateStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, active, promo, hidden, completed]
+      required: [status]
+
+    CreateOfferRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        cost_cents:
+          type: integer
+        sort_order:
+          type: integer
+      required: [name, cost_cents, sort_order]

@@ -12,6 +12,18 @@ code
 
 Интеграция RBAC middleware в router. Определение ролей для каждого route.
 
+**Текущее состояние `app/server.go` после M18:**
+- `NewServer()` принимает `tenantService *tenant.Service`
+- Admin tenant routes зарегистрированы без JWT+RBAC (TODO M19)
+- `/healthz`, `/metrics` — публичные
+- CORS middleware разрешает `X-Tenant-ID` header
+
+**Что нужно изменить в `server.go`:**
+- Добавить JWT middleware (`sharedauth.JWTMiddleware`) для защищённых route groups
+- Добавить RBAC middleware (`sharedauth.RBACMiddleware`) для admin routes
+- Добавить tenant middleware (`tenant.TenantMiddlewareWithService`) для employee routes
+- Auth routes (`/api/v1/auth/`) — публичные, без middleware
+
 ## Что сделать
 
 ### Роли и доступ
@@ -29,67 +41,104 @@ code
 
 ### Integration в `app/server.go`
 
+> **Внимание:** `NewServer()` после M18 принимает `tenantService *tenant.Service`.
+> T1904 добавляет `authHandler *auth.Handler` и `userHandler *user.Handler` как параметры.
+
 ```go
-// Public routes (без auth)
-r.Get("/healthz", healthzHandler)
-r.Mount("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+func NewServer(
+    cfg ServerConfig,
+    db *pgxpool.Pool,
+    redis *redis.Client,
+    verifier *oidc.IDTokenVerifier,
+    logger Logger,
+    reg *prometheus.Registry,
+    tenantService *tenant.Service,
+    authHandler *auth.Handler,     // ← NEW T1903
+    userHandler *user.Handler,     // ← NEW T1905
+) *Server {
+    r := chi.NewRouter()
 
-// Auth routes (без JWT middleware)
-r.Route("/api/v1/auth/", func(r chi.Router) {
-    r.Get("/login", authHandler.LoginRedirect)
-    r.Get("/callback", authHandler.LoginCallback)
-    r.Post("/logout", authHandler.Logout)
-})
+    // Global middleware (без auth)
+    r.Use(middleware.RequestID)
+    r.Use(middleware.RealIP)
+    r.Use(middleware.Logger)
+    r.Use(middleware.Recoverer)
+    r.Use(middleware.Timeout(30 * time.Second))
 
-// Employee routes (JWT + tenant)
-r.Route("/api/v1/", func(r chi.Router) {
-    r.Use(sharedauth.JWTMiddleware(verifier))
-    r.Use(tenant.Middleware(hostResolver))
+    metrics := newHTTPMetrics(reg)
+    r.Use(PrometheusMiddleware(metrics))
+    r.Use(corsMiddleware())
 
-    r.Get("/users/me", userHandler.Me)
-    r.Get("/engagements", catalogHandler.List)
-    r.Get("/engagements/{id}", catalogHandler.Get)
-    r.Get("/user-engagements", userEngagementHandler.List)
+    // ─── Public routes (без auth) ───
+    r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(http.StatusOK)
+        w.Write([]byte("OK"))
+    })
+    r.Mount("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
+
+    // ─── Auth routes (публичные, без JWT) ───
+    r.Route("/api/v1/auth/", func(r chi.Router) {
+        r.Get("/login", authHandler.LoginRedirect)
+        r.Get("/callback", authHandler.LoginCallback)
+        r.Post("/logout", authHandler.Logout)
+    })
+
+    // ─── Employee routes (JWT + tenant middleware) ───
+    r.Route("/api/v1/", func(r chi.Router) {
+        r.Use(sharedauth.JWTMiddleware(verifier))
+        r.Use(tenant.TenantMiddlewareWithService(tenantService, redis))
+
+        // User profile
+        r.Get("/users/me", userHandler.Me)
+        r.Put("/users/me", userHandler.UpdateMe)
+
+        // Future: catalog, engagements, etc.
+        // r.Get("/engagements", catalogHandler.List)
+    })
+
+    // ─── Admin routes (JWT + RBAC, без tenant middleware) ───
+    r.Route("/admin/", func(r chi.Router) {
+        r.Use(sharedauth.JWTMiddleware(verifier))
+
+        // Admin-only
+        r.Group(func(r chi.Router) {
+            r.Use(sharedauth.RBACMiddleware([]string{"admin"}))
+            r.Route("/tenants", func(r chi.Router) {
+                th := tenant.NewHandler(tenantService)
+                r.Post("/", th.Create)
+                r.Get("/", th.List)
+                r.Get("/{id}", th.GetByID)
+                r.Put("/{id}", th.Update)
+                r.Delete("/{id}", th.Delete)
+                r.Get("/{id}/brand", th.GetBrandConfig)
+                r.Put("/{id}/brand", th.UpsertBrandConfig)
+            })
+        })
+
+        // HR + Admin
+        r.Group(func(r chi.Router) {
+            r.Use(sharedauth.RBACMiddleware([]string{"hr", "admin"}))
+            r.Route("/users", func(r chi.Router) {
+                r.Get("/", userHandler.AdminList)
+                r.Get("/{id}", userHandler.AdminGet)
+                r.Put("/{id}", userHandler.AdminUpdate)
+                r.Post("/{id}/deactivate", userHandler.AdminDeactivate)
+            })
+        })
+
+        // Catalog Manager + Admin
+        r.Group(func(r chi.Router) {
+            r.Use(sharedauth.RBACMiddleware([]string{"catalog_manager", "admin"}))
+            // Future: catalog admin routes
+        })
+    })
+
     // ...
-})
-
-// Admin routes (JWT + RBAC admin)
-r.Route("/admin/", func(r chi.Router) {
-    r.Use(sharedauth.JWTMiddleware(verifier))
-    // Без tenant middleware (глобальное управление)
-
-    r.Group(func(r chi.Router) {
-        r.Use(sharedauth.RBACMiddleware([]string{"admin"}))
-        r.Route("/tenants", func(r chi.Router) {
-            r.Post("/", tenantHandler.Create)
-            r.Get("/", tenantHandler.List)
-            r.Get("/{id}", tenantHandler.Get)
-            r.Put("/{id}", tenantHandler.Update)
-            r.Delete("/{id}", tenantHandler.Delete)
-            r.Get("/{id}/brand", tenantHandler.GetBrand)
-            r.Put("/{id}/brand", tenantHandler.UpdateBrand)
-        })
-    })
-
-    r.Group(func(r chi.Router) {
-        r.Use(sharedauth.RBACMiddleware([]string{"hr", "admin"}))
-        r.Route("/users", func(r chi.Router) {
-            r.Get("/", userHandler.AdminList)
-            // ...
-        })
-        r.Route("/billing", func(r chi.Router) {
-            // ...
-        })
-    })
-
-    r.Group(func(r chi.Router) {
-        r.Use(sharedauth.RBACMiddleware([]string{"catalog_manager", "admin"}))
-        r.Route("/engagements", func(r chi.Router) {
-            // ...
-        })
-    })
-})
+}
 ```
+
+Также нужно обновить `wire.go` — добавить создание `authHandler` и `userHandler`
+и передать их в `NewServer()`.
 
 ## Требования
 
@@ -98,6 +147,20 @@ r.Route("/admin/", func(r chi.Router) {
 - Admin routes — без tenant middleware
 - Employee routes — с tenant middleware
 - Auth routes — без middleware (public)
+
+### Источники ролей
+
+**RBAC в middleware (T1902) использует роли из JWT claims Keycloak** — это быстрый путь:
+роль проверяется при каждом запросе без обращения к БД.
+
+**Таблица `user_roles` (T1901) — source of truth в БД** — используется для:
+- Админ-панели: назначение/снятие ролей
+- Аудит: кто, кому, когда назначил роль (`granted_by`, `granted_at`)
+- Отчёты и аналитика
+
+**Синхронизация:** при изменении роли в БД (через admin API) — роль должна обновляться
+в Keycloak через Admin API. Это обеспечивает консистентность между БД и JWT claims.
+Реализация синхронизации — часть T1905 (admin user operations).
 
 ## Критерии приёмки
 

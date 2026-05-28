@@ -1,0 +1,51 @@
+groups:
+  - name: lkfl-alerts
+    rules:
+      # ─── Error rate ───
+      - alert: HighErrorRate
+        expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.01
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "Error rate > 1%"
+          description: "HTTP error rate is above 1% for more than 5 minutes."
+
+      # ─── Latency ───
+      - alert: HighLatencyP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "P95 latency > 500ms"
+          description: "95th percentile latency is above 500ms for more than 5 minutes."
+
+      - alert: HighLatencyP99
+        expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: page
+        annotations:
+          summary: "P99 latency > 1000ms"
+          description: "99th percentile latency is above 1000ms for more than 5 minutes."
+
+      # ─── Catalog ───
+      - alert: CatalogQuerySlow
+        expr: histogram_quantile(0.95, sum(rate(catalog_query_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Catalog P95 query latency > 1s"
+          description: "95th percentile catalog query latency is above 1 second."
+
+      # ─── Instance down ───
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: page
+        annotations:
+          summary: "{{ $labels.job }} is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 1 minute."

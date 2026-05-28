@@ -12,6 +12,17 @@ code
 
 Admin API для управления каталогом. RBAC: catalog_manager, admin.
 
+**После M19 — routing:**
+- Routes монтируются в `server.go` admin group `/admin/` (T1904)
+- Middleware chain: `sharedauth.JWTMiddleware(verifier)` + `sharedauth.RBACMiddleware(["catalog_manager", "admin"])` + `tenant.AdminTenantMiddleware()`
+- Response: `shhttp.WriteJSON()`, `shhttp.WriteJSONError()` из `shared/pkg/http`
+- Pattern: `user/handler.go` admin методы (T1905) — hasRole check, tenant isolation
+
+**⚠️ Delete protection — STUB:**
+- `DELETE /admin/engagements/types/:id` — проверка 0 user_engagements требует таблицу `user_engagements` (F2, M26)
+- Пока: DELETE без проверки (soft delete через status=hidden)
+- TODO: добавить проверку после M26
+
 ## Что сделать
 
 ### Admin handlers

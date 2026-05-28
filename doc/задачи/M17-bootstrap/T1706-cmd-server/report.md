@@ -48,3 +48,8 @@
 - Путь импорта использован `lkfl/internal/app` (а не `lkfl/app` из brief.md), так как пакет физически расположен в `backend/internal/app/`
 - Функция `Provide()` возвращает `*Server` с методами `Start()` и `Shutdown(ctx)` — соответствует интерфейсу main.go
 - `cleanup()` вызывается через defer для гарантированного освобождения ресурсов (DB pool, Redis, Sentry flush)
+
+## Исправления (по итогам аудита M17)
+
+- **go.mod toolchain** — удалена `toolchain go1.24.4` (см. T1701 report.md).
+  Путь импорта `lkfl/internal/app` корректен для структуры `backend/internal/app/`.

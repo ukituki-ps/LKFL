@@ -1,0 +1,7 @@
+-- Ref: T2001 — Migrations: Engagement (Rollback)
+-- Description: Удаление таблиц категорий, типов и офферов энгейджментов.
+
+-- Порядок удаления обратный: сначала зависимые таблицы.
+DROP TABLE IF EXISTS lkfl_platform.engagement_offers;
+DROP TABLE IF EXISTS lkfl_platform.engagement_types;
+DROP TABLE IF EXISTS lkfl_platform.engagement_categories;

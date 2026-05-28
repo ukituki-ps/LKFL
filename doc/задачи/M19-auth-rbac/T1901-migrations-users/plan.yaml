@@ -2,20 +2,20 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `migrations/20260526120000_users.sql`
-- [ ] `users` таблица
-- [ ] `accounts` таблица
-- [ ] `user_roles` таблица
-- [ ] UNIQUE на keycloak_sub
-- [ ] UNIQUE на tenant_id + email
-- [ ] CHECK на status и role
-- [ ] Indexes
-- [ ] Migration apply + rollback OK
-- [ ] Заполнить report.md
+- [x] Создать `migrations/20260526120000_users.sql`
+- [x] `users` таблица
+- [x] `accounts` таблица
+- [x] `user_roles` таблица
+- [x] UNIQUE на keycloak_sub
+- [x] UNIQUE на tenant_id + email
+- [x] CHECK на status и role
+- [x] Indexes
+- [x] Migration apply + rollback OK
+- [x] Заполнить report.md
 
 ## Зависимости
 

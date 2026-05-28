@@ -1,0 +1,51 @@
+server:
+  http_listen_port: 9080
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  - job_name: lkfl-docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Filter: only lkfl containers
+      - source_labels: ['meta_container_name']
+        regex: 'staging-(lkfl-server|lkfl-integration-proxy|nginx|keycloak|postgres|redis|frontend)'
+        action: keep
+      # Set job label (required by Loki 3.0)
+      - source_labels: ['meta_container_name']
+        target_label: 'job'
+      # Set service label
+      - source_labels: ['meta_container_name']
+        regex: 'staging-lkfl-server.*'
+        target_label: 'service'
+        replacement: 'lkfl-server'
+      - source_labels: ['meta_container_name']
+        regex: 'staging-lkfl-integration-proxy.*'
+        target_label: 'service'
+        replacement: 'lkfl-integration-proxy'
+      - source_labels: ['meta_container_name']
+        regex: 'staging-nginx.*'
+        target_label: 'service'
+        replacement: 'nginx'
+      - source_labels: ['meta_container_name']
+        regex: 'staging-keycloak.*'
+        target_label: 'service'
+        replacement: 'keycloak'
+      - source_labels: ['meta_container_name']
+        regex: 'staging-postgres.*'
+        target_label: 'service'
+        replacement: 'postgres'
+      - source_labels: ['meta_container_name']
+        regex: 'staging-redis.*'
+        target_label: 'service'
+        replacement: 'redis'
+      - source_labels: ['meta_container_name']
+        regex: 'staging-frontend.*'
+        target_label: 'service'
+        replacement: 'frontend'

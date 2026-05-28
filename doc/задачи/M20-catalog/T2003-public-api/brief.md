@@ -12,6 +12,16 @@ code
 
 Public API endpoints для каталога. Доступен всем аутентифицированным пользователям.
 
+**После M19 — routing:**
+- Routes монтируются в `server.go` employee group (`/api/v1/`) с JWT + tenant middleware (T1904)
+- `sharedauth.JWTMiddleware(verifier)` + `tenant.TenantMiddlewareWithService()` уже в middleware chain
+- Response: `shhttp.WriteJSON()` из `shared/pkg/http` (T1904)
+- `auth.UserIDFromContext()` → keycloak_sub → user lookup (T1902, T1905)
+
+**⚠️ Badge computation — STUB:**
+- `computeBadge()` требует `user_engagements` таблицу (F2, M26) — пока возвращает "Доступна" для всех
+- TODO: реализовать после M26 (Flow engine)
+
 ## Что сделать
 
 ### `internal/engagement/catalog/handler.go`

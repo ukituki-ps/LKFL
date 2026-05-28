@@ -2,21 +2,21 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `internal/tenant/middleware.go` — chi middleware + context helpers
-- [ ] HostResolver (subdomain → slug)
-- [ ] PathResolver (/t/{slug}/)
-- [ ] Fallback: X-Tenant-ID header
-- [ ] Context keys typed
-- [ ] Skip paths: /healthz, /metrics, /admin/
-- [ ] Redis cache (tenant:resolve:{slug}, TTL 5min)
-- [ ] 401 при отсутствии tenant
-- [ ] Интеграция в app/server.go
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Создать `internal/tenant/middleware.go` — chi middleware + context helpers
+- [x] HostResolver (subdomain → slug)
+- [x] PathResolver (/t/{slug}/)
+- [x] Fallback: X-Tenant-ID header
+- [x] Context keys typed
+- [x] Skip paths: /healthz, /metrics, /admin/
+- [x] Redis cache (tenant:resolve:{slug}, TTL 5min)
+- [x] 401 при отсутствии tenant
+- [x] Интеграция в app/server.go
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 

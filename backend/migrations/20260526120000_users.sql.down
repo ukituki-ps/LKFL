@@ -1,0 +1,7 @@
+-- Ref: T1901 — Migrations: Users + Accounts + Roles (Rollback)
+-- Description: Удаление таблиц пользователей, аккаунтов и ролей.
+
+-- Порядок удаления обратный: сначала зависимые таблицы.
+DROP TABLE IF EXISTS lkfl_platform.user_roles;
+DROP TABLE IF EXISTS lkfl_platform.accounts;
+DROP TABLE IF EXISTS lkfl_platform.users;

@@ -1,0 +1,26 @@
+# T2108 — Dashboard stub
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Greeting: "Привет, {name}" (из GET /api/v1/users/me)
+- [x] Placeholder stat card: баланс баллов
+- [x] Placeholder stat card: активные льготы
+- [x] Placeholder stat card: доступные льготы
+- [x] Placeholder event feed
+- [x] Quick action: "Перейти в каталог" → /catalog
+- [x] Quick action: "Мои документы" → /documents
+- [x] Quick action: "Обратиться в поддержку" → /support
+- [x] Loading state (Loader)
+- [x] Error state
+- [x] Временное приветствие (4 варианта)
+- [x] npm run build — без ошибок
+- [x] npm run lint — без ошибок
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2105, T2109]

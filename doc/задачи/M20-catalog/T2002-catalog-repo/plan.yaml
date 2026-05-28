@@ -2,22 +2,22 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `internal/engagement/catalog/model.go`
-- [ ] Создать `internal/engagement/catalog/repository.go`
-- [ ] Создать `internal/engagement/catalog/service.go`
-- [ ] ListTypes с N-фильтрами
-- [ ] GetTypeByID с offers + category
-- [ ] GetCategories
-- [ ] Admin CRUD
-- [ ] Pagination
-- [ ] Promo first ordering
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Создать `internal/engagement/catalog/model.go`
+- [x] Создать `internal/engagement/catalog/repository.go`
+- [x] Создать `internal/engagement/catalog/service.go`
+- [x] ListTypes с N-фильтрами
+- [x] GetTypeByID с offers + category
+- [x] GetCategories
+- [x] Admin CRUD
+- [x] Pagination
+- [x] Promo first ordering
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 
-depends_on: [T2001, T1804]
+depends_on: [T2001, T1904]

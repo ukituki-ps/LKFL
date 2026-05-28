@@ -9,7 +9,7 @@
 - [x] Создать `migrations/` директорию
 - [x] Создать `atlas.hcl` config
 - [x] Создать `20260526100000_init.sql` — schema + extensions
-- [x] Goose annotations → НЕ применены. Atlas использует plain SQL без аннотаций Goose (см. report.md)
+- [ ] Goose annotations → отменено. Atlas использует plain SQL без аннотаций Goose (см. report.md)
 - [ ] Atlas migrate apply работает — требует запущенного PostgreSQL
 - [ ] Schema `lkfl_platform` создана — требует запущенного PostgreSQL
 - [ ] Extensions установлены — требует запущенного PostgreSQL

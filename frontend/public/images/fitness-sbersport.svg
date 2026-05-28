@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" width="400" height="260">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#DBEAFE"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="260" rx="16" fill="url(#bg)"/>
+  <g transform="translate(152, 82) scale(3.2)" stroke="#3B82F6" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="5.5" cy="17.5" r="3.5"/><circle cx="18.5" cy="17.5" r="3.5"/><path d="M15 8a6 6 0 0 0-12 0v4h12V8z"/>
+  </g>
+  <text x="200" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="22" font-weight="700" fill="#3B82F6" opacity="0.85">Спорт</text>
+</svg>

@@ -13,6 +13,14 @@ code
 `internal/engagement/catalog/` — repository и service для каталога энгейджментов.
 Исходник: `doc/архитектура/engagement.md` (строка 8 — Концепция).
 
+**После M19 — зависимости:**
+- `tenant.WithTenantID(ctx, query)` — tenant isolation (T1803, T1904)
+- `tenant.TenantIDFromContext(ctx)` — получение tenant ID из context
+- `shared/pkg/http` — `shhttp.WriteJSON()`, `shhttp.WriteJSONError()` (T1904)
+- `tenant.JSONB` — переиспользовать тип из `internal/tenant/model.go` (T1802)
+- Pattern: `user/repository.go` из T1905 как референс для структуры пакета
+- Pattern: `user/service.go` из T1905 — mockRepository, unit тесты
+
 ## Что сделать
 
 ### Структура
@@ -132,6 +140,7 @@ LIMIT $2 OFFSET $3
 - Promo items first в ORDER BY
 - Category join (LEFT JOIN для display)
 - Offers loading (separate query или JSON aggregation)
+- **JSONB:** переиспользовать `tenant.JSONB` из `internal/tenant/model.go` (не дублировать тип)
 
 ## Критерии приёмки
 

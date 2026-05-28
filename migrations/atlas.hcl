@@ -5,7 +5,7 @@
 //
 // Apply:  atlas migrate apply --url "$DB_DSN" --dir file://migrations
 // Undo:   atlas migrate undo --url "$DB_DSN" --dir file://migrations --count 1
-
-data "external_schema" "sdk" {
-  program = ["go", "run", "./internal/schema/main.go"]
-}
+// Status: atlas migrate status --url "$DB_DSN" --dir file://migrations
+//
+// external_schema подключается в M18+ когда будет готов internal/schema/.
+// Сейчас — plain SQL миграции без diff-генерации.

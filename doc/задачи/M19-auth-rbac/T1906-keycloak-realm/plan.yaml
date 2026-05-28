@@ -2,19 +2,19 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `infra/keycloak/realm-lkfl-sdek.json`
-- [ ] Realm: lkfl-sdek
-- [ ] Client: lkfl-spa (public, PKCE S256)
-- [ ] Client: lkfl-service (confidential)
-- [ ] Roles: employee, hr, catalog_manager, admin
-- [ ] Dev admin user
-- [ ] Docker volume import
-- [ ] Login через Keycloak работает
-- [ ] Заполнить report.md
+- [x] Создать `infra/keycloak/realm-lkfl-sdek.json`
+- [x] Realm: lkfl-sdek
+- [x] Client: lkfl-spa (public, PKCE S256)
+- [x] Client: lkfl-service (confidential)
+- [x] Roles: employee, hr, catalog_manager, admin
+- [x] Dev admin user
+- [x] Docker volume import
+- [x] Login через Keycloak работает
+- [x] Заполнить report.md
 
 ## Зависимости
 

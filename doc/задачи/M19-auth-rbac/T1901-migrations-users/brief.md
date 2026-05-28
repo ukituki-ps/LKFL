@@ -18,8 +18,8 @@ code
 ### `migrations/20260526120000_users.sql`
 
 ```sql
--- +goose Up
--- +goose StatementBegin
+-- Ref: T1901 — Migrations: Users + Accounts + Roles
+-- Description: Таблицы пользователей, аккаунтов и ролей для RBAC.
 
 -- Пользователи платформы
 CREATE TABLE lkfl_platform.users (
@@ -30,7 +30,7 @@ CREATE TABLE lkfl_platform.users (
     last_name     VARCHAR(100),
     phone         VARCHAR(20),
     status        VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'deactivated', 'deleted')),
-    keycloak_sub  VARCHAR(255) NOT NULL UNIQUE,           -- Keycloak subject ID (OIDC sub claim)
+    keycloak_sub  VARCHAR(255) NOT NULL,                  -- Keycloak subject ID (OIDC sub claim)
     metadata      JSONB DEFAULT '{}',                     -- HR data: greid, department, hire_date
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -38,8 +38,8 @@ CREATE TABLE lkfl_platform.users (
 
 -- Unique: tenant + email
 CREATE UNIQUE INDEX idx_users_tenant_email ON lkfl_platform.users (tenant_id, email);
--- Index: keycloak_sub (OIDC lookup)
-CREATE INDEX idx_users_keycloak_sub ON lkfl_platform.users (keycloak_sub);
+-- Unique: keycloak_sub (OIDC lookup — глобальный)
+CREATE UNIQUE INDEX idx_users_keycloak_sub ON lkfl_platform.users (keycloak_sub);
 -- Index: tenant_id (isolation)
 CREATE INDEX idx_users_tenant_id ON lkfl_platform.users (tenant_id);
 
@@ -67,17 +67,6 @@ CREATE TABLE lkfl_platform.user_roles (
 CREATE UNIQUE INDEX idx_user_roles_user_role ON lkfl_platform.user_roles (user_id, role);
 -- Index: role (поиск по роли)
 CREATE INDEX idx_user_roles_role ON lkfl_platform.user_roles (role);
-
--- +goose StatementEnd
-
--- +goose Down
--- +goose StatementBegin
-
-DROP TABLE IF EXISTS lkfl_platform.user_roles;
-DROP TABLE IF EXISTS lkfl_platform.accounts;
-DROP TABLE IF EXISTS lkfl_platform.users;
-
--- +goose StatementEnd
 ```
 
 ## Требования

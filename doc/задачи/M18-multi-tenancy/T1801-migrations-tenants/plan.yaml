@@ -2,21 +2,21 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `migrations/20260526110000_tenants.sql`
-- [ ] `tenants` таблица (id, slug, name, status, settings, timestamps)
-- [ ] `tenant_brand_config` таблица (id, tenant_id, colors, logo, css_variables, timestamps)
-- [ ] UNIQUE index на `slug`
-- [ ] CHECK constraint на `status`
-- [ ] UNIQUE index на `tenant_brand_config.tenant_id`
-- [ ] ON DELETE CASCADE
-- [ ] Goose annotations (Up/Down)
+- [x] Создать `migrations/20260526110000_tenants.sql`
+- [x] `tenants` таблица (id, slug, name, status, settings, timestamps)
+- [x] `tenant_brand_config` таблица (id, tenant_id, colors, logo, css_variables, timestamps)
+- [x] UNIQUE index на `slug`
+- [x] CHECK constraint на `status`
+- [x] UNIQUE index на `tenant_brand_config.tenant_id`
+- [x] ON DELETE CASCADE
+- [x] Goose annotations (Up/Down)
 - [ ] Migration apply OK
 - [ ] Migration rollback OK
-- [ ] Заполнить report.md
+- [x] Заполнить report.md
 
 ## Зависимости
 

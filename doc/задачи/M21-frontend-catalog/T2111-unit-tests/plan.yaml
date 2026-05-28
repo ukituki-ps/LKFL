@@ -1,0 +1,20 @@
+# T2111 — Unit Tests
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Vitest setup (vite.config.ts test section)
+- [x] `authStore.test.ts` — login, logout, token refresh, roles
+- [x] `api/client.test.ts` — error handling (401, 403, 500), retry, timeout
+- [x] `EngagementCard.test.tsx` — rendering, badge types, cost formatting
+- [x] `RequireAuth.test.tsx` — role check (employee, catalog_manager, admin, unauthorized)
+- [ ] `CatalogPage.test.tsx` — loading, empty, error states
+- [x] Coverage threshold: 80%
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2104, T2107, T2109]

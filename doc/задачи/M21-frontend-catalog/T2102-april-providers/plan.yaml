@@ -1,0 +1,18 @@
+# T2102 — AprilProviders
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `src/main.tsx` — entry point
+- [x] `AprilProviders` корневой провайдер (MantineProvider + QueryClientProvider)
+- [x] `createAprilTheme()` — тема из @ukituki-ps/april-tokens (CSS variables)
+- [ ] Brand CSS variables override из API (tenant brand config) — отложено на M22+
+- [x] Подключить @mantine/core providers
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2101]

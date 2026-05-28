@@ -1,0 +1,28 @@
+# T2204.1 — Браузерные негативные / хаос-тесты
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Random navigation chaos (10 тестов)
+- [x] Random button click chaos (10 тестов)
+- [x] Rapid filter chaos (10 тестов)
+- [x] Search input chaos (10 тестов)
+- [x] Rapid pagination chaos (10 тестов)
+- [x] Double/triple click chaos (10 тестов)
+- [x] Form chaos (10 тестов)
+- [x] Network chaos (10 тестов)
+- [x] Viewport chaos (10 тестов)
+- [x] Keyboard chaos (10 тестов)
+- [x] Воспроизводимость через seed
+- [x] Video recording каждого теста
+- [x] Console errors capture
+- [x] Screenshot + trace on failure
+- [x] CI integration (100 хаос-тестов)
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2204]

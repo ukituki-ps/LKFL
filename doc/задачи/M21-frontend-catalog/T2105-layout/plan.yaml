@@ -1,0 +1,19 @@
+# T2105 — Layout
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] `AprilShellBar` — sidebar + header из @ukituki-ps/april-ui (заменён на Mantine AppShell)
+- [x] Employee navigation: Dashboard, Каталог, Баллы, Документы, Поддержка
+- [x] Admin navigation: HR, Каталог, Контент, Биллинг
+- [x] Role-based nav rendering (employee vs admin)
+- [x] Responsive breakpoints (desktop first)
+- [x] Active route highlighting
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2102, T2104]

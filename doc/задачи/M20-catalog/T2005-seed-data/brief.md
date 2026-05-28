@@ -13,6 +13,11 @@ code
 Seed данные для каталога — категории и типы энгейджментов для tenant sdek.
 Расширяем `cmd/seed/main.go` из T1805.
 
+**После M19 — зависимости:**
+- Tenant ID берётся из seed (T1805): `sdek` tenant уже создан в БД
+- `cmd/seed/main.go` использует `pgxpool` подключение (T1702)
+- Idempotent: `ON CONFLICT DO NOTHING` на unique index `(tenant_id, slug)`
+
 ## Что сделать
 
 ### Категории (СДЭК референс)

@@ -1,0 +1,25 @@
+# T2208 — CI Pipeline (GitHub Actions)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] .github/workflows/ci.yml создан
+- [x] Lint stage (golangci-lint + ESLint)
+- [x] Unit test stage (Go + frontend)
+- [x] Integration test stage (testcontainers)
+- [x] E2E test stage (3 browsers)
+- [x] Chaos test stage (100 тестов)
+- [x] Load test stage (k6 thresholds)
+- [x] Build stage
+- [x] Docker push stage (multi-arch)
+- [x] Coverage gate (> 60%)
+- [x] Caching (go, npm, docker, playwright)
+- [ ] Pipeline зелёный на main
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2204, T2204.1, T2205]

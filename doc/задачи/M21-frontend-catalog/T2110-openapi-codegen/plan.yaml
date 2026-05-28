@@ -1,0 +1,18 @@
+# T2110 — OpenAPI Codegen
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Добавить openapi-typescript к devDependencies
+- [x] Script: `npm run generate-types`
+- [x] Generate types → src/api/types.generated.ts
+- [x] Types match Go structs: EngagementTypeResponse, EngagementCategoryResponse, EngagementOfferResponse, PaginationResponse, ListResponse
+- [x] Pre-commit hook или CI step для проверки актуальности типов
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2101]

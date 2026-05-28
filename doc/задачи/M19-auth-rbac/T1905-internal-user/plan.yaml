@@ -2,20 +2,20 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] Создать `internal/user/model.go`
-- [ ] Создать `internal/user/repository.go`
-- [ ] Создать `internal/user/service.go`
-- [ ] Создать `internal/user/handler.go`
-- [ ] Me, UpdateMe (employee)
-- [ ] AdminList, AdminGet, AdminUpdate, AdminDeactivate (admin/hr)
-- [ ] Search + pagination
-- [ ] Status transitions
-- [ ] Unit tests
-- [ ] Заполнить report.md
+- [x] Создать `internal/user/model.go`
+- [x] Создать `internal/user/repository.go`
+- [x] Создать `internal/user/service.go`
+- [x] Создать `internal/user/handler.go`
+- [x] Me, UpdateMe (employee)
+- [x] AdminList, AdminGet, AdminUpdate, AdminDeactivate (admin/hr)
+- [x] Search + pagination
+- [x] Status transitions
+- [x] Unit tests
+- [x] Заполнить report.md
 
 ## Зависимости
 

@@ -1,0 +1,95 @@
+{
+  "id": "lkfl-sdek",
+  "realm": "lkfl-sdek",
+  "enabled": true,
+  "sslRequired": "external",
+  "loginTheme": "keycloak",
+  "accountTheme": "keycloak",
+
+  "clients": [
+    {
+      "clientId": "lkfl-spa",
+      "enabled": true,
+      "publicClient": true,
+      "redirectUris": [
+        "http://localhost:5173/*",
+        "http://localhost:8080/*",
+        "http://host.docker.internal:5173/*",
+        "http://host.docker.internal:8080/*",
+        "https://dev.april.ukituki.tech/*",
+        "http://dev.april.ukituki.tech/*",
+        "http://lkfl-staging.example.com/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://host.docker.internal:5173",
+        "http://host.docker.internal:8080",
+        "https://dev.april.ukituki.tech",
+        "http://dev.april.ukituki.tech"
+      ],
+      "protocol": "openid-connect",
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    },
+    {
+      "clientId": "lkfl-service",
+      "enabled": true,
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "${KEYCLOAK_SERVICE_SECRET}",
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect",
+      "attributes": {
+        "client.secret.creation.time": "1700000000"
+      }
+    }
+  ],
+
+  "roles": {
+    "realm": [
+      {
+        "id": "role-employee",
+        "name": "employee",
+        "description": "Сотрудник"
+      },
+      {
+        "id": "role-hr",
+        "name": "hr",
+        "description": "HR-менеджер"
+      },
+      {
+        "id": "role-catalog-manager",
+        "name": "catalog_manager",
+        "description": "Менеджер каталога"
+      },
+      {
+        "id": "role-admin",
+        "name": "admin",
+        "description": "Администратор платформы"
+      }
+    ]
+  },
+
+  "users": [
+    {
+      "id": "admin-user",
+      "username": "admin",
+      "enabled": true,
+      "email": "admin@lkfl.dev",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin-dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["admin"]
+    }
+  ]
+}

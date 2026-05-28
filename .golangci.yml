@@ -1,0 +1,66 @@
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - gosimple
+    - unused
+    - gofmt
+    - goimports
+    - misspell
+    - revive
+    - goconst
+    - unconvert
+    - bodyclose
+    - noctx
+    - prealloc
+
+linters-settings:
+  govet:
+    enable-all: true
+    disable:
+      - fieldalignment
+  revive:
+    rules:
+      - name: exported
+        arguments: ["disableStutteringCheck"]
+      - name: var-naming
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: increment-decrement
+      - name: var-declaration
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unreachable-code
+  goconst:
+    min-len: 3
+    min-occurrences: 3
+  misspell:
+    locale: US
+
+issues:
+  exclude-use-default: false
+  max-same-issues: 0
+  exclude-rules:
+    # Тестовые моки могут иметь много методов
+    - path: _test\.go
+      linters:
+        - revive
+        - govet
+    # Retained deps — намеренно неиспользуемые импорты
+    - path: internal/deps/
+      linters:
+        - unused
+        - staticcheck
+        - govet

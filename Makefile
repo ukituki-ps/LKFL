@@ -13,6 +13,9 @@ FRONTEND_DIR := frontend
 # DB_DSN из .env (если файл существует), иначе пустая строка
 DB_DSN := $(shell if [ -f .env ]; then grep -m1 '^DB_DSN=' .env | cut -d= -f2-; fi)
 
+# Deploy worker
+DEPLOY_WORKER_URL ?= http://serverDev:9091
+
 # ============================================================================
 # Build
 # ============================================================================
@@ -26,7 +29,7 @@ build-proxy: ## Собрать lkfl-integration-proxy
 build-all: build build-proxy ## Собрать всё
 
 docker-build: ## Собрать Docker images
-	docker compose build
+	docker compose -f docker-compose.dev.yml build
 
 # ============================================================================
 # Test
@@ -80,26 +83,78 @@ migrate-status: ## Статус миграций
 	atlas migrate status --url "$(DB_DSN)" --dir file://migrations
 
 # ============================================================================
-# Docker
+# Docker — Dev (docker-compose.dev.yml)
 # ============================================================================
 
-up: ## Поднять все контейнеры
-	docker compose up -d
+dev-up: ## Локальная разработка (docker-compose.dev.yml)
+	docker compose -f docker-compose.dev.yml up -d
 
-down: ## Остановить все контейнеры
-	docker compose down
+dev-down: ## Остановить локальные сервисы
+	docker compose -f docker-compose.dev.yml down
 
-down-v: ## Остановить + удалить volumes
-	docker compose down -v
+dev-logs: ## Логи локальных сервисов
+	docker compose -f docker-compose.dev.yml logs -f
 
-logs: ## Логи всех контейнеров
-	docker compose logs -f
+# ============================================================================
+# Docker — Legacy (up/down без -f, для staging)
+# ============================================================================
 
-logs-server: ## Логи lkfl-server
-	docker compose logs -f lkfl-server
+up: ## Поднять все контейнеры (staging)
+	docker compose -f docker-compose.staging.yml up -d
 
-logs-proxy: ## Логи lkfl-integration-proxy
-	docker compose logs -f lkfl-integration-proxy
+down: ## Остановить все контейнеры (staging)
+	docker compose -f docker-compose.staging.yml down
+
+down-v: ## Остановить + удалить volumes (staging)
+	docker compose -f docker-compose.staging.yml down -v
+
+logs: ## Логи всех контейнеров (staging)
+	docker compose -f docker-compose.staging.yml logs -f
+
+logs-server: ## Логи lkfl-server (staging)
+	docker compose -f docker-compose.staging.yml logs -f lkfl-server
+
+logs-proxy: ## Логи lkfl-integration-proxy (staging)
+	docker compose -f docker-compose.staging.yml logs -f lkfl-integration-proxy
+
+# ============================================================================
+# Deploy (через deploy-worker API)
+# ============================================================================
+
+deploy: ## Деплой на staging (через deploy-worker API)
+	curl -X POST $(DEPLOY_WORKER_URL)/deploy \
+		-H "Content-Type: application/json" \
+		-d '{"branch":"main","imageTag":"main-latest"}'
+
+deploy-health: ## Healthcheck через deploy-worker
+	curl -s $(DEPLOY_WORKER_URL)/status | jq .
+
+deploy-rollback: ## Роллбэк через deploy-worker
+	curl -X POST $(DEPLOY_WORKER_URL)/rollback
+
+predeploy: ## Пред-деплой валидация (локально + deploy-worker)
+	./scripts/predeploy.sh
+
+predeploy-quick: ## Быстрая пред-деплой валидация
+	./scripts/predeploy.sh --quick
+
+# ============================================================================
+# Docker Build — Образы
+# ============================================================================
+
+docker-build-server: ## Собрать lkfl-server
+	docker build -f Dockerfile.server -t lkfl-server:latest .
+
+docker-build-proxy: ## Собрать lkfl-integration-proxy
+	docker build -f Dockerfile.proxy -t lkfl-integration-proxy:latest .
+
+docker-build-frontend: ## Собрать lkfl-frontend
+	docker build -f Dockerfile.frontend -t lkfl-frontend:latest .
+
+docker-build-worker: ## Собрать deploy-worker
+	docker build -f Dockerfile.deploy-worker -t deploy-worker:latest .
+
+docker-build-all: docker-build-server docker-build-proxy docker-build-frontend docker-build-worker ## Собрать все образы
 
 # ============================================================================
 # Dev
@@ -133,5 +188,8 @@ help: ## Показать справку
 	test test-coverage test-coverage-html test-integration test-e2e \
 	lint lint-fix lint-frontend fmt vet \
 	migrate-up migrate-down migrate-status \
+	dev-up dev-down dev-logs \
 	up down down-v logs logs-server logs-proxy \
-	dev dev-frontend seed clean help
+	dev dev-frontend seed clean help \
+	deploy deploy-health deploy-rollback predeploy predeploy-quick \
+	docker-build-server docker-build-proxy docker-build-frontend docker-build-worker docker-build-all

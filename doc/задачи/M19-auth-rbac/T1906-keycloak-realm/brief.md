@@ -11,7 +11,20 @@ code
 ## Контекст
 
 Keycloak realm configuration для tenant «sdek».
-Создаётся через Keycloak Admin API (REST) или docker volume с realm JSON.
+Создаётся через docker volume mount realm JSON.
+
+**Текущее состояние docker-compose.yml (M17):**
+- Keycloak 25.0, image `quay.io/keycloak/keycloak:25.0`
+- DB: PostgreSQL (`KC_DB: postgres`, schema `keycloak` в том же PG)
+- Volume: `lkfl_keycloak_data:/opt/keycloak/data`
+- Command: `start-dev --http-relative-path=/ --hostname=localhost --hostname-port=8081`
+- Порт: 8081
+- Issuer URL (для lkfl-server): `http://localhost:8081/realms/lkfl-sdek`
+
+**Что нужно изменить в docker-compose.yml:**
+- Добавить volume mount для realm JSON: `./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro`
+- Добавить `--import-realm` в command Keycloak
+- Realm создаётся при первом запуске контейнера
 
 ## Что сделать
 
@@ -109,14 +122,26 @@ Keycloak realm configuration для tenant «sdek».
 
 ### Docker integration
 
-В `docker-compose.yml`:
+В `docker-compose.yml` изменить секцию `keycloak`:
 
 ```yaml
 keycloak:
+  command: >
+    start-dev --import-realm
+    --http-relative-path=/
+    --hostname=localhost
+    --hostname-port=8081
+    --hostname-strict=false
   volumes:
-    - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json
-  command: start-dev --import-realm
+    - lkfl_keycloak_data:/opt/keycloak/data
+    - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
 ```
+
+> **Важно:** `--import-realm` обрабатывает все `.json` файлы в `/opt/keycloak/data/import/`.
+> Volume `lkfl_keycloak_data` уже смонтирован на `/opt/keycloak/data` (M17).
+> Realm JSON монтируется как read-only (`:ro`) в поддиректорию `import/`.
+
+### Keycloak Admin API script (альтернатива для production)
 
 ### Keycloak Admin API script (альтернатива)
 

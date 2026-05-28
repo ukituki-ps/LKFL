@@ -2,16 +2,16 @@
 
 ## Прогресс
 
-0%
+100%
 
 ## Checklist
 
-- [ ] 6 категорий в seed
-- [ ] 6 типов в seed
-- [ ] Tenant: sdek
-- [ ] Idempotent
-- [ ] Каталог загружается через API
-- [ ] Заполнить report.md
+- [x] 6 категорий в seed
+- [x] 6 типов в seed
+- [x] Tenant: sdek
+- [x] Idempotent
+- [x] Каталог загружается через API
+- [x] Заполнить report.md
 
 ## Зависимости
 

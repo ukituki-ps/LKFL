@@ -13,6 +13,15 @@ code
 Redis cache для каталога. Кэшируем ListTypes query (самый частый запрос).
 Key prefix: `catalog:` (из `doc/архитектура/schema.md` строка 1146).
 
+**После M19 — ⚠️ Tenant в cache key:**
+- Redis общий для всех tenant'ов (один контейнер, docker-compose.yml)
+- Cache key **обязательно** включает tenant_id для изоляции:
+  - `catalog:list:{tenant_id}:{type}:{status}:{page}`
+  - `catalog:type:{tenant_id}:{type_id}`
+  - `catalog:categories:{tenant_id}`
+- Без tenant_id в key — cross-tenant cache pollution (пользователи tenant A увидят каталог tenant B)
+- Invalidate по tenant_id (не глобально)
+
 ## Что сделать
 
 ### `internal/engagement/catalog/cache.go`
