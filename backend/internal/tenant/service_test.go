@@ -1109,9 +1109,9 @@ func TestJSONB_ValueWithData(t *testing.T) {
 
 func TestSlugRegex_Validation(t *testing.T) {
 	tests := []struct {
-		slug    string
-		want    bool
-		reason  string
+		slug   string
+		want   bool
+		reason string
 	}{
 		{"", false, "empty"},
 		{"a", true, "single char"},

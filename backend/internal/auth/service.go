@@ -28,8 +28,8 @@ type TenantResolver interface {
 // Service — бизнес-логика аутентификации.
 type Service struct {
 	userRepo          user.Repository
-	tenantResolver    TenantResolver    // опционально — для callback без tenant middleware
-	defaultTenantSlug string            // tenant slug из Keycloak issuer (fallback)
+	tenantResolver    TenantResolver // опционально — для callback без tenant middleware
+	defaultTenantSlug string         // tenant slug из Keycloak issuer (fallback)
 }
 
 // NewService создаёт Service.

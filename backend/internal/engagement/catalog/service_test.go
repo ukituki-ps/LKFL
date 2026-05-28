@@ -1773,8 +1773,8 @@ func TestService_AdminUpdateOffer_EmptyName(t *testing.T) {
 	svc := NewService(repo, nil)
 
 	offer := EngagementOffer{
-		ID:       uuid.New(),
-		Name:     "",
+		ID:   uuid.New(),
+		Name: "",
 	}
 
 	_, err := svc.AdminUpdateOffer(context.Background(), offer)

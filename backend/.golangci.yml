@@ -26,10 +26,13 @@ linters-settings:
 
 issues:
   exclude-rules:
-    # goconst и SA1012 (nil context) не проверяют test файлы
+    # goconst не проверяет test файлы
     - path: '_test\.go'
       linters:
         - goconst
+    # SA1012 (nil context) не проверяет test файлы
+    - path: '_test\.go'
+      linters:
         - staticcheck
       text: "SA1012"
     # goconst не проверяет seed (хардкод seed-данных — нормально)
