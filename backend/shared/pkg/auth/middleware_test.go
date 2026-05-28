@@ -12,38 +12,10 @@ import (
 // JWT Middleware Edge Cases
 // =============================================================================
 
-// mockTokenVerifier — мок для oidc.IDTokenVerifier для тестов.
-type mockTokenVerifier struct {
-	verifyFn func(ctx context.Context, rawID string) (*mockIDToken, error)
-}
-
-func (m *mockTokenVerifier) Verify(ctx context.Context, rawID string) (*mockIDToken, error) {
-	if m.verifyFn != nil {
-		return m.verifyFn(ctx, rawID)
-	}
-	return &mockIDToken{subject: "user-123"}, nil
-}
-
-// mockIDToken — минимальный мок ID token.
-type mockIDToken struct {
-	subject string
-	claims  map[string]interface{}
-}
-
-func (m *mockIDToken) Claims(v interface{}) error {
-	return nil
-}
-
-// mockOIDCVerifierForMiddleware — адаптер для JWTMiddleware.
-// Реализует интерфейс, ожидаемый middleware (Verify → *oidc.IDToken).
-// Для тестов мы используем httptest и проверяем поведение middleware
-// на уровне HTTP-запросов.
-
 // testJWTMiddleware — тестовый middleware, имитирующий JWT middleware
 // с контролируемыми ответами.
 type testJWTMiddleware struct {
 	tokenValid   bool
-	tokenString  string
 	claims       Claims
 	roles        []string
 	returnError  bool
@@ -610,7 +582,7 @@ func TestRBACMiddleware_ResponseContainsJSONError(t *testing.T) {
 
 func TestExtractKeycloakRoles_NoResourceAccess(t *testing.T) {
 	raw := map[string]interface{}{
-		"sub": "user-123",
+		"sub":   "user-123",
 		"email": "test@example.com",
 	}
 	roles := extractKeycloakRoles(raw)

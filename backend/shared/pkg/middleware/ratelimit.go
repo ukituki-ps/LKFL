@@ -72,7 +72,7 @@ func RateLimiter(cfg RateLimitConfig) func(http.Handler) http.Handler {
 				w.Header().Set("Content-Type", "application/json")
 				w.Header().Set("Retry-After", strconv.Itoa(cfg.Window))
 				w.WriteHeader(http.StatusTooManyRequests)
-				fmt.Fprintf(w, `{"error":"rate limit exceeded"}`)
+				_, _ = fmt.Fprintf(w, `{"error":"rate limit exceeded"}`)
 				return
 			}
 

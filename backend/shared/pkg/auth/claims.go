@@ -49,8 +49,8 @@ func ExtractClaims(idToken *oidc.IDToken) (*Claims, []string, error) {
 
 // extractKeycloakRoles извлекает роли из Keycloak claims.
 // Проверяет два источника:
-//   1. resource_access.{clientID}.roles — client roles
-//   2. realm_access.roles — realm roles
+//  1. resource_access.{clientID}.roles — client roles
+//  2. realm_access.roles — realm roles
 //
 // Формат resource_access:
 //

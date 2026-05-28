@@ -59,8 +59,8 @@ func JWTMiddleware(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handl
 			}
 
 			// Храним Claims как value (не pointer) — UserIDFromContext/RolesFromContext
-		// ожидают именно Claims, не *Claims. Type assertion на pointer упадёт.
-		ctx := context.WithValue(r.Context(), ClaimsKey, *claims)
+			// ожидают именно Claims, не *Claims. Type assertion на pointer упадёт.
+			ctx := context.WithValue(r.Context(), ClaimsKey, *claims)
 			ctx = context.WithValue(ctx, RolesKey, roles)
 
 			// Извлекаем tenant slug из issuer и ставим X-Tenant-ID.
@@ -121,5 +121,5 @@ func RolesFromContext(ctx context.Context) []string {
 func writeJSONError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{"error": message})
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
