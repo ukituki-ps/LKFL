@@ -665,10 +665,10 @@ func TestService_UpdateProfile_OnlyLastName(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		LastName:  "Old",
-		Status:    StatusActive,
+		ID:       uuid.New(),
+		Email:    "test@example.com",
+		LastName: "Old",
+		Status:   StatusActive,
 	}
 	repo.users[user.ID] = user
 
@@ -686,9 +686,9 @@ func TestService_UpdateProfile_OnlyPhone(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusActive,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusActive,
 	}
 	repo.users[user.ID] = user
 
@@ -707,10 +707,10 @@ func TestService_UpdateProfile_SameEmailNoConflict(t *testing.T) {
 
 	tid := uuid.New()
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusActive,
-		TenantID:  tid,
+		ID:       uuid.New(),
+		Email:    "test@example.com",
+		Status:   StatusActive,
+		TenantID: tid,
 	}
 	repo.users[user.ID] = user
 
@@ -733,10 +733,10 @@ func TestService_UpdateProfile_EmailUniquenessCheckError(t *testing.T) {
 
 	tid := uuid.New()
 	user := User{
-		ID:        uuid.New(),
-		Email:     "old@example.com",
-		Status:    StatusActive,
-		TenantID:  tid,
+		ID:       uuid.New(),
+		Email:    "old@example.com",
+		Status:   StatusActive,
+		TenantID: tid,
 	}
 	repo.users[user.ID] = user
 
@@ -755,9 +755,9 @@ func TestService_UpdateProfile_DeactivatedUser(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusDeactivated,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusDeactivated,
 	}
 	repo.users[user.ID] = user
 
@@ -788,9 +788,9 @@ func TestService_UpdateProfile_UpdateError(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusActive,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusActive,
 	}
 	repo.users[user.ID] = user
 
@@ -807,9 +807,9 @@ func TestService_Deactivate_UserDeleted(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusDeleted,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusDeleted,
 	}
 	repo.users[user.ID] = user
 
@@ -824,9 +824,9 @@ func TestService_Deactivate_UserInvalidStatus(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    "unknown_status",
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: "unknown_status",
 	}
 	repo.users[user.ID] = user
 
@@ -857,9 +857,9 @@ func TestService_Deactivate_UpdateStatusError(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusActive,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusActive,
 	}
 	repo.users[user.ID] = user
 
@@ -876,9 +876,9 @@ func TestService_Activate_UserAlreadyActive(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusActive,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusActive,
 	}
 	repo.users[user.ID] = user
 
@@ -893,9 +893,9 @@ func TestService_Activate_UserDeleted(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusDeleted,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusDeleted,
 	}
 	repo.users[user.ID] = user
 
@@ -1076,9 +1076,9 @@ func TestService_List_StatusFilterNoMatch(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusActive,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusActive,
 	}
 	repo.users[user.ID] = user
 
@@ -1256,9 +1256,9 @@ func TestService_Deactivate_Concurrent(t *testing.T) {
 	svc := NewService(repo)
 
 	user := User{
-		ID:        uuid.New(),
-		Email:     "test@example.com",
-		Status:    StatusActive,
+		ID:     uuid.New(),
+		Email:  "test@example.com",
+		Status: StatusActive,
 	}
 	repo.users[user.ID] = user
 
