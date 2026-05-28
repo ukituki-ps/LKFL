@@ -1,3 +1,5 @@
+// Package tenant — multi-tenant изоляция и middleware.
+//
 // WithTenantID автоматически добавляет WHERE tenant_id clause к SQL query,
 // обеспечивая multi-tenant isolation на уровне базы данных.
 //

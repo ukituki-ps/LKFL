@@ -60,7 +60,7 @@ type Config struct {
 // DatabaseDSN returns the database DSN.
 func (c Config) DatabaseDSN() string { return c.DBDSN }
 
-// RedisURL returns the Redis URL.
+// RedisURLGet returns the Redis URL.
 func (c Config) RedisURLGet() string { return c.RedisURL }
 
 // KeycloakIssuer returns the Keycloak issuer URL.

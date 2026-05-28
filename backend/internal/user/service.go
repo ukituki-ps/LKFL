@@ -206,12 +206,14 @@ func (s *Service) CreateAndSetupUser(ctx context.Context, u User) (User, error) 
 	if err != nil {
 		// Не критично — логировать и продолжить (аккаунт можно создать позже)
 		// В продакшене здесь будет slog
+		_ = err
 	}
 
 	// Назначаем базовую роль employee
 	_, err = s.repo.AddRole(ctx, created.ID, RoleEmployee, nil)
 	if err != nil {
 		// Не критично — роль можно назначить позже
+		_ = err
 	}
 
 	return created, nil

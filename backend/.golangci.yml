@@ -1,0 +1,40 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - gofmt
+    - goconst
+    - revive
+    - unused
+
+linters-settings:
+  goconst:
+    # Минимальное количество вхождений для константы
+    min-occurrences: 4
+    # Не проверять test файлы
+    ignore-calls: true
+  revive:
+    rules:
+      - name: exported
+        arguments:
+          - "checkPrivateReceivers"
+      - name: empty-block
+      - name: package-comments
+
+issues:
+  exclude-rules:
+    # goconst не проверяет test файлы
+    - path: '_test\.go'
+      linters:
+        - goconst
+    # goconst не проверяет seed (хардкод seed-данных — нормально)
+    - path: 'cmd/seed/'
+      linters:
+        - goconst
+    # goconst не проверяет engagement catalog (русская строка льгот — не константы)
+    - path: 'internal/engagement/catalog/handler\.go'
+      linters:
+        - goconst
