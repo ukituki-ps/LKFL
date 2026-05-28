@@ -155,7 +155,9 @@ func (d *deployer) composeUp(imageTag string) error {
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("IMAGE_TAG=%s", imageTag))
 
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("%s up -d", d.composeCmd()))
+	// Поднимаем только основные сервисы (не deploy-worker — он сам себя пересоздаст)
+	cmd := exec.Command("sh", "-c",
+		fmt.Sprintf("%s up -d postgres redis keycloak lkfl-server lkfl-integration-proxy lkfl-frontend nginx", d.composeCmd()))
 	cmd.Env = env
 	cmd.Dir = d.cfg.ComposeDir
 	output, err := cmd.CombinedOutput()
