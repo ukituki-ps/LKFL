@@ -10,11 +10,12 @@
 //	./deploy-worker
 //
 // Конфигурация (env vars):
-//   PORT            — порт HTTP-сервера (default: 9091)
-//   WEBHOOK_SECRET  — Bearer token для авторизации webhook
-//   GHCR_TOKEN      — токен для авторизации в ghcr.io
-//   COMPOSE_FILE    — путь к docker-compose файлу (default: docker-compose.staging.yml)
-//   COMPOSE_DIR     — рабочая директория для docker compose (default: .)
+//
+//	PORT            — порт HTTP-сервера (default: 9091)
+//	WEBHOOK_SECRET  — Bearer token для авторизации webhook
+//	GHCR_TOKEN      — токен для авторизации в ghcr.io
+//	COMPOSE_FILE    — путь к docker-compose файлу (default: docker-compose.staging.yml)
+//	COMPOSE_DIR     — рабочая директория для docker compose (default: .)
 package main
 
 import (

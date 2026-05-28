@@ -12,15 +12,14 @@ linters:
 
 linters-settings:
   goconst:
-    # Минимальное количество вхождений для константы
     min-occurrences: 4
-    # Не проверять test файлы
     ignore-calls: true
   revive:
     rules:
       - name: exported
         arguments:
           - "checkPrivateReceivers"
+          - "none"
       - name: empty-block
       - name: package-comments
 
