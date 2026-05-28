@@ -1,0 +1,27 @@
+# plan.yaml — T2214.3 Страницы-заглушки
+
+checklist:
+  - id: 1
+    name: Добавить lucide-react в package.json, npm install
+    done: false
+  - id: 2
+    name: Создать StubBadge.tsx (только dev, tooltip)
+    done: false
+  - id: 3
+    name: Реврайт Dashboard.tsx → моки по прототипу
+    done: false
+  - id: 4
+    name: Реализовать Points.tsx → моки по прототипу
+    done: false
+  - id: 5
+    name: Реализовать Documents.tsx → моки по прототипу
+    done: false
+  - id: 6
+    name: Реализовать Support.tsx → моки по прототипу
+    done: false
+  - id: 7
+    name: Проверить StubBadge скрыт в production build
+    done: false
+  - id: 8
+    name: npm run dev — проверить все 4 страницы
+    done: false

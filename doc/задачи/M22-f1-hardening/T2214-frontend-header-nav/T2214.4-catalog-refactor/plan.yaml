@@ -1,0 +1,24 @@
+# plan.yaml — T2214.4 Каталог: EngagementCard + FilterBar
+
+checklist:
+  - id: 1
+    name: EngagementCard → Lucide иконки (iconMap)
+    done: false
+  - id: 2
+    name: EngagementCard → дизайн по прототипу (icon 44x44, footer)
+    done: false
+  - id: 3
+    name: FilterBar → filter pills вместо Select
+    done: false
+  - id: 4
+    name: Catalog.tsx → grid 3 колонки
+    done: false
+  - id: 5
+    name: Обновить EngagementCard.test.tsx (новый DOM layout)
+    done: false
+  - id: 6
+    name: npm run dev — проверить каталог визуально
+    done: false
+  - id: 7
+    name: Запустить тесты — убедиться, что все проходят
+    done: false

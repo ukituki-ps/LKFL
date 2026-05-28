@@ -1,0 +1,24 @@
+# plan.yaml — T2214.1 Brand tokens, тема, шрифт
+
+checklist:
+  - id: 1
+    name: Создать BrandTokens.css
+    done: false
+  - id: 2
+    name: Обновить theme.ts (primaryColor, fontFamily, headings)
+    done: false
+  - id: 3
+    name: Добавить Google Fonts Inter в index.html
+    done: false
+  - id: 4
+    name: Заменить AprilProviders → LKFLProviders (обёртка DS + QueryClientProvider)
+    done: false
+  - id: 5
+    name: Обновить main.tsx (import BrandTokens, LKFLProviders)
+    done: false
+  - id: 6
+    name: npm run dev — проверить отсутствие ошибок
+    done: false
+  - id: 7
+    name: Запустить тесты — убедиться, что ничего не сломалось
+    done: false

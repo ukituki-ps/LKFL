@@ -94,7 +94,7 @@ func (d *deployer) Rollback() {
 // ─── Docker Compose helpers ───
 
 func (d *deployer) composeCmd() string {
-	return fmt.Sprintf("docker compose -f %s --env-file .env.staging", d.cfg.ComposeFile)
+	return fmt.Sprintf("docker compose -p lkfl-staging -f %s --env-file .env.staging", d.cfg.ComposeFile)
 }
 
 func (d *deployer) ghcrLogin() error {
