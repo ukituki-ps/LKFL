@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1
 # Deploy Worker — HTTP API для оркестрации docker compose на staging сервере
-# Порт: 9091 (не 9090 — конфликт с prometheus)
+# Порт: 9092 (не 9090 — конфликт с prometheus)
 #
 # Build: docker build -f Dockerfile.deploy-worker -t lkfl-deploy-worker:latest .
-# Run:   docker run -p 9091:9091 lkfl-deploy-worker:latest
+# Run:   docker run -p 9092:9092 lkfl-deploy-worker:latest
 
 FROM golang:1.24-alpine AS build
 ENV GOTOOLCHAIN=auto
@@ -15,10 +15,16 @@ COPY backend/ ./
 RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -trimpath -o /deploy-worker ./cmd/deploy-worker/
 
 FROM alpine:3.20
+# docker-cli — для управления Docker daemon через socket
+# docker compose plugin — для orchestrator compose-файлов
+# curl --fail --silent --show-error --location: обязательна проверка HTTP-статуса
 RUN apk add --no-cache git bash curl docker-cli && \
     mkdir -p /usr/lib/docker/cli-plugins && \
-    curl -sSL https://github.com/docker/compose/releases/download/v5.1.3/docker-compose-linux-x86_64 -o /usr/lib/docker/cli-plugins/docker-compose && \
-    chmod +x /usr/lib/docker/cli-plugins/docker-compose
+    curl --fail --silent --show-error --location \
+        https://github.com/docker/compose/releases/download/v2.38.0/docker-compose-linux-x86_64 \
+        -o /usr/lib/docker/cli-plugins/docker-compose && \
+    chmod +x /usr/lib/docker/cli-plugins/docker-compose && \
+    docker compose version
 COPY --from=build /deploy-worker /usr/local/bin/deploy-worker
-EXPOSE 9091
+EXPOSE 9092
 ENTRYPOINT ["deploy-worker"]

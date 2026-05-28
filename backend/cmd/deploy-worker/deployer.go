@@ -103,7 +103,7 @@ func (d *deployer) ghcrLogin() error {
 		return nil
 	}
 
-	cmd := exec.Command("docker", "login", "ghcr.io", "-u", "ukituki", "--password-stdin")
+	cmd := exec.Command("docker", "login", "ghcr.io", "-u", d.cfg.GHCRUsername, "--password-stdin")
 	cmd.Stdin = strings.NewReader(d.cfg.GHCRToken)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
