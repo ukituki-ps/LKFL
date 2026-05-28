@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 )
 
 // Config — конфигурация deploy-worker из переменных окружения.
@@ -18,7 +18,9 @@ type Config struct {
 func loadConfig() Config {
 	port := 9091
 	if p := os.Getenv("PORT"); p != "" {
-		fmt.Sscanf(p, "%d", &port)
+		if parsed, err := strconv.Atoi(p); err == nil {
+			port = parsed
+		}
 	}
 
 	return Config{

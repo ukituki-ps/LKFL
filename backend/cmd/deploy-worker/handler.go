@@ -45,6 +45,27 @@ func (h *handler) validateAuth(r *http.Request) bool {
 	return parts[1] == h.cfg.WebhookSecret
 }
 
+// writeJSON кодирует val в JSON и пишет в ResponseWriter.
+func writeJSON(w http.ResponseWriter, val any) error {
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(val)
+}
+
+// writeJSONStatus пишет статус и JSON в ResponseWriter.
+func writeJSONStatus(w http.ResponseWriter, status int, val any) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	return json.NewEncoder(w).Encode(val)
+}
+
+// conflictResponse возвращает JSON-ответ 409 Conflict.
+func conflictResponse(w http.ResponseWriter, message string) {
+	_ = writeJSONStatus(w, http.StatusConflict, map[string]string{
+		"status":  "conflict",
+		"message": message,
+	})
+}
+
 // handleDeploy обрабатывает POST /deploy — запуск деплоя.
 func (h *handler) handleDeploy(w http.ResponseWriter, r *http.Request) {
 	if !h.validateAuth(r) {
@@ -57,7 +78,7 @@ func (h *handler) handleDeploy(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
+	_ = r.Body.Close()
 
 	var req DeployRequest
 	if err := json.Unmarshal(body, &req); err != nil {
@@ -67,23 +88,13 @@ func (h *handler) handleDeploy(w http.ResponseWriter, r *http.Request) {
 
 	// Проверяем, что нет активного деплоя
 	if !h.deployer.sm.canDeploy() {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "conflict",
-			"message": "deploy already in progress",
-		})
+		conflictResponse(w, "deploy already in progress")
 		return
 	}
 
 	// Atomically захватываем слот для деплоя (защита от race condition)
 	if !h.deployer.sm.tryAcquire() {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "conflict",
-			"message": "deploy started by concurrent request",
-		})
+		conflictResponse(w, "deploy started by concurrent request")
 		return
 	}
 
@@ -91,9 +102,7 @@ func (h *handler) handleDeploy(w http.ResponseWriter, r *http.Request) {
 		req.ImageTag = fmt.Sprintf("%s-%s", req.Branch, req.SHA[:7])
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = writeJSONStatus(w, http.StatusAccepted, map[string]string{
 		"status":  "queued",
 		"message": fmt.Sprintf("deploying %s (tag: %s)", req.Branch, req.ImageTag),
 	})
@@ -110,9 +119,7 @@ func (h *handler) handleDeployPR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: PR preview на отдельный порт/композ
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = writeJSONStatus(w, http.StatusAccepted, map[string]string{
 		"status":  "queued",
 		"message": "PR preview deploy queued",
 	})
@@ -126,29 +133,17 @@ func (h *handler) handleRollback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if !h.deployer.sm.canDeploy() {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "conflict",
-			"message": "deploy already in progress",
-		})
+		conflictResponse(w, "deploy already in progress")
 		return
 	}
 
 	// Atomically захватываем слот для rollback (защита от race condition)
 	if !h.deployer.sm.tryAcquire() {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusConflict)
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "conflict",
-			"message": "rollback started by concurrent request",
-		})
+		conflictResponse(w, "rollback started by concurrent request")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusAccepted)
-	json.NewEncoder(w).Encode(map[string]string{
+	_ = writeJSONStatus(w, http.StatusAccepted, map[string]string{
 		"status":  "queued",
 		"message": "rollback queued",
 	})
@@ -159,8 +154,7 @@ func (h *handler) handleRollback(w http.ResponseWriter, r *http.Request) {
 // handleStatus обрабатывает GET /status — текущее состояние деплоя.
 func (h *handler) handleStatus(w http.ResponseWriter, r *http.Request) {
 	state := h.deployer.sm.getState()
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(state)
+	_ = writeJSON(w, state)
 }
 
 // handleLogs обрабатывает GET /logs — логи последнего деплоя.
