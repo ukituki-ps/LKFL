@@ -26,11 +26,11 @@ type Handler struct {
 	verifier     *oidc.IDTokenVerifier
 	redis        *redis.Client
 	service      *Service
-	issuer       string           // OIDC issuer (host.docker.internal) — для token verification
-	publicIssuer string           // Public issuer — для browser-редиректов
+	issuer       string // OIDC issuer (host.docker.internal) — для token verification
+	publicIssuer string // Public issuer — для browser-редиректов
 	clientID     string
 	clientSecret string
-	tenantSlug   string           // Tenant slug из issuer URL (lkfl-sdek → sdek)
+	tenantSlug   string // Tenant slug из issuer URL (lkfl-sdek → sdek)
 	metrics      *metrics.Metrics
 }
 
@@ -140,10 +140,12 @@ func (h *Handler) LoginRedirect(w http.ResponseWriter, r *http.Request) {
 // GET /api/v1/auth/callback?code=...&state=...
 //
 // Для браузерных запросов (Accept содержит text/html):
-//   → 302 redirect на frontend /callback?code=...&state=...
+//
+//	→ 302 redirect на frontend /callback?code=...&state=...
 //
 // Для API запросов (Accept: application/json):
-//   → обмен code на token, 200 с user data + session token
+//
+//	→ обмен code на token, 200 с user data + session token
 func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 	// Браузерный запрос — редирект на фронтенд /callback с code и state
 	if isBrowserRequest(r) {
@@ -256,8 +258,6 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 	if len(roles) == 0 {
 		roles = sharedauth.ExtractRolesFromJWT(tokenSet.AccessToken)
 	}
-
-	
 
 	// 7. Создаём/обновляем пользователя в БД
 	user, err := h.service.CreateOrUpdateUser(r.Context(), claims, roles)

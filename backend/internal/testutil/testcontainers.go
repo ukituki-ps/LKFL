@@ -407,9 +407,9 @@ func parseTestToken(token string) (*sharedauth.Claims, []string) {
 	}
 
 	return &sharedauth.Claims{
-		Subject:   subject,
-		Email:     subject + "@test.local",
-		GivenName: "Test",
+		Subject:    subject,
+		Email:      subject + "@test.local",
+		GivenName:  "Test",
 		FamilyName: "User",
 	}, roles
 }

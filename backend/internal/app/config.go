@@ -16,9 +16,9 @@ import (
 // корректно только с плоскими ключами (не вложенными).
 type Config struct {
 	// Server
-	ServerPort         int    `mapstructure:"SERVER_PORT"`
-	ServerReadTimeout  int    `mapstructure:"SERVER_READ_TIMEOUT"`
-	ServerWriteTimeout int    `mapstructure:"SERVER_WRITE_TIMEOUT"`
+	ServerPort         int `mapstructure:"SERVER_PORT"`
+	ServerReadTimeout  int `mapstructure:"SERVER_READ_TIMEOUT"`
+	ServerWriteTimeout int `mapstructure:"SERVER_WRITE_TIMEOUT"`
 
 	// Database
 	DBDSN         string `mapstructure:"DB_DSN"`

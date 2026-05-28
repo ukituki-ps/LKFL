@@ -9,6 +9,7 @@ linters:
     - goconst
     - revive
     - unused
+    - staticcheck
 
 linters-settings:
   goconst:
@@ -25,10 +26,12 @@ linters-settings:
 
 issues:
   exclude-rules:
-    # goconst не проверяет test файлы
+    # goconst и SA1012 (nil context) не проверяют test файлы
     - path: '_test\.go'
       linters:
         - goconst
+        - staticcheck
+      text: "SA1012"
     # goconst не проверяет seed (хардкод seed-данных — нормально)
     - path: 'cmd/seed/'
       linters:
