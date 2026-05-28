@@ -99,7 +99,11 @@ func (h *handler) handleDeploy(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.ImageTag == "" {
-		req.ImageTag = fmt.Sprintf("%s-%s", req.Branch, req.SHA[:7])
+		shortSHA := req.SHA
+		if len(shortSHA) > 7 {
+			shortSHA = shortSHA[:7]
+		}
+		req.ImageTag = fmt.Sprintf("%s-%s", req.Branch, shortSHA)
 	}
 
 	_ = writeJSONStatus(w, http.StatusAccepted, map[string]string{
