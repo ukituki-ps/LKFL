@@ -221,7 +221,7 @@ func buildTestServer(db *pgxpool.Pool, redisClient *redis.Client) (*httptest.Ser
 	// Health
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 
 	// Auth routes (public, no JWT)
@@ -417,7 +417,7 @@ func parseTestToken(token string) (*sharedauth.Claims, []string) {
 func writeJSONError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	fmt.Fprintf(w, `{"error":"%s"}`, message)
+	_, _ = fmt.Fprintf(w, `{"error":"%s"}`, message)
 }
 
 func testCORS() func(http.Handler) http.Handler {
@@ -681,7 +681,7 @@ func ReadBody(resp *http.Response) string {
 	if resp == nil || resp.Body == nil {
 		return ""
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	data, _ := io.ReadAll(resp.Body)
 	return string(data)
 }
@@ -691,7 +691,7 @@ func ReadJSONBody[T any](resp *http.Response, v *T) error {
 	if resp == nil || resp.Body == nil {
 		return fmt.Errorf("no response")
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	return json.NewDecoder(resp.Body).Decode(v)
 }
 

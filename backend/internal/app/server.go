@@ -137,7 +137,7 @@ func NewServer(
 	// ─── Public routes (без auth) ───
 	r.Get("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OK"))
+		_, _ = w.Write([]byte("OK"))
 	})
 	r.Mount("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 

@@ -161,11 +161,11 @@ func (h *handler) handleStatus(w http.ResponseWriter, r *http.Request) {
 func (h *handler) handleLogs(w http.ResponseWriter, r *http.Request) {
 	logs := h.deployer.sm.getLogs()
 	w.Header().Set("Content-Type", "text/plain")
-	fmt.Fprint(w, logs)
+	_, _ = fmt.Fprint(w, logs)
 }
 
 // handleHealthz обрабатывает GET /healthz — health check эндпоинт.
 func (h *handler) handleHealthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "ok")
+	_, _ = fmt.Fprint(w, "ok")
 }

@@ -78,7 +78,7 @@ func TestRateLimiterFailOpen(t *testing.T) {
 	client := redis.NewClient(&redis.Options{
 		Addr: "localhost:59999", // несуществующий порт
 	})
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	cfg := RateLimitConfig{
 		MaxRequests: 5,

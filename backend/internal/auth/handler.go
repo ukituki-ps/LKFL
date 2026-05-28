@@ -213,7 +213,7 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 		shhttp.WriteJSONError(w, http.StatusBadGateway, "token exchange failed: "+err.Error())
 		return
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {

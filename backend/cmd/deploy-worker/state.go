@@ -11,6 +11,15 @@ import (
 
 const previousTagFile = ".deploy-previous-tag"
 
+// Статусы деплоя.
+const (
+	statusIdle      = "idle"
+	statusDeploying = "deploying"
+	statusSuccess   = "success"
+	statusFailed    = "failed"
+	statusPending   = "pending"
+)
+
 // DeployState — сериализуемое состояние деплоя для JSON-ответов.
 type DeployState struct {
 	Status      string `json:"status"`
@@ -32,7 +41,7 @@ type stateManager struct {
 
 func newStateManager() *stateManager {
 	sm := &stateManager{
-		state: DeployState{Status: "idle"},
+		state: DeployState{Status: statusIdle},
 	}
 
 	// Восстановить PreviousTag из файла (переживает перезапуск)
@@ -47,7 +56,7 @@ func newStateManager() *stateManager {
 func (sm *stateManager) canDeploy() bool {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	return sm.state.Status == "idle" || sm.state.Status == "failed" || sm.state.Status == "success"
+	return sm.state.Status == statusIdle || sm.state.Status == statusFailed || sm.state.Status == statusSuccess
 }
 
 // tryAcquire atomically проверяет возможность деплоя и захватывает слот.
@@ -56,8 +65,8 @@ func (sm *stateManager) canDeploy() bool {
 func (sm *stateManager) tryAcquire() bool {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	if sm.state.Status == "idle" || sm.state.Status == "failed" || sm.state.Status == "success" {
-		sm.state.Status = "pending"
+	if sm.state.Status == statusIdle || sm.state.Status == statusFailed || sm.state.Status == statusSuccess {
+		sm.state.Status = statusPending
 		return true
 	}
 	return false
@@ -83,7 +92,7 @@ func (sm *stateManager) setStatus(status string) {
 	defer sm.mu.Unlock()
 
 	// При старте нового деплоя сохраняем предыдущий тег и очищаем логи
-	if status == "deploying" && (sm.state.Status == "idle" || sm.state.Status == "success" || sm.state.Status == "failed" || sm.state.Status == "pending") {
+	if status == statusDeploying && (sm.state.Status == statusIdle || sm.state.Status == statusSuccess || sm.state.Status == statusFailed || sm.state.Status == statusPending) {
 		if sm.state.ImageTag != "" {
 			sm.state.PreviousTag = sm.state.ImageTag
 		}
@@ -92,7 +101,7 @@ func (sm *stateManager) setStatus(status string) {
 	}
 
 	// Сохранить в файл для персистентности (переживает перезапуск)
-	if status == "success" && sm.state.ImageTag != "" {
+	if status == statusSuccess && sm.state.ImageTag != "" {
 		// Текущий ImageTag станет PreviousTag для следующего деплоя
 		if err := os.WriteFile(previousTagFile, []byte(sm.state.ImageTag+"\n"), 0644); err != nil {
 			log.Printf("warn: failed to save current tag: %v", err)
@@ -148,7 +157,7 @@ func (sm *stateManager) setFinishedAt() {
 func (sm *stateManager) fail(msg string) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
-	sm.state.Status = "failed"
+	sm.state.Status = statusFailed
 	sm.state.Error = msg
 	sm.state.FinishedAt = time.Now().Format(time.RFC3339)
 }
