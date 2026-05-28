@@ -345,11 +345,13 @@ services:
       - .env.staging
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./:/app:ro
+      - ./infra:/home/ukituki/LKFL-staging/infra:ro
+      - ./.env.staging:/home/ukituki/LKFL-staging/.env.staging:ro
+      - ./docker-compose.staging.yml:/home/ukituki/LKFL-staging/docker-compose.staging.yml:ro
     environment:
       PORT: "9092"
-      COMPOSE_FILE: /app/docker-compose.staging.yml
-      COMPOSE_DIR: /app
+      COMPOSE_FILE: /home/ukituki/LKFL-staging/docker-compose.staging.yml
+      COMPOSE_DIR: /home/ukituki/LKFL-staging
     networks:
       - lkfl_backend
       - lkfl_frontend
