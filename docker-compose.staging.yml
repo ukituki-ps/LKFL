@@ -350,9 +350,7 @@ services:
     environment:
       PORT: "9092"
       COMPOSE_FILE: docker-compose.staging.yml
-      GHCR_TOKEN: ${GHCR_TOKEN:-}
-      GHCR_USERNAME: ${GHCR_USERNAME:-ukituki}
-      WEBHOOK_SECRET: ${WEBHOOK_SECRET:-}
+      # GHCR_TOKEN, GHCR_USERNAME, WEBHOOK_SECRET come from env_file (.env.staging)
     networks:
       - lkfl_backend
       - lkfl_frontend
