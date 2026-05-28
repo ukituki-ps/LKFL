@@ -1,0 +1,346 @@
+# T2213 — CI/CD: GitHub Actions + Deploy Worker
+# План реализации (с учётом serverAI + аудита 35 пунктов)
+
+checklist:
+  # ========================================================================
+  # Фаза 0: serverAI — self-hosted GitHub Actions runners
+  # ========================================================================
+
+  - id: f0-runner-setup
+    name: "serverAI — запустить 7 GitHub Actions runners"
+    description: |
+      Готово:
+        - Debian 13, Docker 29.4.3, Buildx v0.33.0
+        - 30GB RAM, 16 CPU, 54GB free
+        - 7 instances: /home/ukituki/lkfl-runners/runner-{1..7}
+        - setup-runners.sh создан
+      Осталось:
+        - Создать GitHub PAT (scope: repo) → https://github.com/settings/tokens
+        - ssh serverAi && cd /home/ukituki/lkfl-runners && ./setup-runners.sh <PAT>
+        - Проверить: systemctl status lkfl-runner-{1..7}
+        - Проверить на GitHub: Settings → Actions → Runners → 7 online
+    status: todo
+
+  - id: f0-runner-isolation
+    name: "serverAI — изоляция runners (label lkfl, systemd)"
+    description: |
+      Изоляция от других проектов на serverAI:
+        - Директория: /home/ukituki/lkfl-runners/ (только LKFL)
+        - Label: lkfl (workflow: runs-on: lkfl)
+        - Systemd: lkfl-runner-{1..7}.service
+        - Security: NoNewPrivileges, ProtectSystem=strict
+        - User: ukituki (не root)
+      Установлено setup-runners.sh
+    status: done  # готово при f0-runner-setup
+
+  # ========================================================================
+  # Фаза 1: Dockerfile и CI
+  # ========================================================================
+
+  - id: f1-dockerfile-server
+    name: "Dockerfile.server — multi-stage build lkfl-server"
+    description: |
+      Разделить текущий Dockerfile на отдельные файлы.
+      golang:1.24-alpine → CGO_ENABLED=0 go build → distroless/base-debian12
+      Содержимое текущего Dockerfile stage 1+4
+      Build на serverAI (runs-on: lkfl)
+    status: done
+
+  - id: f1-dockerfile-proxy
+    name: "Dockerfile.proxy — multi-stage build lkfl-integration-proxy"
+    description: |
+      golang:1.24-alpine → CGO_ENABLED=0 go build → distroless/base-debian12
+      Содержимое текущего Dockerfile stage 2+5
+    status: done
+
+  - id: f1-dockerfile-frontend
+    name: "Dockerfile.frontend — Node build + nginx static образ"
+    description: |
+      # 🔴 Пункт 3: фронтенд — отдельный образ, не volume mount
+      node:20-alpine → npm ci → npm run build → nginx:1.27-alpine
+      COPY dist/ → /usr/share/nginx/html
+      COPY infra/nginx/frontend.conf → default.conf
+      EXPOSE 80
+    status: done
+
+  - id: f1-dockerfile-worker
+    name: "Dockerfile.deploy-worker — Go + git + bash + curl"
+    description: |
+      golang:1.24-alpine build → alpine:3.20 runtime
+      apk add git bash curl
+      Для orchestration docker compose через Docker socket
+      EXPOSE 9091 (не 9090 — конфликт с prometheus)
+    status: done
+
+  - id: f1-server-subcommands
+    name: "cmd/server/main.go — subcommand migrate + seed"
+    description: |
+      # 🔴 Пункт 4: миграции и seed должны работать
+      Перенос cmd/seed/ в subcommand "server seed"
+      Добавление subcommand "server migrate" (Atlas migrate apply)
+      CLI: switch os.Args[1] → migrate | seed | default(server)
+    status: done
+
+  - id: f1-ci-replace
+    name: "ЗАМЕНИТЬ ci.yml → build.yml (удалить ci.yml)"
+    description: |
+      # 🔴 Пункт 1: конфликт ci.yml vs build.yml
+      Удалить .github/workflows/ci.yml
+      Создать .github/workflows/build.yml:
+        Trigger: push [main, feature/*], pull_request
+        Jobs:
+          lint-test:
+            runs-on: ubuntu-latest (public)
+            go vet, go test -short, npm lint
+            Go version: 1.24 (синхронизировать с Dockerfile!)
+          build-push:
+            needs: lint-test
+            runs-on: lkfl  # ← serverAI self-hosted runner
+            strategy.matrix.service: [server, proxy, frontend, deploy-worker]
+            docker login GHCR ДО build (для cache pull!)
+            docker buildx build --push → ghcr.io/ukituki-ps/lkfl/{service}:{tag}
+            Docker layer cache через GHCR (type=registry, buildcache tag)
+        Тегирование: main-{sha}, pr-{number}-{sha}
+        Secrets: GITHUB_TOKEN (для GHCR push)
+    status: done
+
+  - id: f1-deploy-workflow
+    name: ".github/workflows/deploy.yml — webhook на dev.april.ukituki.tech/deploy-webhook"
+    description: |
+      # 🟢 Пункт 19: только на push в main
+      # Webhook доступен через nginx serverPr01 (уже настроен)
+      Trigger: workflow_run build.yml completed on main
+      Job: notify-deploy-worker
+        runs-on: ubuntu-latest
+        POST https://dev.april.ukituki.tech/deploy-webhook/deploy
+        Body: {branch, sha, imageTag}
+        Auth: Bearer ${{ secrets.DEPLOY_TOKEN }}
+    status: done
+
+  - id: f1-github-secrets
+    name: "GitHub secrets — DEPLOY_TOKEN"
+    description: |
+      DEPLOY_TOKEN — для авторизации webhook на deploy-worker
+      Настроить в repo Settings → Secrets → Actions
+    status: todo
+
+  # ========================================================================
+  # Фаза 2: Docker Compose — dev vs staging
+  # ========================================================================
+
+  - id: f2-compose-dev
+    name: "docker-compose.dev.yml — локальная разработка"
+    description: |
+      # 🔴 Пункт 6: разделить compose файлы
+      build: для lkfl-server и lkfl-proxy
+      volume mount: ./frontend/dist → nginx
+      volume mount: ./backend → hot reload
+      Все сервисы (postgres, redis, keycloak, nginx, prometheus)
+      Без deploy-worker, migrate, seed
+    status: done
+
+  - id: f2-compose-staging
+    name: "docker-compose.staging.yml — staging (pull из GHCR)"
+    description: |
+      # 🔴 Пункт 1: image: вместо build:
+      # 🔴 Пункт 11: был только docker-compose.yml
+      image: ${GHCR_REGISTRY}/lkfl/{service}:${IMAGE_TAG}
+      Без build: (сборка на serverAI через GitHub Actions)
+      Без volume mount frontend/dist (образ содержит dist/)
+      С lkfl-migrate, lkfl-seed, lkfl-deploy-worker
+      nginx upstream: lkfl-frontend:80 (отдельный сервис)
+      stop_grace_period: 35s для lkfl-server
+      deploy-worker порт: 9091 (не 9090 — конфликт с prometheus)
+      deploy-worker restart: always (не unless-stopped)
+    status: done
+
+  - id: f2-compose-fixes
+    name: "Исправления docker-compose"
+    description: |
+      # 🔴 Пункт 2: KC_DB_URL hostname
+      #   Оставить service name "postgres" — compose DNS резолвит по имени service key
+      # 🔴 Пункт 7: Loki — убрать из default, profile [monitoring]
+      # 🔴 Пункт 8: Grafana/Promtail — profile [monitoring]
+      # 🟡 Пункт 9: Порт 8080 → nginx:80 (не lkfl-server)
+      #   nginx ports: ["80:80", "443:443", "8080:80"]  ← 8080:80, не 8080:8080!
+      #   Убрать ports из lkfl-server
+      # 🔴 Пункт 15: Порт 9090 конфликт → deploy-worker на 9091
+      # 🟢 stop_grace_period: 35s для lkfl-server (graceful shutdown 30s)
+      # 🟢 deploy-worker restart: always (автоматический рестарт сервера)
+    status: done
+
+  - id: f2-nginx-fixes
+    name: "Исправления nginx config (default.conf)"
+    description: |
+      # 🔴 Пункт 2: Добавить location /nginx-health { return 200 "ok"; }
+      #   (было: отсутствует → nginx forever unhealthy)
+      # 🔴 Пункт 5: Добавить upstream lkfl_frontend { server lkfl-frontend:80; }
+      #   (было: serve static из volume, стало: proxy на отдельный образ)
+      # 🔴 Пункт callback: location /callback → proxy_pass http://lkfl_frontend
+      #   (было: serve static из volume, в staging volume нет → Keycloak callback сломается)
+      # 🟡 Пункт 5: Hardcoded X-Tenant-ID sdek → задокументировать как staging-only
+      #   (для white-label — динамическое разрешение по hostname в M23+)
+      # 🟡 Пункт 6: Добавить rate limiting:
+      #   limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+      #   limit_req_zone $binary_remote_addr zone=login:10m rate=1r/s;
+      #   limit_req zone=api burst=20 nodelay; (для /api и /admin)
+      # Убрать volume mount ./frontend/dist из nginx
+      # Изменить location / → proxy_pass http://lkfl_frontend
+    status: done
+
+  - id: f2-env-secrets
+    name: "Secrets — .env.staging → gitignore + .env.staging.example"
+    description: |
+      # 🔴 Пункт 8: .gitignore не покрывает .env.staging
+      .gitignore → добавить:
+        .env.staging
+        .env.production
+      .env.staging.example → шаблон с пустыми значениями:
+        DB_DSN=
+        REDIS_URL=
+        KEYCLOAK_ISSUER=
+        KEYCLOAK_CLIENT_SECRET=
+        JWT_SECRET=
+        GHCR_REGISTRY=ghcr.io/ukituki-ps/lkfl
+        IMAGE_TAG=
+        GHCR_TOKEN=
+        WEBHOOK_SECRET=
+        DEPLOY_TOKEN=
+    status: done
+
+  # ========================================================================
+  # Фаза 3: Deploy Worker
+  # ========================================================================
+
+  - id: f3-deploy-worker
+    name: "cmd/deploy-worker/ — HTTP API + Docker orchestration"
+    description: |
+      Порт: 9091 (не 9090 — конфликт с prometheus!)
+      API:
+        POST /deploy     — {branch, sha, pr, imageTag}
+                          → pull → migrate → up → seed → healthcheck
+        POST /deploy/pr  — PR preview на отдельный порт
+        POST /rollback   — откат к предыдущему IMAGE_TAG
+        GET  /status     — текущий деплой, очередь, результат
+        GET  /logs       — логи последнего деплоя
+      Валидация webhook (Authorization: Bearer ${DEPLOY_TOKEN})
+      Queue: однопоточная (sync.Mutex на деплой)
+      Docker compose через Docker socket mount
+      Идемпотентность:
+        - Migrate: Atlas idempotent по умолчанию
+        - Seed: INSERT ON CONFLICT DO NOTHING
+        - Pull: --ignore-buildable (не пересобирать)
+      Rollback: сохранять previous_image_tag в файл
+    status: done
+
+  # ========================================================================
+  # Фаза 4: Скрипты и Makefile
+  # ========================================================================
+
+  - id: f4-deploy-sh
+    name: "scripts/deploy.sh — переписать (без SSH)"
+    description: |
+      Выполняется внутри deploy-worker на serverDev
+      COMPOSE="docker compose -f docker-compose.staging.yml --env-file .env.staging"
+      0. echo "$GHCR_TOKEN" | docker login ghcr.io -u ukituki --password-stdin
+      1. $COMPOSE pull --ignore-buildable
+      2. $COMPOSE run --rm lkfl-migrate
+      3. $COMPOSE up -d
+      4. $COMPOSE run --rm lkfl-seed
+      5. wait_for_http http://lkfl-server:8080/healthz
+    status: done
+
+  - id: f4-predeploy-sh
+    name: "scripts/predeploy.sh — адаптировать"
+    description: |
+      Локальные проверки:
+        - Go build lkfl-server, lkfl-proxy
+        - npm run build frontend
+        - docker compose -f docker-compose.dev.yml config (валидация)
+        - docker compose -f docker-compose.staging.yml config (валидация)
+      Серверные проверки:
+        - GET http://serverDev:9091/status (deploy-worker доступен)
+    status: done
+
+  - id: f4-makefile
+    name: "Makefile — обновить цели"
+    description: |
+      dev-up:       docker compose -f docker-compose.dev.yml up -d
+      dev-down:     docker compose -f docker-compose.dev.yml down
+      dev-logs:     docker compose -f docker-compose.dev.yml logs -f
+      deploy:       curl POST serverDev:9091/deploy
+      deploy-health: curl serverDev:9091/status
+      deploy-rollback: curl POST serverDev:9091/rollback
+      predeploy:    ./scripts/predeploy.sh
+    status: done
+
+  # ========================================================================
+  # Фаза 5: Документация
+  # ========================================================================
+
+  - id: f5-adr
+    name: "ADR-036: CI/CD — serverAI runners + Deploy Worker"
+    description: |
+      Status: Accepted
+      Context:
+        - Текущий deploy.sh через SSH ненадёжен
+        - 35 проблем найдено при аудите (см. brief.md)
+        - ci.yml конфликтует с build.yml
+        - nginx /nginx-health отсутствует (forever unhealthy)
+        - Фронтенд upstream отсутствует (serve static вместо proxy)
+        - .gitignore не покрывает .env.staging
+        - Go version mismatch (1.22 vs 1.24)
+        - Порт 9090 конфликт (prometheus vs deploy-worker)
+        - Сборка на сервере, seed/migrate не работают
+        - Один compose на всё, secrets в репе
+      Decision: serverAI (7 self-hosted runners) → GHCR → Deploy Worker
+        - serverAI: Debian 13, 30GB RAM, 16 CPU, Docker 29.4.3
+        - 7 runner instances, label lkfl, изоляция systemd
+        - 4 Dockerfile (server, proxy, frontend, deploy-worker)
+        - 2 compose файла (dev, staging)
+        - Docker profiles (default, monitoring)
+        - CLI subcommands (migrate, seed)
+        - Deploy Worker порт 9091 (не 9090)
+        - Nginx: upstream lkfl_frontend, /nginx-health, rate limiting
+      Consequences:
+        - Сборка на мощном сервере с кэшем Docker layers
+        - Repeatable: любая ветка деплоится через webhook
+        - Secrets вне репозитория
+        - Мониторинг опционален (profile)
+        -   CI pipeline заменён (ci.yml → build.yml)
+    status: done
+
+  - id: f5-deploy-doc
+    name: "doc/деплой.md — полный rewrite"
+    description: |
+      Новая архитектура:
+        - serverAI (7 self-hosted runners) → GHCR → Deploy Worker
+        - Два compose файла (dev vs staging)
+        - Docker profiles
+        - API deploy-worker (порт 9091)
+        - Тегирование образов
+        - Secrets management
+        - Troubleshooting (обновлённый)
+        - Чек-лист деплоя
+        - X-Tenant-ID: задокументирован как staging-only limitation
+    status: done
+
+  # ========================================================================
+  # Фаза 6: Финальная проверка
+  # ========================================================================
+
+  - id: f6-e2e-test
+    name: "E2E тест: push → serverAI build → GHCR → deploy → healthz 200"
+    description: |
+      1. git push test-ветку в main
+      2. GitHub Actions build.yml:
+        - lint-test на ubuntu-latest → OK
+        - build-push на lkfl (serverAI) → 4 образа в GHCR
+      3. deploy.yml → POST serverDev:9091/deploy
+      4. Deploy worker: pull → migrate → up → seed → healthcheck
+      5. curl https://dev.april.ukituki.tech/healthz → 200
+      6. curl https://dev.april.ukituki.tech/ → 200 (frontend через lkfl_frontend upstream)
+      7. curl https://dev.april.ukituki.tech/api/v1/... → 401 (auth required — OK)
+      8. Проверить nginx health: curl http://serverDev:80/nginx-health → 200
+      9. Проверить deploy-worker: curl http://serverDev:9091/status → OK
+    status: todo

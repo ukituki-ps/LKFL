@@ -1,0 +1,39 @@
+package main
+
+import (
+	"fmt"
+	"os"
+)
+
+// Config — конфигурация deploy-worker из переменных окружения.
+type Config struct {
+	Port          int
+	WebhookSecret string
+	GHCRToken     string
+	ComposeFile   string
+	ComposeDir    string
+}
+
+// loadConfig загружает конфигурацию из переменных окружения.
+func loadConfig() Config {
+	port := 9091
+	if p := os.Getenv("PORT"); p != "" {
+		fmt.Sscanf(p, "%d", &port)
+	}
+
+	return Config{
+		Port:          port,
+		WebhookSecret: os.Getenv("WEBHOOK_SECRET"),
+		GHCRToken:     os.Getenv("GHCR_TOKEN"),
+		ComposeFile:   getEnvOrDefault("COMPOSE_FILE", "docker-compose.staging.yml"),
+		ComposeDir:    getEnvOrDefault("COMPOSE_DIR", "."),
+	}
+}
+
+// getEnvOrDefault возвращает значение переменной окружения или defaultVal, если пустая.
+func getEnvOrDefault(key, defaultVal string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return defaultVal
+}

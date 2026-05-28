@@ -1,0 +1,21 @@
+# syntax=docker/dockerfile:1
+# Deploy Worker — HTTP API для оркестрации docker compose на staging сервере
+# Порт: 9091 (не 9090 — конфликт с prometheus)
+#
+# Build: docker build -f Dockerfile.deploy-worker -t lkfl-deploy-worker:latest .
+# Run:   docker run -p 9091:9091 lkfl-deploy-worker:latest
+
+FROM golang:1.24-alpine AS build
+ENV GOTOOLCHAIN=auto
+RUN apk add --no-cache git ca-certificates tzdata
+WORKDIR /src
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+COPY backend/ ./
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -trimpath -o /deploy-worker ./cmd/deploy-worker/
+
+FROM alpine:3.20
+RUN apk add --no-cache git bash curl
+COPY --from=build /deploy-worker /usr/local/bin/deploy-worker
+EXPOSE 9091
+ENTRYPOINT ["deploy-worker"]

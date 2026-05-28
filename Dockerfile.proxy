@@ -1,0 +1,24 @@
+# syntax=docker/dockerfile:1
+# LKFL Integration Proxy — lkfl-integration-proxy binary
+# Multi-stage: Go build → distroless runtime
+#
+# Build: docker build -f Dockerfile.proxy -t lkfl-integration-proxy:latest .
+# Run:   docker run -p 8090:8090 -p 8091:8091 lkfl-integration-proxy:latest
+
+FROM golang:1.24-alpine AS base
+ENV GOTOOLCHAIN=auto
+RUN apk add --no-cache git ca-certificates tzdata
+WORKDIR /src
+COPY backend/go.mod backend/go.sum ./
+RUN go mod download
+
+FROM base AS proxy-build
+COPY backend/ ./
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -trimpath -o /proxy ./cmd/integration-proxy/
+
+FROM gcr.io/distroless/base-debian12 AS proxy
+WORKDIR /app
+COPY --chown=1001:1001 --from=proxy-build /proxy /app/proxy
+USER 1001:1001
+EXPOSE 8090 8091
+ENTRYPOINT ["/app/proxy"]
