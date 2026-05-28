@@ -345,12 +345,11 @@ services:
       - .env.staging
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - ./.env.staging:/.env.staging:ro
-      - ./docker-compose.staging.yml:/docker-compose.staging.yml:ro
+      - ./:/app:ro
     environment:
       PORT: "9092"
-      COMPOSE_FILE: docker-compose.staging.yml
-      # GHCR_TOKEN, GHCR_USERNAME, WEBHOOK_SECRET come from env_file (.env.staging)
+      COMPOSE_FILE: /app/docker-compose.staging.yml
+      COMPOSE_DIR: /app
     networks:
       - lkfl_backend
       - lkfl_frontend
