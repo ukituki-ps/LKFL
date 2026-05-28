@@ -1,5 +1,13 @@
 {
-  "worktrees": {},
+  "worktrees": {
+    "wt-1779996736316-1": {
+      "branch": "nice-bed",
+      "path": "/home/ukituki/LKFL/.kilo/worktrees/nice-bed",
+      "parentBranch": "main",
+      "createdAt": "2026-05-28T19:32:16.316Z",
+      "remote": "origin"
+    }
+  },
   "sessions": {
     "ses_19c2c954affeS920a5yjUkjlat": {
       "worktreeId": null,
@@ -32,19 +40,18 @@
     "ses_194f40e93ffeP5Dx5TLRHeJ6Xb": {
       "worktreeId": null,
       "createdAt": "2026-05-27T20:06:45.392Z"
+    },
+    "ses_18fed30b6ffepvl0y30hadBwBb": {
+      "worktreeId": "wt-1779996736316-1",
+      "createdAt": "2026-05-28T19:32:21.626Z"
     }
   },
   "tabOrder": {
     "local": [
-      "pending:1",
-      "ses_19c2c954affeS920a5yjUkjlat",
-      "ses_19c1b1b9fffeoPLJxDwO29l4Ml",
-      "ses_19c12d9d4ffebdEZYy1SiFqa1L",
-      "ses_195f07832ffenioWEgBUPyY4Xg",
-      "ses_195dee193ffestp7LpKpHR8DBW",
-      "ses_19587ec87ffeJ2yPLWrsq6BvYN",
-      "ses_1952f720cffebuvCXkcuf54EkB",
-      "ses_194f40e93ffeP5Dx5TLRHeJ6Xb"
+      "pending:1"
     ]
-  }
+  },
+  "worktreeOrder": [
+    "wt-1779996736316-1"
+  ]
 }

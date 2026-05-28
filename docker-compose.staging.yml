@@ -149,14 +149,14 @@ services:
     environment:
       DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER:-http://localhost:8080/realms/lkfl-sdek}
-      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL:-http://localhost:8080/realms/lkfl-sdek}
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
+      KEYCLOAK_PUBLIC_URL: http://keycloak:8080/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
       SERVER_PORT: "8080"
       LOG_LEVEL: ${LOG_LEVEL:-info}
       SENTRY_DSN: ${SENTRY_DSN:-}
-      JWT_SECRET: ${JWT_SECRET:-changeme}
+      JWT_SECRET: ${JWT_SECRET:-changeme-staging}
       TZ: Europe/Moscow
       RATE_LIMIT_AUTH: "100"
       RATE_LIMIT_CATALOG: "500"
@@ -330,21 +330,22 @@ services:
 
   # =========================================================================
   # lkfl-deploy-worker — webhook receiver → auto-deploy staging
-#   Принимает webhook от GitHub Actions, пулит новые образы из GHCR,
+  # Принимает webhook от GitHub Actions, пулит новые образы из GHCR,
   # применяет миграции и перезапускает сервисы.
-  # Порт 9091 (не 9090 — конфликт с prometheus!)
+  # Порт 9092 (не 9090 — конфликт с prometheus!)
   # =========================================================================
   lkfl-deploy-worker:
-    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/deploy-worker:latest
+    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/deploy-worker:main-latest
     restart: always
     stop_grace_period: 15s
     ports:
-      - "9091:9091"
+      - "9092:9092"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./.env.staging:/.env.staging:ro
       - ./docker-compose.staging.yml:/docker-compose.staging.yml:ro
     environment:
+      PORT: "9092"
       WEBHOOK_SECRET: ${WEBHOOK_SECRET}
       GHCR_TOKEN: ${GHCR_TOKEN}
       COMPOSE_FILE: docker-compose.staging.yml
