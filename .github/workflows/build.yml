@@ -78,7 +78,7 @@ jobs:
         working-directory: frontend
         run: |
           echo "@ukituki-ps:registry=https://npm.pkg.github.com" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.NPM_TOKEN }}" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ github.token }}" >> .npmrc
 
       - name: Install frontend dependencies
         working-directory: frontend
