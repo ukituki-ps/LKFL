@@ -10,7 +10,8 @@ import '@mantine/core/styles.css'
 
 // Экспортируем setupAuthForTest для E2E тестов (Playwright page.evaluate)
 if (typeof window !== 'undefined') {
-	;(window as any).__LKFL_AUTH_STORE__ = { setupAuthForTest }
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	(window as unknown as Record<string, unknown>).__LKFL_AUTH_STORE__ = { setupAuthForTest }
 }
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
