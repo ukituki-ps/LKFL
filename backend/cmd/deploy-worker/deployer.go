@@ -94,8 +94,8 @@ func (d *deployer) Rollback() {
 // ─── Docker Compose helpers ───
 
 func (d *deployer) composeCmd() string {
-	// Compose file references ./infra/ paths — нужно указать --project-dir
-	return fmt.Sprintf("docker compose -p lkfl-staging -f %s --env-file .env.staging --project-dir %s", d.cfg.ComposeFile, d.cfg.ComposeDir)
+	// Compose file references ./infra/ paths — нужно указать --project-directory
+	return fmt.Sprintf("docker compose -p lkfl-staging -f %s --env-file .env.staging --project-directory %s", d.cfg.ComposeFile, d.cfg.ComposeDir)
 }
 
 func (d *deployer) ghcrLogin() error {
