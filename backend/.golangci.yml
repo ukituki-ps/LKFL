@@ -17,10 +17,6 @@ linters-settings:
     ignore-calls: true
   revive:
     rules:
-      - name: exported
-        arguments:
-          - "checkPrivateReceivers"
-          - "none"
       - name: empty-block
       - name: package-comments
 
