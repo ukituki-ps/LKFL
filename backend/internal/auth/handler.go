@@ -244,10 +244,11 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		slog.Warn("token exchange failed", "status", resp.StatusCode, "body", string(body), "redirect_uri", savedRedirect)
+		slog.Error("token_exchange_failed", "status", resp.StatusCode, "body", string(body), "redirect_uri", savedRedirect)
 		shhttp.WriteJSONError(w, resp.StatusCode, string(body))
 		return
 	}
+	slog.Info("token_exchange_success", "id_token_len", len(body))
 
 	var tokenSet struct {
 		IDToken     string `json:"id_token"`
@@ -264,9 +265,11 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 		if h.metrics != nil {
 			h.metrics.AuthCallbackTotal.WithLabelValues("failure").Inc()
 		}
+		slog.Error("id_token_verify_failed", "error", err.Error(), "issuer_expected", h.issuer)
 		shhttp.WriteJSONError(w, http.StatusUnauthorized, "invalid id_token: "+err.Error())
 		return
 	}
+	slog.Info("id_token_verified_ok")
 
 	// 6. Извлекаем claims и роли из ID token
 	claims, roles, err := sharedauth.ExtractClaims(idToken)
