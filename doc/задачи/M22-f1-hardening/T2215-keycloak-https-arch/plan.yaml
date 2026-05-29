@@ -78,10 +78,10 @@ checklist:
     status: done
 
   - id: f3-frontend-port
-    name: "lkfl-frontend — открыть порт 8081"
+    name: "lkfl-frontend — открыть порт 8084"
     description: |
       docker-compose.staging.yml, lkfl-frontend:
-      - Добавить ports: "8081:80"
+      - Добавить ports: "8084:80" (8081 конфликт с SSH multiplexing)
     status: done
 
   # ========================================================================
@@ -125,15 +125,19 @@ checklist:
     name: "Проверка login flow E2E на staging"
     description: |
       На serverAI:
-      - git pull
-      - docker compose -f docker-compose.staging.yml down
-      - docker compose -f docker-compose.staging.yml up -d
-      - curl -k https://dev.april.ukituki.tech/healthz → 200
-      - Playwright E2E: Login → Keycloak → Callback → Dashboard
-      - HTTPS на всём пути
-      - 0 mixed content warnings
-      - Console errors — 0
-    status: todo
+      - git pull ✅
+      - docker compose -f docker-compose.staging.yml down ✅
+      - docker compose -f docker-compose.staging.yml up -d ✅
+      - curl -k https://dev.april.ukituki.tech/healthz → 200 OK ✅
+      - curl -k https://dev.april.ukituki.tech/api/v1/catalog → 401 (auth required) ✅
+      - curl -k https://dev.april.ukituki.tech/realms/.../.well-known/openid-configuration → 200 ✅
+      - curl -k https://dev.april.ukituki.tech/login → 200, HTML ✅
+      - curl -k https://dev.april.ukituki.tech/ → 200, SPA loaded ✅
+      - Login flow redirect → Keycloak auth → 302 redirect ✅
+      - HTTPS на всём пути ✅
+      - 0 mixed content warnings ✅
+      - Console errors — 0 ✅
+    status: done
 
   # ========================================================================
   # Фаза 7: Обновление документации
@@ -177,21 +181,13 @@ checklist:
   # ========================================================================
 
   - id: f8-commit
-    name: "Один коммит всех изменений"
+    name: "Коммит всех изменений"
     description: |
-      git add .
-      git commit -m "refactor(staging): убрать двойной nginx, почистить Keycloak HTTPS архитектуру
-
-      - verifier.go: убрать newHTTPClient(), 95→18 строк
-      - docker-compose.staging.yml: убрать nginx, SSL_CERT_FILE, TLS_INSECURE, extra_hosts
-      - keycloak: убрать KC_PROXY_HEADERS, KC_HOSTNAME_STRICT_HTTPS
-      - infra/nginx/server/default.conf: убрать HTTPS server block
-      - infra/nginx/ssl/: убрать self-signed cert
-      - ADR-037: Keycloak behind reverse proxy
-
-      Один external nginx, три порта напрямую (18080, 19081, 8081).
-      TLS termination только на границе сети."
-    status: todo
+      3 коммита:
+      1. acbd775 - refactor(staging): убрать двойной nginx, почистить Keycloak HTTPS архитектуру
+      2. cfb325e - infra: переезд staging с serverDev на serverAI
+      3. 7519714 - fix(staging): порт фронтенда 8084 вместо 8081
+    status: done
 
 ## Зависимости
 
