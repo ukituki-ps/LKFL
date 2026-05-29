@@ -157,6 +157,7 @@ func (h *Handler) LoginRedirect(w http.ResponseWriter, r *http.Request) {
 //
 //	→ обмен code на token, 200 с user data + session token
 func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
+	slog.Info("LoginCallback called", "method", r.Method, "path", r.URL.Path, "accept", r.Header.Get("Accept"), "code_len", len(r.URL.Query().Get("code")), "state_len", len(r.URL.Query().Get("state")))
 	// Браузерный запрос — редирект на фронтенд /callback с code и state
 	if isBrowserRequest(r) {
 		code := r.URL.Query().Get("code")
