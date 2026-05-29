@@ -101,11 +101,10 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
-      # hostname:v2 config:
+   # hostname:v2 config:
       # KC_HOSTNAME — primary hostname, используется для issuer и всех URL генерации.
       # KC_FRONTEND_URL — browser-visible URL (HTTPS).
       # KC_HOSTNAME_ADMIN — admin console URL (HTTPS).
-      # KC_HOSTNAME_BACKCHANNEL_URL — internal URL для backchannel (discovery, token exchange).
       # nginx передаёт Host: dev.april.ukituki.tech → issuer: http://dev.april.ukituki.tech/...
       # lkfl-server: extra_hosts маппит dev.april.ukituki.tech → host-gateway:80 → nginx → Keycloak.
       # KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/... → совпадает с discovery и token iss.
@@ -114,23 +113,10 @@ services:
       KC_HOSTNAME_STRICT_HTTP: "false"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
-      # Backchannel URL: discovery endpoint и token exchange используют этот URL.
-      # Без него Keycloak использует KC_HOSTNAME + HTTP scheme (так как KC_HTTP_ENABLED не установлен).
-      # KC_PROXY_HEADERS: xforwarded заставляет Keycloak читать scheme из X-Forwarded-Proto header.
-      # nginx передаёт X-Forwarded-Proto: https → Keycloak генерирует HTTPS URL в login form action.
-      KC_PROXY_HEADERS: xforwarded
       TZ: Europe/Moscow
-    command: start-dev --import-realm
-    volumes:
-      - staging_keycloak_data:/opt/keycloak/data
-      - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
-    healthcheck:
-      # Quarkus SmallRye Health — management port 9000
-      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && exec 3>&-"]
-      interval: 15s
-      timeout: 5s
-      retries: 10
-      start_period: 60s
+      RATE_LIMIT_AUTH: "100"
+      RATE_LIMIT_CATALOG: "500"
+      RATE_LIMIT_ADMIN: "200"
     depends_on:
       postgres:
         condition: service_healthy
@@ -167,10 +153,9 @@ services:
     environment:
       DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-     # Issuer теперь https:// из-за KC_PROXY_HEADERS=xforwarded.
-      # lkfl-server резолвит dev.april.ukituki.tech через extra_hosts → host-gateway → nginx:8443 (HTTPS).
-      # Для self-signed cert: нужно настроить SSL_CERT_FILE или GODEBUG=x509ignoreCN=0.
-      KEYCLOAK_ISSUER: https://dev.april.ukituki.tech/realms/lkfl-sdek
+     # Issuer использует http:// (lkfl-server резолвит через extra_hosts → host-gateway:80 → nginx → Keycloak).
+      # Keycloak генерирует HTTPS URL для browser через KC_PROXY_HEADERS + KC_FRONTEND_URL.
+      KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
@@ -290,7 +275,6 @@ services:
     ports:
       - "80:80"      # для extra_hosts: lkfl-server → host-gateway:80 → nginx → Keycloak
       - "8888:80"    # для external nginx forwarding
-      - "443:443"    # для extra_hosts HTTPS: lkfl-server → host-gateway:443 → nginx → Keycloak
       - "8443:443"
     volumes:
       - ./infra/nginx/server/default.conf:/etc/nginx/conf.d/default.conf:ro
