@@ -103,8 +103,10 @@ services:
       KC_HTTP_RELATIVE_PATH: /
       KC_HTTP_ENABLED: "true"
       KC_PROXY_ADDRESS_FORWARDING: "true"
-      KC_HOSTNAME: dev.april.ukituki.tech
-      KC_HOSTNAME_PORT: "443"
+      # hostname:v2: KC_HOSTNAME_URL задаёт точный baseURL для всех URL генерации.
+      # Из lkfl-server: issuer check через http://keycloak:8080 (Docker сеть).
+      # Из браузера: auth URL через KEYCLOAK_PUBLIC_URL (не зависит от KC_HOSTNAME_URL).
+      KC_HOSTNAME_URL: http://keycloak:8080
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       TZ: Europe/Moscow
