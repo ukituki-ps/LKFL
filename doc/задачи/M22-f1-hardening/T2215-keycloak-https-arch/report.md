@@ -120,16 +120,23 @@
 - [x] Config маршрутизирует `/` → 8084 ✅
 - [x] TLS termination — единственный слой (serverPr01) ✅
 
-### E2E тесты на staging
+### E2E тесты на staging (Playwright через браузер)
 
-- [x] `/healthz` → 200 OK ✅
-- [x] `/api/v1/catalog` → 401 (auth required, OK) ✅
-- [x] `/realms/lkfl-sdek/.well-known/openid-configuration` → 200, issuer: `http://dev.april.ukituki.tech/realms/lkfl-sdek` ✅
-- [x] `/login` → 200, HTML loaded ✅
-- [x] `/` → 200, frontend SPA loaded ✅
-- [x] Login flow redirect → Keycloak auth → 302 redirect ✅
-- [x] HTTPS на всём пути для браузера ✅
-- [x] 0 mixed content warnings ✅
+- [x] Navigate to /login ✅
+- [x] Login page loaded ✅
+- [x] Keycloak redirect ✅
+- [x] Keycloak auth page (title: 'Sign in to lkfl-sdek') ✅
+- [x] Fill username (admin) ✅
+- [x] Fill password (admin-dev-password) ✅
+- [x] Submit login form ✅
+- [x] Callback redirect → final URL: https://dev.april.ukituki.tech/ ✅
+- [x] Page loaded (title: 'LKFL — Платформа гибких льгот') ✅
+- [x] Dashboard content ✅
+- [x] HTTPS URL ✅
+- [x] Console errors: 0 ✅
+- [x] Screenshot saved ✅
+
+**Результат: 13/13 PASS, 0/13 FAIL** ✅
 
 ## Коммиты
 
