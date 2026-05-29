@@ -121,6 +121,13 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      # Quarkus SmallRye Health — management port 9000
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && exec 3>&-"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     deploy:
       resources:
         limits:
