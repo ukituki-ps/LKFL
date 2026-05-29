@@ -109,8 +109,9 @@ services:
       KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "true"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
-      # ADR-037: backchannel issuer для внутреннего discovery (lkfl-server → Keycloak)
+      # ADR-037: backchannel URL для внутренних операций Keycloak
       KC_HOSTNAME_BACKCHANNEL_URL: http://keycloak:8080
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
@@ -158,9 +159,10 @@ services:
     environment:
       DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
-      # Нет SSL_CERT_FILE / TLS_INSECURE — TLS termination только на external nginx.
-      KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/realms/lkfl-sdek
+     # Issuer = HTTPS (совпадает с Keycloak discovery при KC_HOSTNAME_STRICT_HTTPS=true).
+      # Token exchange → https://dev.april.ukituki.tech → nginx (443) → keycloak (19081).
+      # go-oidc verifier: iss claim из токена = https://dev.april.ukituki.tech/realms/lkfl-sdek.
+      KEYCLOAK_ISSUER: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
