@@ -209,13 +209,13 @@
 
 ### E2E
 
-- [ ] Деплой на serverDev работает end-to-end — ⏳ требует работающий serverAI + serverDev
+- [x] Деплой на serverAi работает end-to-end — ✅ push → build → push GHCR → webhook → deploy → healthz 200
 
 ### serverAI — runners
 
-- [ ] 7 runner instances запущены — ⏳ ручная настройка на serverAI
-- [ ] Label `lkfl` зарегистрирован в GitHub — ⏳ ручная настройка
-- [ ] GitHub PAT создан — ⏳ ручная настройка
+- [x] 7 runner instances запущены — ✅ lkfl-runner-{1..7} на serverAi
+- [x] Label `lkfl` зарегистрирован в GitHub — ✅
+- [x] GitHub PAT создан — ✅
 
 ## Проблемы и решения
 
@@ -253,11 +253,59 @@
 | 9 | P2 | `staging.yml` — `lkfl-deploy-worker` без `stop_grace_period` | `stop_grace_period: 15s` |
 | 10 | P2 | `docker-compose.prod.yml` — `lkfl-server` без `stop_grace_period` | `stop_grace_period: 35s` |
 
+## Пост-аудит исправления v3 (2026-05-28) — сессия 20:22
+
+**Контекст:** Аудит деплоя выявил 8 проблем (2 критических, 4 значимых, 2 минорных).
+Все исправлены в одной сессии, 7 коммитов → squash → 1.
+
+### Коммиты (до squash)
+
+| Коммит | Описание |
+|--------|----------|
+| `d05a9e9` | docker-compose plugin v2.38.0 в образ, `curl --fail`, порт 9092, GHCR username конфиг, keycloak healthcheck |
+| `6c765df` | GHCR_TOKEN из env_file, не из host env |
+| `a63a86d` | compose up исключает deploy-worker из перезапуска (self-resurrection bug) |
+| `f1589e3` | `--project-directory` для путей `./infra/` |
+| `fa7b60c` | `--project-directory` вместо `--project-dir` (compose v2.x флаг) |
+| `73bfe67` | Хостовый путь `/home/ukituki/LKFL-staging` для Docker daemon |
+| `fc93e40` | `max-parallel: 2` для build-push (один Docker daemon на serverAi) |
+
+### Исправления
+
+| # | Приоритет | Проблема | Фикс |
+|---|-----------|----------|------|
+| 1 | P0 | docker-compose plugin не установлен в образе deploy-worker | `Dockerfile.deploy-worker`: `curl --fail --silent --show-error --location` + `docker compose version` для верификации при сборке |
+| 2 | P0 | Порт 9091 vs 9092 (Dockerfile / default / compose не совпадали) | `EXPOSE 9092` в Dockerfile, `port := 9092` в `config.go` |
+| 3 | P1 | Хардкод GHCR username `"ukituki"` в `deployer.go` | `GHCR_USERNAME` env var (default: `ukituki`) в `config.go` + `deployer.go` |
+| 4 | P1 | Keycloak healthcheck «unhealthy» (TCP на 8080 не работает в Quarkus) | Healthcheck через Quarkus management `localhost:9000` (TCP) |
+| 5 | P1 | `depends_on: service_started` → server стартует раньше Keycloak | `depends_on: service_healthy` для lkfl-server → keycloak |
+| 6 | P1 | Deploy-worker пересоздавал сам себя (`compose up -d`) | Явный список сервисов: `postgres redis keycloak lkfl-server lkfl-integration-proxy lkfl-frontend nginx` |
+| 7 | P1 | `--project-dir` не распознан compose v2.x | `--project-directory` + `COMPOSE_DIR` env var |
+| 8 | P1 | Docker daemon не видит пути `./infra/` (контейнер vs хост) | Volume mount `./infra:/home/ukituki/LKFL-staging/infra:ro` + `COMPOSE_DIR=/home/ukituki/LKFL-staging` |
+| 9 | P2 | `environment: GHCR_TOKEN: ${GHCR_TOKEN:-}` переопределял env_file пустым | Убрать явные оверрайды для переменных, которые уже в `.env.staging` |
+| 10 | P2 | `curl -sSL` без `--fail` → HTML 404 записан как бинарник | `curl --fail --silent --show-error --location` |
+| 11 | P2 | CI перегружал Docker daemon (4 параллельных buildx) | `max-parallel: 2` в build.yml matrix strategy |
+
+### Результат
+
+- ✅ CI/CD pipeline работает end-to-end: push → lint → build → GHCR push → webhook → deploy → healthcheck
+- ✅ Все 8 сервисов staging healthy (serverAi)
+- ✅ External access: `dev.april.ukituki.tech` → serverAi:8888 через nginx serverPr01
+- ✅ Keycloak healthy (Quarkus management port)
+- ✅ Server OIDC подключение без retries
+
 ## Результат
 
-Задача T2213 выполнена. Все кодовые изменения готовы. 17 пост-аудит проблем исправлено (7 v1 + 10 v2).
+Задача T2213 выполнена. Все кодовые изменения готовы. 35 пост-аудит проблем исправлено (7 v1 + 10 v2 + 11 v3 + 7 infra).
 
-Осталась ручная настройка:
-- serverAI: GitHub PAT + runners setup (Фаза 0)
-- GitHub secrets: DEPLOY_TOKEN
-- E2E тест: требует работающие serverAI + serverDev
+### Итоговый статус инфраструктуры
+
+| Компонент | Статус |
+|-----------|--------|
+| serverAi (192.168.1.46) | ✅ amd64, CI runners (7 шт) + staging стенд |
+| serverPr01 | ✅ внешний nginx → serverAi:8888 |
+| serverDev (arm64) | ⏸ освобождён, можно отключить |
+| CI pipeline | ✅ зелёный, end-to-end рабочий |
+| Deploy-worker | ✅ port 9092, compose v2.38.0, self-exclude |
+| GHCR | ✅ pull/push рабочий |
+| External HTTPS | ✅ dev.april.ukituki.tech 200 OK |
