@@ -117,6 +117,7 @@ services:
       RATE_LIMIT_AUTH: "100"
       RATE_LIMIT_CATALOG: "500"
       RATE_LIMIT_ADMIN: "200"
+    command: start-dev --import-realm
     depends_on:
       postgres:
         condition: service_healthy
