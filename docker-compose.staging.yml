@@ -116,7 +116,9 @@ services:
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       # Backchannel URL: discovery endpoint и token exchange используют этот URL.
       # Без него Keycloak использует KC_HOSTNAME + HTTP scheme (так как KC_HTTP_ENABLED не установлен).
-      KC_HOSTNAME_BACKCHANNEL_URL: https://dev.april.ukituki.tech
+      # KC_PROXY_HEADERS: xforwarded заставляет Keycloak читать scheme из X-Forwarded-Proto header.
+      # nginx передаёт X-Forwarded-Proto: https → Keycloak генерирует HTTPS URL в login form action.
+      KC_PROXY_HEADERS: xforwarded
       TZ: Europe/Moscow
     command: start-dev --import-realm
     volumes:
