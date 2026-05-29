@@ -101,18 +101,14 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
-   # hostname:v2 config:
-      # KC_HOSTNAME — primary hostname, используется для issuer и всех URL генерации.
+   # ADR-037: hostname:v2 без KC_PROXY_HEADERS + KC_HOSTNAME_STRICT_HTTPS.
+      # KC_HOSTNAME — browser redirect URI hostname.
       # KC_FRONTEND_URL — browser-visible URL (HTTPS).
       # KC_HOSTNAME_ADMIN — admin console URL (HTTPS).
-      # nginx передаёт Host: dev.april.ukituki.tech → issuer: http://dev.april.ukituki.tech/...
-      # lkfl-server: extra_hosts маппит dev.april.ukituki.tech → host-gateway:80 → nginx → Keycloak.
-      # KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/... → совпадает с discovery и token iss.
+      # Issuer внутри Docker-сети: http://keycloak:8080/realms/lkfl-sdek.
       KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
-      KC_HOSTNAME_STRICT_HTTPS: "true"
-      KC_PROXY_HEADERS: xforwarded
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
@@ -154,18 +150,14 @@ services:
       - "18080:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
-      # Маппинг public URL → host-gateway: discovery endpoint доступен
-      # через nginx proxy (Host: dev.april.ukituki.tech) → Keycloak.
-      # issuer в discovery = http://dev.april.ukituki.tech/... = token iss (browser flow).
-      - "dev.april.ukituki.tech:host-gateway"
     env_file:
       - .env.staging
     environment:
       DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-     # Issuer HTTPS: lkfl-server резолвит dev.april.ukituki.tech через extra_hosts → nginx:443 → Keycloak.
-      # KC_PROXY_HEADERS=xforwarded → Keycloak генерирует HTTPS URL (form action, discovery, token iss).
-      KEYCLOAK_ISSUER: https://dev.april.ukituki.tech/realms/lkfl-sdek
+      # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
+      # Нет SSL_CERT_FILE / TLS_INSECURE — TLS termination только на external nginx.
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
@@ -177,11 +169,6 @@ services:
       RATE_LIMIT_AUTH: "100"
       RATE_LIMIT_CATALOG: "500"
       RATE_LIMIT_ADMIN: "200"
-      # Trust self-signed cert for Keycloak HTTPS discovery through nginx:443
-      SSL_CERT_FILE: /etc/nginx/ssl/server.crt
-      TLS_INSECURE: "true"  # staging: fallback если cert не загрузился
-    volumes:
-      - ./infra/nginx/ssl/server.crt:/etc/nginx/ssl/server.crt:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -258,6 +245,9 @@ services:
   lkfl-frontend:
     image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/frontend:${IMAGE_TAG:-main-latest}
     restart: unless-stopped
+    # ADR-037: порт 8081 напрямую для external nginx (без internal nginx)
+    ports:
+      - "8081:80"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
       interval: 15s
@@ -272,47 +262,6 @@ services:
         reservations:
           memory: 32M
           cpus: "0.05"
-    networks:
-      - lkfl_frontend
-
-  # =========================================================================
-  # Nginx 1.27 — Reverse Proxy + TLS (staging)
-  # Маршрутизация: /api → lkfl-server, / → lkfl-frontend upstream
-  # Фронтенд теперь отдельный upstream (lkfl_frontend), не volume mount
-  # =========================================================================
-  nginx:
-    image: nginx:1.27-alpine
-    restart: unless-stopped
-    ports:
-      - "80:80"      # для extra_hosts: lkfl-server → host-gateway:80 → nginx → Keycloak
-      - "8888:80"    # для external nginx forwarding
-      - "443:443"    # HTTPS для lkfl-server → nginx:443 → Keycloak discovery
-    volumes:
-      - ./infra/nginx/server/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
-    depends_on:
-      - lkfl-server
-      - lkfl-frontend
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:80/nginx-health || exit 1"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-          cpus: "0.5"
-        reservations:
-          memory: 64M
-          cpus: "0.1"
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "5"
-        tag: "nginx"
     networks:
       - lkfl_frontend
 

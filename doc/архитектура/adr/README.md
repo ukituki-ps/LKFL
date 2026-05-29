@@ -1,6 +1,6 @@
 # ADR — Архитектурные решения
 
-> **36 файлов.** 27 Accepted, 4 Superseded, 5 Note.
+> **37 файлов.** 28 Accepted, 4 Superseded, 5 Note.
 
 ---
 
@@ -44,6 +44,7 @@
 | [034](./034-i18n-yagni.md) | i18n — YAGNI | ✅ | 84 |
 | [035](./035-integration-proxy.md) | Integration Proxy — вынос внешних интеграций из монолита | ✅ Accepted | 438 |
 | [036](./036-ci-cd-deploy-worker.md) | CI/CD — serverAI self-hosted runners + Deploy Worker | ✅ Accepted | 122 |
+| [037](./037-keycloak-reverse-proxy.md) | Keycloak behind reverse proxy — один nginx, чистый verifier.go | ✅ Accepted | 150 |
 
 ---
 

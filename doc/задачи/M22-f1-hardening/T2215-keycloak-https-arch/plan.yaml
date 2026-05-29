@@ -1,0 +1,198 @@
+# T2215 — Очистка архитектуры Keycloak/HTTPS на staging
+# Один коммит, один конфиг, ноль костылей
+
+checklist:
+  # ========================================================================
+  # Фаза 1: ADR-037 — документация архитектуры
+  # ========================================================================
+
+  - id: f1-adr
+    name: "ADR-037 — Keycloak behind reverse proxy"
+    description: |
+      Создать doc/архитектура/adr/037-keycloak-reverse-proxy.md:
+      - Context: двойной nginx → 12+ коммитов костылей за 2 дня
+      - Decision: один external nginx, три порта напрямую
+      - Keycloak hostname:v2 config — правильные настройки
+      - verifier.go — чистый go-oidc, без хак-обёрток
+      - 4 правила (TLS termination, issuer URL, hostname:v2, verifier.go)
+      - Consequences: 9 файлов/настроек убрано, 95→18 строк в verifier.go
+    status: done
+
+  # ========================================================================
+  # Фаза 2: Go — чистка verifier.go
+  # ========================================================================
+
+  - id: f2-verifier-clean
+    name: "Убрать newHTTPClient() из verifier.go"
+    description: |
+      backend/shared/pkg/auth/verifier.go:
+      - Удалить newHTTPClient() (строки 28-58)
+      - Удалить подмену http.DefaultTransport в NewVerifier() (строки 75-77)
+      - Удалить imports: crypto/tls, crypto/x509, net/http, os
+      - Оставить: context, fmt, log/slog, time, github.com/coreos/go-oidc
+      - Оставить чистый oidc.NewProvider + retry loop
+    status: done
+
+  - id: f2-compile
+    name: "Проверка компиляции"
+    description: |
+      cd backend && go build ./...
+      cd backend && go vet ./...
+    status: done
+
+  # ========================================================================
+  # Фаза 3: Docker Compose staging — чистка
+  # ========================================================================
+
+  - id: f3-server-clean
+    name: "lkfl-server — убрать костыли"
+    description: |
+      docker-compose.staging.yml, lkfl-server:
+      - Убрать extra_hosts: dev.april.ukituki.tech:host-gateway
+      - Убрать KEYCLOAK_ISSUER: https://... → http://keycloak:8080/...
+      - Убрать SSL_CERT_FILE: /etc/nginx/ssl/server.crt
+      - Убрать TLS_INSECURE: "true"
+      - Убрать volumes: server.crt mount
+      - Оставить extra_hosts: host.docker.internal:host-gateway
+      - Добавить комментарий: "← ADR-037: issuer = внутренний URL Keycloak"
+    status: done
+
+  - id: f3-keycloak-clean
+    name: "Keycloak — убрать KC_PROXY_HEADERS + STRICT_HTTPS"
+    description: |
+      docker-compose.staging.yml, keycloak:
+      - Убрать KC_PROXY_HEADERS: xforwarded
+      - Убрать KC_HOSTNAME_STRICT_HTTPS: "true"
+      - Оставить KC_HOSTNAME: dev.april.ukituki.tech
+      - Оставить KC_HOSTNAME_STRICT: "false"
+      - Оставить KC_HOSTNAME_STRICT_HTTP: "false"
+    status: done
+
+  - id: f3-nginx-remove
+    name: "Nginx container — убрать из staging"
+    description: |
+      docker-compose.staging.yml:
+      - Удалить service nginx целиком
+      - Удалить volumes staging nginx-related
+      - Оставить nginx для локальной dev (docker-compose.dev.yml)
+    status: done
+
+  - id: f3-frontend-port
+    name: "lkfl-frontend — открыть порт 8081"
+    description: |
+      docker-compose.staging.yml, lkfl-frontend:
+      - Добавить ports: "8081:80"
+    status: done
+
+  # ========================================================================
+  # Фаза 4: Nginx config — убрать internal
+  # ========================================================================
+
+  - id: f4-https-block
+    name: "Убрать HTTPS server block из default.conf"
+    description: |
+      infra/nginx/server/default.conf:
+      - Удалить server block listen 443 ssl (строки 27-57)
+      - Оставить server block listen 80 (для локальной dev)
+    status: done
+
+  - id: f4-ssl-remove
+    name: "Убрать self-signed cert файлы"
+    description: |
+      - Удалить infra/nginx/ssl/server.crt
+      - Удалить infra/nginx/ssl/server.key
+      - Удалить volume mount ssl в docker-compose.staging.yml nginx
+    status: done
+
+  # ========================================================================
+  # Фаза 5: External nginx config
+  # ========================================================================
+
+  - id: f5-external-doc
+    name: "Задокументировать external nginx config"
+    description: |
+      В ADR-037 добавить секцию "External nginx config":
+      - Пример конфига для staging (3 upstream'а)
+      - Mapping портов: backend 18080, keycloak 19081, frontend 8081
+      - Как добавить новые upstream'ы
+    status: done
+
+  # ========================================================================
+  # Фаза 6: E2E тест
+  # ========================================================================
+
+  - id: f6-e2e
+    name: "Проверка login flow E2E на staging"
+    description: |
+      На serverDev:
+      - git pull
+      - docker compose -f docker-compose.staging.yml down
+      - docker compose -f docker-compose.staging.yml up -d
+      - curl -k https://dev.april.ukituki.tech/healthz → 200
+      - Playwright E2E: Login → Keycloak → Callback → Dashboard
+      - HTTPS на всём пути
+      - 0 mixed content warnings
+      - Console errors — 0
+    status: todo
+
+  # ========================================================================
+  # Фаза 7: Обновление документации
+  # ========================================================================
+
+  - id: f7-adr-index
+    name: "Обновить doc/архитектура/adr/README.md"
+    description: |
+      Добавить ADR-037 в сводную таблицу:
+      | [037](./037-keycloak-reverse-proxy.md) | Keycloak behind reverse proxy — один nginx, чистый verifier.go | ✅ | N |
+    status: done
+
+  - id: f7-plan
+    name: "Обновить doc/план/задачи.md"
+    description: |
+      Добавить T2215 в таблицу M22:
+      | M22 | T2215 | code | ⬜ | ⬜ | ⬜ | 0% | — |
+    status: done
+
+  - id: f7-deploy-doc
+    name: "Обновить doc/деплой.md (если существует)"
+    description: |
+      Секция staging:
+      - Архитектура: external nginx → 3 порта
+      - Почему нет internal nginx
+      - Ссылка на ADR-037
+    status: done
+
+  - id: f7-comments
+    name: "Добавить комментарии в docker-compose.staging.yml"
+    description: |
+      lkfl-server:
+        # ← ADR-037: issuer = внутренний URL Keycloak (http://keycloak:8080)
+        # ← ADR-037: нет SSL_CERT_FILE — TLS termination только на external nginx
+      keycloak:
+        # ← ADR-037: hostname:v2 без KC_PROXY_HEADERS + KC_HOSTNAME_STRICT_HTTPS
+    status: done
+
+  # ========================================================================
+  # Фаза 8: Коммит
+  # ========================================================================
+
+  - id: f8-commit
+    name: "Один коммит всех изменений"
+    description: |
+      git add .
+      git commit -m "refactor(staging): убрать двойной nginx, почистить Keycloak HTTPS архитектуру
+
+      - verifier.go: убрать newHTTPClient(), 95→18 строк
+      - docker-compose.staging.yml: убрать nginx, SSL_CERT_FILE, TLS_INSECURE, extra_hosts
+      - keycloak: убрать KC_PROXY_HEADERS, KC_HOSTNAME_STRICT_HTTPS
+      - infra/nginx/server/default.conf: убрать HTTPS server block
+      - infra/nginx/ssl/: убрать self-signed cert
+      - ADR-037: Keycloak behind reverse proxy
+
+      Один external nginx, три порта напрямую (18080, 19081, 8081).
+      TLS termination только на границе сети."
+    status: todo
+
+## Зависимости
+
+depends_on: [T2210, T2213]
