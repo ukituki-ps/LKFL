@@ -152,6 +152,7 @@ services:
       DB_DSN: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/lkfl_platform?sslmode=disable
       REDIS_URL: redis://default:${REDIS_PASSWORD:-changeme-prod}@redis:6379
       KEYCLOAK_ISSUER: http://${KEYCLOAK_HOSTNAME:-localhost}:8081/realms/lkfl-sdek
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL:-https://${DOMAIN:-example.com}/realms/lkfl-sdek}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:?KEYCLOAK_CLIENT_SECRET required}
       SERVER_PORT: "8080"
