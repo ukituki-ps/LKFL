@@ -1,0 +1,5 @@
+-- Rollback: remove metadata from users and settings from accounts
+ALTER TABLE lkfl_platform.users
+    DROP COLUMN IF EXISTS metadata;
+ALTER TABLE lkfl_platform.accounts
+    DROP COLUMN IF EXISTS settings;
