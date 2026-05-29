@@ -5,17 +5,22 @@ import {
 	Stack,
 	Table,
 	Badge,
-	ActionIcon,
-	Tooltip,
+	Button,
 } from '@mantine/core'
-import { AprilIconFileText, AprilIconSuccess, AprilIconClipboardList } from '@ukituki-ps/april-ui'
+import {
+	AprilIconFileText,
+	AprilIconSuccess,
+	AprilIconDownload,
+} from '@ukituki-ps/april-ui'
 import { StubBadge } from '@/components/ui/StubBadge'
 
 /* ─── Mock data ─── */
 
+/* ГЭП-9: добавлено docMeta поле */
 const mockDocuments = [
 	{
 		name: 'Согласие на обработку ПДн',
+		docMeta: 'Платформа · ПДн',
 		type: 'Согласие',
 		date: '01.05.2026',
 		status: 'Подписано',
@@ -23,6 +28,7 @@ const mockDocuments = [
 	},
 	{
 		name: 'Заявление на льготу «Фитнес-клуб»',
+		docMeta: 'World Class · Фитнес',
 		type: 'Заявление',
 		date: '15.05.2026',
 		status: 'Одобрено',
@@ -30,6 +36,7 @@ const mockDocuments = [
 	},
 	{
 		name: 'Полис ДМС — СОГАЗ',
+		docMeta: 'АльфаСтрахование · ДМС',
 		type: 'Полис',
 		date: '10.05.2026',
 		status: 'Активен',
@@ -37,6 +44,7 @@ const mockDocuments = [
 	},
 	{
 		name: 'Заявление на льготу «Онлайн-кинотеатр»',
+		docMeta: 'KION · Развлечения',
 		type: 'Заявление',
 		date: '20.05.2026',
 		status: 'На рассмотрении',
@@ -46,7 +54,9 @@ const mockDocuments = [
 
 /**
  * Страница «Документы» — заглушка по прототипу.
- * Таблица: документ, тип, дата, статус, «Скачать».
+ *
+ * ГЭП-9: secondary doc-meta строка под названием.
+ * ГЭП-10: кнопка «Скачать» с текстом + иконка.
  */
 export function Documents() {
 	return (
@@ -93,7 +103,7 @@ export function Documents() {
 									Статус
 								</Text>
 							</th>
-							<th style={{ width: 60 }}>
+							<th style={{ width: 100 }}>
 								<Text size="xs" fw={600} c="dimmed">
 									—
 								</Text>
@@ -106,6 +116,10 @@ export function Documents() {
 								<td>
 									<Text size="sm" fw={500}>
 										{doc.name}
+									</Text>
+									{/* ГЭП-9: secondary строка */}
+									<Text size="xs" c="dimmed" mt={2}>
+										{doc.docMeta}
 									</Text>
 								</td>
 								<td>
@@ -143,11 +157,17 @@ export function Documents() {
 									</Badge>
 								</td>
 								<td>
-									<Tooltip label="Скачать">
-										<ActionIcon variant="subtle" color="dimmed" size="sm">
-											<AprilIconClipboardList size={14} />
-										</ActionIcon>
-									</Tooltip>
+									{/* ГЭП-10: кнопка «Скачать» с текстом */}
+									<Button
+										variant="subtle"
+										size="xs"
+										leftSection={<AprilIconDownload size={12} />}
+										onClick={() => {
+											// Stub — скачивание файла в F2
+										}}
+									>
+										Скачать
+									</Button>
 								</td>
 							</tr>
 						))}

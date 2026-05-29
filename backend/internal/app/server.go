@@ -141,7 +141,7 @@ func NewServer(
 	})
 	r.Mount("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
-// ─── Auth routes (публичные, без JWT) ───
+	// ─── Auth routes (public, no JWT) ───
 	// Defined as a MOUNTED sub-router so chi does NOT apply middleware
 	// from the /api/v1/ group to these paths.
 	authRouter := chi.NewRouter()

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, Badge as MantineBadge, Text, Group, Box } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import type { EngagementTypeResponse } from '@/api/types'
@@ -108,12 +109,17 @@ function formatPrice(cents: number): string {
  * ├─────────────────────────┤
  * │  Цена        [badge]    │
  * └─────────────────────────┘
+ *
+ * ГЭП-8: hover-эффект — translateY(-2px) + усиленный shadow.
  */
 export function EngagementCard({ engagement }: EngagementCardProps) {
 	const badgeColor = getBadgeColor(engagement.badge_color, engagement.badge)
 	const priceDisplay =
 		engagement.price_display ||
 		(engagement.cost_cents != null ? formatPrice(engagement.cost_cents) : '')
+
+	/* ГЭП-8: hover state */
+	const [hovered, setHovered] = useState(false)
 
 	return (
 		<Card
@@ -124,7 +130,14 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 			style={{
 				display: 'flex',
 				flexDirection: 'column',
+				transition: 'transform 0.15s, box-shadow 0.15s',
+				transform: hovered ? 'translateY(-2px)' : 'none',
+				boxShadow: hovered
+					? '0 4px 16px rgba(0,0,0,0.1)'
+					: 'var(--brand-shadow-card)',
 			}}
+			onMouseEnter={() => setHovered(true)}
+			onMouseLeave={() => setHovered(false)}
 		>
 			<Link
 				to={`/catalog/${engagement.slug}`}

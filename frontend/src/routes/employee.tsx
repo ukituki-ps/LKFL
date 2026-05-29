@@ -7,6 +7,7 @@ export const employeeRoutes = [
 	{ path: '/points', label: 'Баллы', icon: 'star' },
 	{ path: '/documents', label: 'Документы', icon: 'file' },
 	{ path: '/support', label: 'Поддержка', icon: 'help' },
+	{ path: '/catalog/:slug', label: 'Детали льготы', icon: 'grid', hidden: true },
 ] as const
 
 export type EmployeeRoute = (typeof employeeRoutes)[number]

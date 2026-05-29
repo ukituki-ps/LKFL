@@ -1,31 +1,42 @@
-import { Group, Badge, ActionIcon, Tooltip } from '@mantine/core'
+import { Group, ActionIcon, Tooltip } from '@mantine/core'
 import { AprilIconBell, AprilIconCoins } from '@ukituki-ps/april-ui'
 import { UserMenu } from './UserMenu'
 
 /**
  * Правая зона header'а: баланс, уведомления, профиль.
  *
- * Баланс — mock-значение «1 250» (подключится в F2).
- * Колокольчик — заглушка (переход на /notifications — TODO F2).
+ * ГЭП-5: Balance pill — зелёная пилюля по стилям прототипа:
+ *   background: #F0FDF4; border: 1px solid #BBF7D0; border-radius: 20px; color: #166534
+ *   текст «N баллов»
  */
 export function HeaderRight() {
 	return (
 		<Group gap={10}>
-			{/* Balance pill — mock до F2 */}
+			{/* ГЭП-5: Balance pill — кастомная пилюля по прототипу */}
 			<Tooltip label="Баланс баллов — подключится в F2">
-				<Badge
-					leftSection={<AprilIconCoins size={14} />}
-					variant="light"
-					color="brand"
-					size="sm"
+				<div
 					style={{
+						display: 'flex',
+						alignItems: 'center',
+						gap: 6,
+						background: '#F0FDF4',
+						border: '1px solid #BBF7D0',
+						borderRadius: 20,
+						padding: '4px 12px',
 						cursor: 'default',
-						fontWeight: 600,
-						fontSize: 12,
 					}}
 				>
-					1 250
-				</Badge>
+					<AprilIconCoins size={14} style={{ color: '#166534' }} />
+					<Text
+						style={{
+							fontSize: 12,
+							fontWeight: 600,
+							color: '#166534',
+						}}
+					>
+						1 250 баллов
+					</Text>
+				</div>
 			</Tooltip>
 
 			{/* Bell icon — заглушка */}
@@ -46,3 +57,5 @@ export function HeaderRight() {
 		</Group>
 	)
 }
+
+import { Text } from '@mantine/core'

@@ -1,0 +1,93 @@
+# plan.yaml — T2214.6 Исправление гэпов прототипа
+
+checklist:
+  - id: gap-1
+    title: "ГЭП-1: Страница детализации льготы /catalog/:slug"
+    tasks:
+      - "Создать src/pages/CatalogDetail.tsx с BENEFIT_DATA mock"
+      - "Добавить маршрут /catalog/:slug в App.tsx"
+      - "Добавить entry в routes/employee.tsx"
+      - "DMS-льготы с табами «Условия» / «Полис» / «Клиники»"
+    status: done
+
+  - id: gap-2
+    title: "ГЭП-2: Dashboard — Быстрые действия из прототипа"
+    tasks:
+      - "Заменить mockQuickActions на 5 элементов из прототипа"
+      - "Grid 2 колонки"
+      - "Toast «Функция будет доступна после F2» при клике"
+    status: done
+
+  - id: gap-3
+    title: "ГЭП-3: Dashboard — Layout 2 колонки"
+    tasks:
+      - "Левая колонка: Активные льготы + Лента событий"
+      - "Правая колонка (292px): Быстрые действия"
+      - "Убрать QuickActionsGrid из нижней части"
+    status: done
+
+  - id: gap-4
+    title: "ГЭП-4: Points — Layout side-by-side"
+    tasks:
+      - "Левая колонка (320px): зелёная карточка с категориями внутри"
+      - "Правая колонка: Card с фильтрами + транзакции"
+      - "Перенести прогресс-бары внутрь зелёной карточки"
+    status: done
+
+  - id: gap-5
+    title: "ГЭП-5: Header — Balance pill стиль"
+    tasks:
+      - "Заменить Mantine Badge на кастомную пилюлю"
+      - "background: #F0FDF4, border: #BBF7D0, border-radius: 20px"
+      - "Текст «N баллов»"
+    status: done
+
+  - id: gap-6
+    title: "ГЭП-6: Dashboard — Stat card 1 зелёный фон"
+    tasks:
+      - "Зелёный фон, белый текст для карточки «Баланс баллов»"
+      - "Subtitle: «+500 баллов в июне»"
+    status: done
+
+  - id: gap-7
+    title: "ГЭП-7: Dashboard — Лента событий"
+    tasks:
+      - "Иконки в цветных квадратах (30×30, border-radius 8px)"
+      - "Временные метки под текстом"
+      - "Bold ключевые части текста"
+    status: done
+
+  - id: gap-8
+    title: "ГЭП-8: Каталог — Hover-эффект карточек"
+    tasks:
+      - "transition: transform 0.15s, box-shadow 0.15s"
+      - "hover: translateY(-2px), shadow усиленный"
+    status: done
+
+  - id: gap-9
+    title: "ГЭП-9: Documents — secondary doc-meta"
+    tasks:
+      - "Добавить docMeta поле в моки"
+      - "Рендерить как Text size=xs c=dimmed под именем"
+    status: done
+
+  - id: gap-10
+    title: "ГЭП-10: Documents — кнопка «Скачать»"
+    tasks:
+      - "Заменить ActionIcon на Button variant=subtle с текстом"
+    status: done
+
+  - id: gap-11
+    title: "ГЭП-11: Support — success state"
+    tasks:
+      - "useState для tracking формы/успеха"
+      - "onSubmit: показать success block"
+      - "Success: иконка + текст + «Мы ответим в течение 1 рабочего дня»"
+    status: done
+
+  - id: gap-12
+    title: "ГЭП-12: Dashboard — Stat card 3 формат"
+    tasks:
+      - "value (число 26px fw:800) + suffix («дн» 16px fw:600)"
+      - "Подпись: «Период: янв — июн 2025»"
+    status: done

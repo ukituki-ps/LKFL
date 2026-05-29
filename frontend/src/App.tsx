@@ -20,6 +20,9 @@ const Documents = React.lazy(
 const Support = React.lazy(
 	() => import('@/pages/Support').then((m) => ({ default: m.Support })),
 )
+const CatalogDetail = React.lazy(
+	() => import('@/pages/CatalogDetail').then((m) => ({ default: m.CatalogDetail })),
+)
 
 // Lazy loaded admin pages
 const AdminHR = React.lazy(
@@ -83,6 +86,7 @@ export function App() {
 						<Route element={<Shell />}>
 							<Route path="/" element={<Dashboard />} />
 							<Route path="/catalog" element={<Catalog />} />
+							<Route path="/catalog/:slug" element={<CatalogDetail />} />
 							<Route path="/points" element={<Points />} />
 							<Route path="/documents" element={<Documents />} />
 							<Route path="/support" element={<Support />} />

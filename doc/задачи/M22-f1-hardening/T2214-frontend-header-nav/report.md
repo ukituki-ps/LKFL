@@ -13,6 +13,7 @@
 | **T2214.2** | ✅ выполнено | Shell → AprilProductHeader, навигация |
 | **T2214.3** | ✅ выполнено | Страницы-заглушки с моками |
 | **T2214.4** | ✅ выполнено | Каталог: EngagementCard + FilterBar |
+| **T2214.6** | ✅ выполнено | Исправление 12 гэпов прототипа |
 
 ## Что сделано (агрегированно)
 
@@ -21,6 +22,7 @@
 3. **Shell (T2214.2)** — горизонтальный layout с AprilProductHeader, HeaderNav, HeaderRight, мобильная навигация Burger → Drawer
 4. **Страницы-заглушки (T2214.3)** — Dashboard, Points, Documents, Support с моками + StubBadge
 5. **Каталог (T2214.4)** — EngagementCard по прототипу, FilterBar с SegmentedControl, grid 3 колонки
+6. **Гэпы прототипа (T2214.6)** — 12 гэпов устранено: CatalogDetail, Dashboard 2 колонки, Points side-by-side, Balance pill, hover, success state и др.
 
 ## Аудит (исправления после первоначальной реализации)
 

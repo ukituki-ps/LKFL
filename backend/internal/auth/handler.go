@@ -21,6 +21,8 @@ import (
 	shhttp "lkfl/shared/pkg/http"
 )
 
+const protoHTTPS = "https"
+
 // Handler — HTTP handlers для аутентификации.
 // Все URL используют host.docker.internal — единый адрес для браузера и бэкенда.
 type Handler struct {
@@ -103,8 +105,8 @@ func (h *Handler) LoginRedirect(w http.ResponseWriter, r *http.Request) {
 	redirect := r.URL.Query().Get("redirect")
 	if redirect == "" {
 		scheme := "http"
-		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-			scheme = "https"
+		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == protoHTTPS {
+			scheme = protoHTTPS
 		}
 		redirect = fmt.Sprintf("%s://%s/callback", scheme, r.Host)
 	}
@@ -338,8 +340,8 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	if redirect == "" {
 		// Конструируем из запроса
 		scheme := "http"
-		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
-			scheme = "https"
+		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == protoHTTPS {
+			scheme = protoHTTPS
 		}
 		redirect = fmt.Sprintf("%s://%s/", scheme, r.Host)
 	}

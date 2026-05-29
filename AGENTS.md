@@ -88,7 +88,7 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 - `doc/README.md` — карта всей документации
 - `doc/NAVIGATION.md` — навигация для агентов (вопрос → файл:строка)
 - `doc/контекст/` — 6 файлов: философия, проблема, акторы, ограничения, negative-criteria, настраиваемость
-- `doc/архитектура/` — 9 файлов + 35 ADR: модули, стек, интеграции, безопасность, schema.md (47 таблиц), cel-engine, engagement, теги, пакеты-platform
+- `doc/архитектура/` — 10 файлов + 35 ADR: модули, стек, интеграции, безопасность, риски, schema.md (47 таблиц), cel-engine, engagement, теги, пакеты-platform
 - `doc/архитектура/adr/` — 35 ADR. Индекс: [`adr/README.md`](./doc/архитектура/adr/README.md)
 - `doc/спецификация/` — артефакты (30), journeys (57), API (118 endpoints), критерии приёмки (66)
 - `doc/план/` — вехи M00→M16 (doc) + M17→M44 (code), задачи T{MM}{NN}, зависимости, exit criteria
