@@ -110,6 +110,8 @@ services:
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
+      # ADR-037: backchannel issuer для внутреннего discovery (lkfl-server → Keycloak)
+      KC_HOSTNAME_BACKCHANNEL_URL: http://keycloak:8080
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
       RATE_LIMIT_AUTH: "100"
