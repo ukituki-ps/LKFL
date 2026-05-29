@@ -101,6 +101,7 @@ jobs:
     runs-on: lkfl  # ← self-hosted runner на serverAI (label: lkfl)
     strategy:
       fail-fast: false
+      max-parallel: 2  # serverAi: 1 Docker daemon, не перегружать buildx
       matrix:
         service: [server, proxy, frontend, deploy-worker]
     steps:

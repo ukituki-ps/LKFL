@@ -94,7 +94,8 @@ func (d *deployer) Rollback() {
 // ─── Docker Compose helpers ───
 
 func (d *deployer) composeCmd() string {
-	return fmt.Sprintf("docker compose -p lkfl-staging -f %s --env-file .env.staging", d.cfg.ComposeFile)
+	// Compose file references ./infra/ paths — нужно указать --project-directory
+	return fmt.Sprintf("docker compose -p lkfl-staging -f %s --env-file .env.staging --project-directory %s", d.cfg.ComposeFile, d.cfg.ComposeDir)
 }
 
 func (d *deployer) ghcrLogin() error {
@@ -103,7 +104,7 @@ func (d *deployer) ghcrLogin() error {
 		return nil
 	}
 
-	cmd := exec.Command("docker", "login", "ghcr.io", "-u", "ukituki", "--password-stdin")
+	cmd := exec.Command("docker", "login", "ghcr.io", "-u", d.cfg.GHCRUsername, "--password-stdin")
 	cmd.Stdin = strings.NewReader(d.cfg.GHCRToken)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
@@ -155,7 +156,9 @@ func (d *deployer) composeUp(imageTag string) error {
 	env := os.Environ()
 	env = append(env, fmt.Sprintf("IMAGE_TAG=%s", imageTag))
 
-	cmd := exec.Command("sh", "-c", fmt.Sprintf("%s up -d", d.composeCmd()))
+	// Поднимаем только основные сервисы (не deploy-worker — он сам себя пересоздаст)
+	cmd := exec.Command("sh", "-c",
+		fmt.Sprintf("%s up -d postgres redis keycloak lkfl-server lkfl-integration-proxy lkfl-frontend nginx", d.composeCmd()))
 	cmd.Env = env
 	cmd.Dir = d.cfg.ComposeDir
 	output, err := cmd.CombinedOutput()
