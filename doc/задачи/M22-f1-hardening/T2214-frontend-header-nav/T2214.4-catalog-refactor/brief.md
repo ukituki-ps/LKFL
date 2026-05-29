@@ -1,4 +1,4 @@
-# T2214.4 — Каталог: EngagementCard + FilterBar + Lucide
+# T2214.4 — Каталог: EngagementCard + AprilFilterPills + AprilIcon
 
 ## Родительская задача
 
@@ -14,20 +14,19 @@ code
 
 ## Кратко
 
-Рефакторинг карточки льготы (EngagementCard) и фильтров (FilterBar) по дизайну прототипа. Замена эмодзи на Lucide иконки.
+Полный реврайт карточки льготы (EngagementCard) по дизайну прототипа. Замена FilterBar на `AprilFilterPills` из DS. Замена эмодзи на `AprilIcon*`.
 
 ---
 
 ## Зависимости
 
-- **T2214.1** (Brand tokens) — нужен `--brand-*` для цветов
-- **T2214.3** (Pages stubs) — устанавливает `lucide-react`
+- **T2214.1** (Brand tokens + DS upgrade) — нужен `--brand-*` для цветов, нужен `@ukituki-ps/april-ui@0.1.16`
 
 ## Что сделать
 
-### 1. `src/components/catalog/EngagementCard.tsx` — Lucide + прототип
+### 1. `src/components/catalog/EngagementCard.tsx` — полный реврайт
 
-Заменить эмодзи на `lucide-react` иконки. Карточка по прототипу:
+Заменить эмодзи на `AprilIcon*` и обновить layout по прототипу:
 
 ```
 ┌─────────────────────────┐
@@ -40,34 +39,55 @@ code
 └─────────────────────────┘
 ```
 
-Icon mapping:
+Icon mapping через `AprilIcon*`:
 ```ts
+import {
+  AprilIconHeart,
+  AprilIconSuccess,
+  AprilIconUsers,
+  AprilIconDumbbell,
+  AprilIconGift,        // → bike (nearest аналог)
+  AprilIconCoffee,
+  AprilIconGraduationCap,
+  AprilIconBrain,
+  AprilIconLanguages,
+  AprilIconShoppingBag,
+  AprilIconSmile,       // → smile (если нет → AprilIconHeart)
+  AprilIconCalendar,    // → fallback
+} from '@ukituki-ps/april-ui'
+
 const iconMap: Record<string, LucideIcon> = {
-  'heart-pulse': HeartPulse,
-  'shield-plus': ShieldPlus,
-  users: Users,
-  dumbbell: Dumbbell,
-  bike: Bike,
-  utensils: Utensils,
-  'graduation-cap': GraduationCap,
-  brain: Brain,
-  languages: Languages,
-  'shopping-bag': ShoppingBag,
-  smile: Smile,
-  coffee: Coffee,
+  'heart-pulse': AprilIconHeart,
+  'shield-plus': AprilIconSuccess,
+  'shield-check': AprilIconSuccess,
+  users: AprilIconUsers,
+  dumbbell: AprilIconDumbbell,
+  bike: AprilIconGift,         // nearest аналог
+  utensils: AprilIconCoffee,   // nearest аналог
+  'graduation-cap': AprilIconGraduationCap,
+  brain: AprilIconBrain,
+  languages: AprilIconLanguages,
+  'shopping-bag': AprilIconShoppingBag,
+  smile: AprilIconHeart,       // nearest аналог
+  coffee: AprilIconCoffee,
 }
 ```
 
-> **Иконочная стратегия:** использовать `lucide-react` напрямую (не `AprilIcon` обёртку DS). DS v0.1.13 экспортирует ~25 иконок, прототипу нужно ~40. См. T2214.3.
+### 2. `src/components/catalog/FilterBar.tsx` → `AprilFilterPills`
 
-### 2. `src/components/catalog/FilterBar.tsx` — filter pills
+Заменить `Select`-dropdown на `AprilFilterPills` из DS:
 
-Заменить `Select`-dropdown на pill-кнопки:
-- `padding: 6px 14px`, `border-radius: 20px`, `font-size: 12px`, `font-weight: 600`
-- inactive: `border: 1.5px solid var(--brand-border)`, `color: var(--brand-text-muted)`
-- active: `background: var(--brand-green)`, `color: #fff`, `border-color: var(--brand-green)`
+```tsx
+import { AprilFilterPills } from '@ukituki-ps/april-ui'
 
-> **Компонент DS:** `AprilFilterPills` доступен начиная с v0.1.15. Текущая версия `0.1.13` — не имеет. Реализовать кастомно. В M22+ можно заменить на DS-компонент.
+<AprilFilterPills
+  items={filterOptions}
+  active={activeFilter}
+  onChange={setActiveFilter}
+/>
+```
+
+**DS `AprilFilterPills` — доступен в v0.1.16.** Кастомная реализация НЕ требуется.
 
 ### 3. `src/pages/Catalog.tsx` — Grid 3 колонки
 
@@ -75,25 +95,27 @@ const iconMap: Record<string, LucideIcon> = {
 
 ### 4. Обновление тестов `EngagementCard.test.tsx`
 
-Рефакторинг карточки меняет структуру DOM. Обновить тесты:
-- Проверить Lucide иконки (по `data-testid` или наличие SVG)
+Реврайт карточки меняет структуру DOM. Обновить тесты:
+- Проверить `AprilIcon*` (по `data-testid` или наличие SVG)
 - Проверить новый layout (icon 44×44, footer с ценой)
-- Убрать проверки на «Нет изображения» (заменён на Lucide иконку)
+- Убрать проверки на «Нет изображения» (заменён на `AprilIcon`)
+- Убрать проверки на эмодзи
 
 ## Файлы
 
 ### Изменяются
-- `src/components/catalog/EngagementCard.tsx` — Lucide иконки, дизайн по прототипу
-- `src/components/catalog/FilterBar.tsx` — filter pills вместо Select
+- `src/components/catalog/EngagementCard.tsx` — полный реврайт (AprilIcon*, дизайн по прототипу)
+- `src/components/catalog/FilterBar.tsx` → обёртка над `AprilFilterPills` из DS
 - `src/components/catalog/EngagementCard.test.tsx` — обновление тестов
 - `src/pages/Catalog.tsx` — grid 3 колонки
 
 ## Критерии приёмки
 
 - [ ] Карточки по дизайну прототипа (icon 44×44, footer с ценой + badge)
-- [ ] Filter pills вместо selects (pill-кнопки с зелёным active)
+- [ ] `AprilFilterPills` из DS вместо кастомных filter pills
 - [ ] Grid 3 колонки (как в прототипе)
-- [ ] Все эмодзи заменены на Lucide иконки
-- [ ] Icon mapping в EngagementCard
+- [ ] Все эмодзи заменены на `AprilIcon*` из DS
+- [ ] Icon mapping в EngagementCard через `AprilIcon*`
+- [ ] `lucide-react` НЕ импортируется напрямую в коде LKFL
 - [ ] Тесты EngagementCard.test.tsx обновлены и проходят
 - [ ] `npm run dev` → каталог визуально соответствует прототипу

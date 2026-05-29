@@ -1,8 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { App } from './App'
-import { AprilProviders } from './lib/providers'
+import { LKFLProviders } from './lib/providers'
 import { setupAuthForTest } from './stores/authStore'
+import '@/components/ui/BrandTokens.css'
 import '@mantine/core/styles.css'
 
 // April tokens CSS (подключает CSS variables)
@@ -16,8 +17,8 @@ if (typeof window !== 'undefined') {
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
 	<React.StrictMode>
-		<AprilProviders>
+		<LKFLProviders>
 			<App />
-		</AprilProviders>
+		</LKFLProviders>
 	</React.StrictMode>,
 )

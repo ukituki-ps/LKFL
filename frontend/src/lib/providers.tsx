@@ -1,10 +1,7 @@
 import { ReactNode } from 'react'
-import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { AprilProviders as AprilProvidersDS } from '@ukituki-ps/april-ui'
 import { createAprilTheme } from './theme'
-
-// Создаём тему на основе April tokens
-const aprilTheme = createAprilTheme()
 
 // React Query клиент с дефолтными настройками
 const queryClient = new QueryClient({
@@ -20,7 +17,7 @@ const queryClient = new QueryClient({
 	},
 })
 
-interface AprilProvidersProps {
+interface LKFLProvidersProps {
 	children: ReactNode
 }
 
@@ -28,17 +25,17 @@ interface AprilProvidersProps {
  * Корневой провайдер приложения.
  *
  * Объединяет:
- * - MantineProvider с April темой
+ * - AprilProviders (DS) — density context + Mantine + color scheme
  * - QueryClientProvider для React Query
  *
  * White-label brand CSS variables применяются через CSS injection
  * из backend (TODO M22+).
  */
-export function AprilProviders({ children }: AprilProvidersProps) {
+export function LKFLProviders({ children }: LKFLProvidersProps) {
 	return (
-		<MantineProvider theme={aprilTheme}>
+		<AprilProvidersDS theme={createAprilTheme()}>
 			<QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-		</MantineProvider>
+		</AprilProvidersDS>
 	)
 }
 

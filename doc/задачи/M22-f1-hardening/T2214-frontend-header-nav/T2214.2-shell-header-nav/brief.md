@@ -14,19 +14,23 @@ code
 
 ## Кратко
 
-Заменить Mantine `AppShell` (sidebar-layout) на горизонтальный layout с `AprilProductHeader`. Реализовать HeaderNav, HeaderRight, мобильную навигацию (Burger → Drawer).
+Заменить Mantine `AppShell` (sidebar-layout) на горизонтальный layout с `AprilProductHeader` из DS. Реализовать HeaderNav, HeaderRight, мобильную навигацию (Burger → Drawer).
+
+**`AprilProductHeader` — доступен в `@ukituki-ps/april-ui@0.1.16`** (устанавливается в T2214.1).
 
 ---
 
 ## Зависимости
 
-- **T2214.1** (Brand tokens) — нужен `--brand-*` для цветов навигации
+- **T2214.1** (Brand tokens + DS upgrade) — нужен `--brand-*` для цветов навигации, нужен `AprilProductHeader` из DS v0.1.16
 
 ## Что сделать
 
 ### 1. `src/components/layout/Shell.tsx` — AprilProductHeader
 
 ```tsx
+import { AprilProductHeader } from '@ukituki-ps/april-ui'
+
 <div style={{ minHeight: '100vh', backgroundColor: 'var(--brand-bg)' }}>
   <AprilProductHeader
     left={<Logo onClick={() => navigate('/')} />}
@@ -40,7 +44,7 @@ code
 </div>
 ```
 
-**Header height:** DS `AprilProductHeader` → 56px (comfortable) / 48px (compact). Прототип — 58px. Разница ≤2px — приемлемо. Если критично — кастомный `style={{ height: 58 }}` на корневом div header'а.
+**Header height:** DS `AprilProductHeader` → 56px (comfortable) / 48px (compact). Прототип — 58px. Разница ≤2px — приемлемо.
 
 **Sidebar убран** полностью (desktop). Мобильная навигация — Burger → Drawer.
 
@@ -59,16 +63,18 @@ code
 ### 3. `src/components/layout/HeaderRight.tsx`
 
 ```tsx
+import { AprilIconCoins, AprilIconBell } from '@ukituki-ps/april-ui'
+
 <Group gap={10}>
-  <BalancePill />   {/* bg: var(--brand-green-light), border: var(--brand-green-border) */}
-  <BellIcon />      {/* 34x34, bg: var(--brand-row), border: 1px solid var(--brand-border) */}
+  <BalancePill />   {/* bg: var(--brand-green-light), border: var(--brand-green-border), icon: AprilIconCoins */}
+  <BellIcon />      {/* 34x34, bg: var(--brand-row), icon: AprilIconBell */}
   <UserMenu />      {/* avatar: 34px circle, bg: var(--brand-green) */}
 </Group>
 ```
 
-**BalancePill:** mock-значение «1 250» (до F2). Иконка `Coins` (Lucide).
+**BalancePill:** mock-значение «1 250» (до F2). Иконка `AprilIconCoins`.
 
-**BellIcon:** кнопка-заглушка (переход на `/notifications` — TODO F2).
+**BellIcon:** кнопка-заглушка (переход на `/notifications` — TODO F2). Иконка `AprilIconBell`.
 
 **UserMenu:** обновить avatar → `bg: var(--brand-green)`, size 34px.
 
@@ -116,11 +122,11 @@ Breakpoint: `768px` (как в текущем Shell).
 ## Критерии приёмки
 
 ### Header и layout
-- [ ] `Shell.tsx` использует `AprilProductHeader` (не `AppShell`)
+- [ ] `Shell.tsx` использует `AprilProductHeader` из `@ukituki-ps/april-ui` (не `AppShell`)
 - [ ] Sidebar убран (навигация горизонтальная в header'е)
 - [ ] 5 ссылок навигации с underline active-индикатором
-- [ ] Balance-pill в правой зоне header'а
-- [ ] Bell icon button в правой зоне header'а
+- [ ] Balance-pill в правой зоне header'а (иконка `AprilIconCoins`)
+- [ ] Bell icon button в правой зоне header'а (иконка `AprilIconBell`)
 - [ ] Avatar с инициалами (зелёный круг 34px) + dropdown
 - [ ] Sticky header (прилипает при скролле)
 - [ ] Фон страницы `#F2F2F2`

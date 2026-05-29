@@ -29,7 +29,16 @@ export function UserMenu() {
 			<Menu.Target>
 				<UnstyledButton>
 					<Group gap="sm">
-						<Avatar size="sm" color="blue">
+						<Avatar
+							size={34}
+							radius="xl"
+							color="brand"
+							style={{
+								backgroundColor: 'var(--brand-green, #00B33C)',
+								fontSize: 11,
+								fontWeight: 600,
+							}}
+						>
 							{getInitials()}
 						</Avatar>
 						{!isMobile && (

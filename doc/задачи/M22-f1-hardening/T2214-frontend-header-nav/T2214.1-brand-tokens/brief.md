@@ -18,6 +18,10 @@ code
 
 **Фундамент:** без этой подзадачи остальные визуально не совпадут с прототипом.
 
+## Зависимости
+
+- **T2214.5** (DS upgrade v0.1.13 → v0.1.16) — пакеты уже обновлены, новые компоненты DS доступны
+
 ---
 
 ## Что сделать
@@ -75,7 +79,7 @@ defaultRadius: 'md',  // 14px
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 ```
 
-> **Security note:** для ФСТЭК-стенда Google Fonts будет заменён на self-hosted шрифт (задача T2214.1 — не scope).
+> **Security note:** для ФСТЭК-стенда Google Fonts будет заменён на self-hosted шрифт (задача следует в M42 Mobile+PWA или отдельной задаче).
 
 ### 4. `src/main.tsx` — Import BrandTokens.css
 
@@ -114,10 +118,7 @@ export function LKFLProviders({ children }: { children: ReactNode }) {
 - `src/main.tsx` — import BrandTokens, `LKFLProviders` вместо `AprilProviders`
 - `index.html` — Google Fonts Inter
 
-## Зависимости
-
-- Нет внешних зависимостей
-- Нет зависимостей от других задач M22
+> `frontend/package.json` (апгрейд DS пакетов) — выполняется в **T2214.5**.
 
 ## Критерии приёмки
 
@@ -129,3 +130,4 @@ export function LKFLProviders({ children }: { children: ReactNode }) {
 - [ ] `npm run dev` → страница работает без ошибок
 - [ ] Тесты не ломаются
 - [ ] Фон страницы `#F2F2F2` (через CSS token `--brand-bg` в Shell)
+- [ ] Импорт `AprilProductHeader` из `@ukituki-ps/april-ui` компилируется (проверка)

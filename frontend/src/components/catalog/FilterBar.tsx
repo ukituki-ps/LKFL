@@ -1,4 +1,5 @@
-import { Select, Group } from '@mantine/core'
+import { Group } from '@mantine/core'
+import { AprilFilterPills } from '@ukituki-ps/april-ui'
 import type { EngagementCategoryResponse } from '@/api/types'
 
 interface FilterBarProps {
@@ -10,6 +11,7 @@ interface FilterBarProps {
 }
 
 const typeOptions = [
+	{ value: '', label: 'Все' },
 	{ value: 'benefit', label: 'Льготы' },
 	{ value: 'activity', label: 'Активности' },
 ]
@@ -21,6 +23,8 @@ const statusOptions = [
 
 /**
  * Панель фильтров каталога: тип, статус, категория.
+ *
+ * Использует AprilFilterPills из DS v0.1.16.
  * Все фильтры синхронизируются с URL query params через onChange.
  */
 export function FilterBar({
@@ -30,44 +34,35 @@ export function FilterBar({
 	category,
 	onChange,
 }: FilterBarProps) {
-	const categoryOptions = categories.map((cat) => ({
-		value: cat.slug,
-		label: cat.name,
-	}))
+	const categoryOptions = [
+		{ value: '', label: 'Все' },
+		...categories.map((cat) => ({ value: cat.slug, label: cat.name })),
+	]
 
 	return (
-		<Group gap="sm" mb="md" wrap="wrap">
-			<Select
-				data={typeOptions}
-				value={type}
-				onChange={(v) => onChange('type', v || '')}
-				label="Тип"
-				clearable
-				size="sm"
-				radius="md"
-				w={140}
+		<Group gap="md" mb="md" wrap="wrap">
+			{/* Type filter */}
+			<AprilFilterPills
+				items={typeOptions}
+				active={type || ''}
+				onChange={(v) => onChange('type', v)}
 			/>
 
-			<Select
-				data={statusOptions}
-				value={status}
-				onChange={(v) => onChange('status', v || 'active')}
-				label="Статус"
-				size="sm"
-				radius="md"
-				w={140}
+			{/* Status filter */}
+			<AprilFilterPills
+				items={statusOptions}
+				active={status || 'active'}
+				onChange={(v) => onChange('status', v)}
 			/>
 
-			<Select
-				data={categoryOptions}
-				value={category}
-				onChange={(v) => onChange('category', v || '')}
-				label="Категория"
-				clearable
-				size="sm"
-				radius="md"
-				w={160}
-			/>
+			{/* Category filter */}
+			{categories.length > 0 && (
+				<AprilFilterPills
+					items={categoryOptions}
+					active={category || ''}
+					onChange={(v) => onChange('category', v)}
+				/>
+			)}
 		</Group>
 	)
 }
