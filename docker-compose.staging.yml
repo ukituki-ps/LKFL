@@ -102,11 +102,13 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
       KC_HTTP_ENABLED: "true"
-      KC_PROXY_ADDRESS_FORWARDING: "true"
-      # hostname:v2: KC_HOSTNAME_URL задаёт точный baseURL для всех URL генерации.
-      # Из lkfl-server: issuer check через http://keycloak:8080 (Docker сеть).
-      # Из браузера: auth URL через KEYCLOAK_PUBLIC_URL (не зависит от KC_HOSTNAME_URL).
-      KC_HOSTNAME_URL: http://keycloak:8080
+      # hostname:v2 config: issuer определяется Host header (KC_HOSTNAME_STRICT=false).
+      # nginx proxy передаёт Host: dev.april.ukituki.tech → issuer: http://dev.april.ukituki.tech/...
+      # lkfl-server: extra_hosts маппит dev.april.ukituki.tech → host-gateway,
+      # KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/... → совпадает с token iss.
+      KC_HOSTNAME: keycloak
+      KC_HTTP_PORT: "8080"
+      KC_FRONTEND_URL: https://dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       TZ: Europe/Moscow
@@ -148,12 +150,16 @@ services:
       - "18080:8080"
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      # Маппинг public URL → host-gateway: discovery endpoint доступен
+      # через nginx proxy (Host: dev.april.ukituki.tech) → Keycloak.
+      # issuer в discovery = http://dev.april.ukituki.tech/... = token iss (browser flow).
+      - "dev.april.ukituki.tech:host-gateway"
     env_file:
       - .env.staging
     environment:
       DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
+      KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
@@ -267,7 +273,8 @@ services:
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
-      - "8888:80"
+      - "80:80"      # для extra_hosts: lkfl-server → host-gateway:80 → nginx → Keycloak
+      - "8888:80"    # для external nginx forwarding
       - "8443:443"
     volumes:
       - ./infra/nginx/server/default.conf:/etc/nginx/conf.d/default.conf:ro
