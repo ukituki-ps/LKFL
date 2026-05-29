@@ -102,8 +102,9 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
       KC_HTTP_ENABLED: "true"
-      KC_HOSTNAME: keycloak
-      KC_HOSTNAME_PORT: "8080"
+      KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_HOSTNAME: dev.april.ukituki.tech
+      KC_HOSTNAME_PORT: "443"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       TZ: Europe/Moscow
@@ -151,7 +152,7 @@ services:
       DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
-      KEYCLOAK_PUBLIC_URL: http://keycloak:8080/realms/lkfl-sdek
+      KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
       SERVER_PORT: "8080"

@@ -55,3 +55,22 @@ jobs:
           fi
 
           echo "✅ Deploy triggered successfully"
+
+  # =========================================================================
+  # Post-deploy smoke test
+  # =========================================================================
+  smoke-test:
+    name: Smoke Test
+    needs: [deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment
+        run: sleep 60
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: |
+          chmod +x infra/smoke-test.sh
+          infra/smoke-test.sh https://dev.april.ukituki.tech

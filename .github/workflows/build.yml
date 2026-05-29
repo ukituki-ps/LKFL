@@ -92,6 +92,50 @@ jobs:
         working-directory: frontend
         run: npx tsc --noEmit
 
+      # ── Config validation ──
+      - name: Validate docker-compose config
+        run: |
+          # Проверка: lkfl-server должен иметь KEYCLOAK_PUBLIC_URL
+          # (без него browser redirect попадает на internal Docker hostname)
+          for compose_file in docker-compose.staging.yml docker-compose.prod.yml; do
+            if [[ -f "$compose_file" ]]; then
+              # Ищем секцию lkfl-server и проверяем наличие KEYCLOAK_PUBLIC_URL
+              in_server=0
+              has_public_url=0
+              while IFS= read -r line; do
+                if echo "$line" | grep -q "^  lkfl-server:"; then
+                  in_server=1
+                elif [[ $in_server -eq 1 ]] && echo "$line" | grep -q "^  [a-z]"; then
+                  # Началась другая секция services
+                  break
+                elif [[ $in_server -eq 1 ]] && echo "$line" | grep -q "KEYCLOAK_PUBLIC_URL"; then
+                  has_public_url=1
+                  break
+                fi
+              done < "$compose_file"
+              if [[ $has_public_url -eq 0 ]]; then
+                echo "FAIL: $compose_file — lkfl-server missing KEYCLOAK_PUBLIC_URL"
+                echo "  Browser login redirect will use internal Docker hostname!"
+                exit 1
+              fi
+              echo "OK: $compose_file has KEYCLOAK_PUBLIC_URL for lkfl-server"
+            fi
+          done
+
+          # Проверка: Keycloak KC_HOSTNAME не должен быть internal hostname
+          for compose_file in docker-compose.staging.yml docker-compose.prod.yml; do
+            if [[ -f "$compose_file" ]]; then
+              hostname=$(grep "KC_HOSTNAME:" "$compose_file" | head -1 | awk '{print $2}' | tr -d '"')
+              if [[ -n "$hostname" ]] && [[ "$hostname" == "keycloak" || "$hostname" == "localhost" ]]; then
+                if [[ "$compose_file" == *"staging"* ]] || [[ "$compose_file" == *"prod"* ]]; then
+                  echo "FAIL: $compose_file — KC_HOSTNAME='$hostname' is not suitable for $compose_file"
+                  echo "  Use external domain (e.g., dev.april.ukituki.tech)"
+                  exit 1
+                fi
+              fi
+            fi
+          done
+
   # =========================================================================
   # 2. DOCKER BUILD + PUSH — self-hosted runner на serverAI
   # =========================================================================
@@ -179,3 +223,22 @@ jobs:
           fi
 
           echo "✅ Deploy notification sent successfully"
+
+  # =========================================================================
+  # 4. SMOKE TEST — пост-деплой проверка
+  # =========================================================================
+  smoke-test:
+    name: Smoke Test
+    needs: [deploy-notify]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for deployment to complete
+        run: sleep 90
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: |
+          chmod +x infra/smoke-test.sh
+          infra/smoke-test.sh https://dev.april.ukituki.tech

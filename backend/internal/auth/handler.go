@@ -98,7 +98,17 @@ func (h *Handler) LoginRedirect(w http.ResponseWriter, r *http.Request) {
 	verifier := generatePKCEVerifier()
 	challenge := pkceCodeChallenge(verifier)
 
-	// Сохраняем state + code_verifier в Redis (TTL 10 мин)
+	// Собираем redirect_uri (динамически из запроса или из query param)
+	redirect := r.URL.Query().Get("redirect")
+	if redirect == "" {
+		scheme := "http"
+		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+			scheme = "https"
+		}
+		redirect = fmt.Sprintf("%s://%s/callback", scheme, r.Host)
+	}
+
+	// Сохраняем state + code_verifier + redirect_uri в Redis (TTL 10 мин)
 	stateKey := fmt.Sprintf("auth:state:%s", state)
 	if err := h.redis.Set(r.Context(), stateKey, time.Now().Format(time.RFC3339), 10*time.Minute).Err(); err != nil {
 		shhttp.WriteJSONError(w, http.StatusInternalServerError, "failed to generate login state")
@@ -109,11 +119,10 @@ func (h *Handler) LoginRedirect(w http.ResponseWriter, r *http.Request) {
 		shhttp.WriteJSONError(w, http.StatusInternalServerError, "failed to store PKCE verifier")
 		return
 	}
-
-	// Собираем URL авторизации Keycloak
-	redirect := r.URL.Query().Get("redirect")
-	if redirect == "" {
-		redirect = "https://dev.april.ukituki.tech/callback"
+	redirectKey := fmt.Sprintf("auth:redirect:%s", state)
+	if err := h.redis.Set(r.Context(), redirectKey, redirect, 10*time.Minute).Err(); err != nil {
+		shhttp.WriteJSONError(w, http.StatusInternalServerError, "failed to store redirect URI")
+		return
 	}
 
 	// При retry=1 форсируем перелогин в Keycloak (prompt=login).
@@ -188,6 +197,15 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	h.redis.Del(r.Context(), verifierKey)
 
+	// 2.5. Получаем redirect_uri из Redis (должен совпадать с тем, что был в LoginRedirect)
+	redirectKey := fmt.Sprintf("auth:redirect:%s", state)
+	savedRedirect, err := h.redis.Get(r.Context(), redirectKey).Result()
+	if err != nil {
+		shhttp.WriteJSONError(w, http.StatusBadRequest, "redirect URI not found")
+		return
+	}
+	h.redis.Del(r.Context(), redirectKey)
+
 	// 3. Получаем authorization code
 	code := r.URL.Query().Get("code")
 	if code == "" {
@@ -204,7 +222,7 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 	form.Set("grant_type", "authorization_code")
 	form.Set("client_id", h.clientID)
 	form.Set("code", code)
-	form.Set("redirect_uri", "https://dev.april.ukituki.tech/callback")
+	form.Set("redirect_uri", savedRedirect)
 	form.Set("code_verifier", verifierStr)
 	if h.clientSecret != "" {
 		form.Set("client_secret", h.clientSecret)
@@ -312,7 +330,12 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	// Редирект на Keycloak logout
 	redirect := r.URL.Query().Get("post_logout_redirect_uri")
 	if redirect == "" {
-		redirect = "http://localhost:5173/"
+		// Конструируем из запроса
+		scheme := "http"
+		if r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == "https" {
+			scheme = "https"
+		}
+		redirect = fmt.Sprintf("%s://%s/", scheme, r.Host)
 	}
 
 	logoutURL := fmt.Sprintf(
