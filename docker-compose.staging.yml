@@ -102,15 +102,14 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
       KC_HTTP_ENABLED: "true"
-      # hostname:v2 config: issuer определяется Host header (KC_HOSTNAME_STRICT=false).
-      # nginx proxy передаёт Host: dev.april.ukituki.tech → issuer: http://dev.april.ukituki.tech/...
-      # lkfl-server: extra_hosts маппит dev.april.ukituki.tech → host-gateway,
-      # KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/... → совпадает с token iss.
-      KC_HOSTNAME: keycloak
-      KC_HTTP_PORT: "8080"
-      KC_FRONTEND_URL: https://dev.april.ukituki.tech
+      # hostname:v2 config: KC_PROXY_ADDRESS_FORWARDING читает Host header от nginx proxy.
+      # nginx передаёт Host: dev.april.ukituki.tech → issuer: http://dev.april.ukituki.tech/...
+      # lkfl-server: extra_hosts маппит dev.april.ukituki.tech → host-gateway:80 → nginx → Keycloak.
+      # KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/... → совпадает с discovery и token iss.
+      KC_PROXY_ADDRESS_FORWARDING: "true"
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
+      KC_FRONTEND_URL: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
     command: start-dev --import-realm
     volumes:
