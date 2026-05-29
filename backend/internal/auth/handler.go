@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"strings"
@@ -242,6 +243,7 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		slog.Warn("token exchange failed", "status", resp.StatusCode, "body", string(body), "redirect_uri", savedRedirect)
 		shhttp.WriteJSONError(w, resp.StatusCode, string(body))
 		return
 	}
