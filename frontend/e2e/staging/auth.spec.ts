@@ -9,13 +9,12 @@ import {
 	expectNoStuckLoop,
 	STAGING_USERNAME,
 	STAGING_PASSWORD,
-	LS_TOKEN,
-	LS_USER,
-	LS_ROLES,
 	KC_USERNAME_SELECTOR,
 	KC_PASSWORD_SELECTOR,
-	KC_SUBMIT_SELECTOR,
 	expectKeycloakLoginForm,
+	submitKeycloakLoginForm,
+	isVerifyProfilePage,
+	submitVerifyProfile,
 } from './helpers';
 
 /**
@@ -24,8 +23,8 @@ import {
  * Никаких моков — тестируем полный flow: browser → nginx → backend → Keycloak.
  *
  * Запуск:
- *   npm run test:e2e:staging
- *   npm run test:e2e:staging -- --grep "login"
+ *   npx playwright test --config=playwright.staging.config.ts
+ *   npx playwright test --config=playwright.staging.config.ts --grep "login"
  *
  * Переменные окружения:
  *   E2E_BASE_URL  — URL стенда (default: https://dev.april.ukituki.tech)
@@ -33,13 +32,105 @@ import {
  *   E2E_PASSWORD  — пароль для Keycloak (default: admin-dev-password)
  */
 
-// ─── Полный login flow ───
+// ─── Полный login flow (пошаговый) ───
+
+test.describe('Staging: Full Login Flow Step by Step', () => {
+	test('E2E-S01: пошаговый login — frontend → Keycloak → callback → dashboard', async ({ page }) => {
+		// Шаг 1: Переход на /login → редирект на backend → редирект на Keycloak
+		await test.step('Шаг 1: переход на /login', async () => {
+			await page.goto('/login', { waitUntil: 'domcontentloaded' });
+		});
+
+		// Шаг 2: Keycloak login page загружается
+		await test.step('Шаг 2: Keycloak login page загружается', async () => {
+			await expectKeycloakLoginForm(page, 30_000);
+
+			// Проверяем что URL содержит /realms/lkfl-sdek/ (не keycloak:8080)
+			const url = page.url();
+			expect(url).toContain('/realms/lkfl-sdek/');
+			expect(url).not.toContain('keycloak:8080');
+			expect(url).not.toContain('localhost');
+			expect(url).not.toContain('DNS_PROBE');
+
+			// Проверяем что form доступна
+			await expect(page.locator(KC_USERNAME_SELECTOR)).toBeVisible();
+			await expect(page.locator(KC_PASSWORD_SELECTOR)).toBeVisible();
+			await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+		});
+
+		// Шаг 3: Ввод credentials
+		await test.step('Шаг 3: ввод credentials', async () => {
+			await page.fill(KC_USERNAME_SELECTOR, STAGING_USERNAME);
+			await page.fill(KC_PASSWORD_SELECTOR, STAGING_PASSWORD);
+			await page.getByRole('button', { name: 'Sign In' }).click();
+		});
+
+		// Шаг 4: Обработка VERIFY_PROFILE если появился
+		await test.step('Шаг 4: проверка VERIFY_PROFILE required action', async () => {
+			// Ждём редиректа Keycloak после submit
+			await page.waitForTimeout(3000);
+
+			if (await isVerifyProfilePage(page)) {
+				await test.step('VERIFY_PROFILE — заполняем профиль', async () => {
+					await submitVerifyProfile(page);
+					// Ждём редиректа после VERIFY_PROFILE
+					await page.waitForTimeout(3000);
+				});
+			} else {
+				// VERIFY_PROFILE не появился — нормально для уже настроенных пользователей
+			}
+		});
+
+		// Шаг 5: Callback → backend → dashboard
+		await test.step('Шаг 5: callback и перенаправление на dashboard', async () => {
+			// Ожидаем редирект на callback → frontend → dashboard
+			await page.waitForURL(/\/(callback|$)/, { timeout: 30_000 });
+
+			// Ждём полного рендера dashboard
+			await page.waitForLoadState('networkidle', { timeout: 15_000 });
+
+			// Проверяем что мы на dashboard
+			const finalUrl = page.url();
+			expect(finalUrl).toMatch(/\/$/);
+			expect(finalUrl).not.toMatch(/\/login/);
+			expect(finalUrl).not.toMatch(/\/callback/);
+			expect(finalUrl).not.toMatch(/\/realms\//);
+		});
+
+		// Шаг 6: Проверка localStorage (token, user, roles)
+		await test.step('Шаг 6: проверка localStorage', async () => {
+			// Token сохранён и валидный (JWT формат: header.payload.signature)
+			const token = await getToken(page);
+			expect(token).toBeTruthy();
+			expect(token!.split('.').length).toBe(3); // JWT формат
+
+			// User сохранён в localStorage
+			const user = await getUser(page);
+			expect(user).toBeTruthy();
+			expect(user!.email).toBeTruthy();
+
+			// Roles сохранены в localStorage
+			const roles = await getRoles(page);
+			expect(roles).toBeTruthy();
+			expect(Array.isArray(roles)).toBe(true);
+			expect(roles!.length).toBeGreaterThan(0);
+		});
+
+		// Шаг 7: Проверка что dashboard рендерится
+		await test.step('Шаг 7: dashboard рендерится', async () => {
+			const title = await page.title();
+			expect(title).toContain('LKFL');
+		});
+	});
+});
+
+// ─── Полный login flow (через helper) ───
 
 test.describe('Staging: Full Login Flow', () => {
 	test('E2E-001: полный login flow через Keycloak → dashboard', async ({ page }) => {
 		const token = await loginThroughKeycloak(page);
 
-		// Token сохранён и валидный (JWT длинный)
+		// Token сохранён и валидный (JWT формат)
 		expect(token).toBeTruthy();
 		expect(token!.length).toBeGreaterThan(100);
 

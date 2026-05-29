@@ -142,6 +142,10 @@ func NewServer(
 	r.Mount("/metrics", promhttp.HandlerFor(reg, promhttp.HandlerOpts{}))
 
 	// ─── Auth routes (публичные, без JWT) ───
+	// Важно: define ДО /api/v1/ чтобы chi не применил JWT middleware к /auth/callback.
+	// В chi: Route("/api/v1/", ...) matches ALL paths starting with /api/v1/ including
+	// /api/v1/auth/* — middleware applies even if no sub-route matches.
+	// Решение: explicit exclude /auth/* от JWT middleware через chi.Middleware.
 	r.Route("/api/v1/auth/", func(r chi.Router) {
 		r.Use(authLimiter)
 		r.Get("/login", authHandler.LoginRedirect)
@@ -149,9 +153,22 @@ func NewServer(
 		r.Post("/logout", authHandler.Logout)
 	})
 
-	// ─── Employee routes (JWT + tenant middleware) ───
+// ─── Employee routes (JWT + tenant middleware) ───
+	// Excludes /api/v1/auth/* from JWT middleware — auth routes are public.
 	r.Route("/api/v1/", func(r chi.Router) {
-		r.Use(sharedauth.JWTMiddleware(verifier))
+		// Wrap JWT middleware to skip /auth/* paths.
+		// chi Route("/api/v1/", ...) prefix matches /api/v1/auth/ too,
+		// so middleware applies even though sub-routes don't match.
+		jwtMiddleware := sharedauth.JWTMiddleware(verifier)
+		r.Use(func(next http.Handler) http.Handler {
+			return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+				if strings.HasPrefix(req.URL.Path, "/api/v1/auth/") {
+					next.ServeHTTP(w, req)
+					return
+				}
+				jwtMiddleware(next).ServeHTTP(w, req)
+			})
+		})
 		r.Use(tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics))
 
 		// User profile
