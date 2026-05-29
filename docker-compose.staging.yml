@@ -111,6 +111,7 @@ services:
       KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "true"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
