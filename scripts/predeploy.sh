@@ -16,7 +16,7 @@ set -euo pipefail
 # Конфигурация
 # ============================================================================
 
-DEPLOY_WORKER_URL="${DEPLOY_WORKER_URL:-http://serverDev:9091}"
+DEPLOY_WORKER_URL="${DEPLOY_WORKER_URL:-http://serverAI:9091}"
 BACKEND_DIR="backend"
 FRONTEND_DIR="frontend"
 

@@ -109,7 +109,7 @@
 Переписан полностью:
 - SSH/rsync удалён
 - Новый пайплайн: GHCR login → pull → migrate → up → seed → healthcheck
-- Выполняется внутри deploy-worker на serverDev
+- Выполняется внутри deploy-worker на serverAI
 - Режимы: full, --dry-run, --health, --rollback
 
 #### scripts/predeploy.sh
@@ -304,7 +304,7 @@
 |-----------|--------|
 | serverAi (192.168.1.46) | ✅ amd64, CI runners (7 шт) + staging стенд |
 | serverPr01 | ✅ внешний nginx → serverAi:8888 |
-| serverDev (arm64) | ⏸ освобождён, можно отключить |
+| serverAI (arm64) | ⏸ освобождён, можно отключить |
 | CI pipeline | ✅ зелёный, end-to-end рабочий |
 | Deploy-worker | ✅ port 9092, compose v2.38.0, self-exclude |
 | GHCR | ✅ pull/push рабочий |

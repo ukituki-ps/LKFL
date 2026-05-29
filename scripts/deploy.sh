@@ -1,5 +1,5 @@
 #!/bin/bash
-# LKFL — Deploy Script (выполняется внутри deploy-worker на serverDev)
+# LKFL — Deploy Script (выполняется внутри deploy-worker на serverAI)
 #
 # Новый пайплайн: pull из GHCR → миграции → up → seed → healthcheck
 # Вызывается deploy-worker (cmd/deploy-worker) при получении webhook.
@@ -206,7 +206,7 @@ main() {
 
     echo ""
     log -e "${YELLOW}========================================${NC}"
-    log -e "${YELLOW}  LKFL Deploy — serverDev${NC}"
+    log -e "${YELLOW}  LKFL Deploy — serverAI${NC}"
     log -e "${YELLOW}  IMAGE_TAG: ${IMAGE_TAG}${NC}"
     log -e "${YELLOW}  Режим: ${mode}${NC}"
     log -e "${YELLOW}========================================${NC}"

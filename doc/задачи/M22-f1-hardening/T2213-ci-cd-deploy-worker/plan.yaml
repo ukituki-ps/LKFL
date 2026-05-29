@@ -240,7 +240,7 @@ checklist:
   - id: f4-deploy-sh
     name: "scripts/deploy.sh — переписать (без SSH)"
     description: |
-      Выполняется внутри deploy-worker на serverDev
+      Выполняется внутри deploy-worker на serverAI
       COMPOSE="docker compose -f docker-compose.staging.yml --env-file .env.staging"
       0. echo "$GHCR_TOKEN" | docker login ghcr.io -u ukituki --password-stdin
       1. $COMPOSE pull --ignore-buildable
@@ -259,7 +259,7 @@ checklist:
         - docker compose -f docker-compose.dev.yml config (валидация)
         - docker compose -f docker-compose.staging.yml config (валидация)
       Серверные проверки:
-        - GET http://serverDev:9091/status (deploy-worker доступен)
+        - GET http://serverAI:9091/status (deploy-worker доступен)
     status: done
 
   - id: f4-makefile
@@ -268,9 +268,9 @@ checklist:
       dev-up:       docker compose -f docker-compose.dev.yml up -d
       dev-down:     docker compose -f docker-compose.dev.yml down
       dev-logs:     docker compose -f docker-compose.dev.yml logs -f
-      deploy:       curl POST serverDev:9091/deploy
-      deploy-health: curl serverDev:9091/status
-      deploy-rollback: curl POST serverDev:9091/rollback
+      deploy:       curl POST serverAI:9091/deploy
+      deploy-health: curl serverAI:9091/status
+      deploy-rollback: curl POST serverAI:9091/rollback
       predeploy:    ./scripts/predeploy.sh
     status: done
 
@@ -343,5 +343,5 @@ checklist:
       7. curl https://dev.april.ukituki.tech/api/v1/... → 401 (auth required — OK)
       8. Проверить nginx health: curl http://serverAi:8888/nginx-health → 200
     status: done
-      9. Проверить deploy-worker: curl http://serverDev:9091/status → OK
+      9. Проверить deploy-worker: curl http://serverAI:9091/status → OK
     status: todo

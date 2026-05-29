@@ -124,7 +124,7 @@ checklist:
   - id: f6-e2e
     name: "Проверка login flow E2E на staging"
     description: |
-      На serverDev:
+      На serverAI:
       - git pull
       - docker compose -f docker-compose.staging.yml down
       - docker compose -f docker-compose.staging.yml up -d

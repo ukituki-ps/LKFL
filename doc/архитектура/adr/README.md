@@ -1,6 +1,6 @@
 # ADR — Архитектурные решения
 
-> **37 файлов.** 28 Accepted, 4 Superseded, 5 Note.
+> **38 файлов.** 29 Accepted, 4 Superseded, 5 Note.
 
 ---
 
@@ -45,6 +45,7 @@
 | [035](./035-integration-proxy.md) | Integration Proxy — вынос внешних интеграций из монолита | ✅ Accepted | 438 |
 | [036](./036-ci-cd-deploy-worker.md) | CI/CD — serverAI self-hosted runners + Deploy Worker | ✅ Accepted | 122 |
 | [037](./037-keycloak-reverse-proxy.md) | Keycloak behind reverse proxy — один nginx, чистый verifier.go | ✅ Accepted | 150 |
+| [038](./038-staging-move-serverai.md) | Переезд staging с serverDev на serverAI | ✅ Accepted | 68 |
 
 ---
 

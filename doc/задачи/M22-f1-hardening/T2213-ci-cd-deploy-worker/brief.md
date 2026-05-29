@@ -14,7 +14,7 @@ code
 - Локальная машина — не триггер, требует ручного запуска
 - Go-сборка на сервере (медленно, требует Go в Docker multi-stage)
 - Seed и миграции не работают (Go нет на сервере, distroless без shell)
-- Hardcoded `serverDev` — нельзя масштабировать
+- Hardcoded `serverAI` — нельзя масштабировать
 - Один `docker-compose.yml` на всё (dev + staging) — `build:` вместо `image:`
 - Фронтенд — volume mount `./frontend/dist/` вместо отдельного образа
 - Loki ломает compose (несовместимый конфиг)
@@ -34,7 +34,7 @@ code
 - **Порт 9090 конфликт**: prometheus и deploy-worker оба хотят 9090
 - Нет GHCR login step до build — cache pull не работает
 - Нет `stop_grace_period` — graceful shutdown 30s в main.go требует 35s
-- **Webhook URL** — настроен через nginx serverPr01: `https://dev.april.ukituki.tech/deploy-webhook` → serverDev:9091
+- **Webhook URL** — настроен через nginx serverPr01: `https://dev.april.ukituki.tech/deploy-webhook` → serverAI:9091
 - **`/callback` location** serve static из volume → в staging volume нет → Keycloak callback сломается
 - **`docker compose pull`** без `docker login GHCR` → 401 Unauthorized для private repo
 - **Port mapping 8080:8080** → должно быть 8080:80 (nginx внутри слушает 80, не 8080)
@@ -43,7 +43,7 @@ code
 - **serverAI** — мощный сервер (Debian 13, 30GB RAM, 16 CPU, Docker 29.4.3) с 7 self-hosted GitHub Actions runner'ами → сборка Docker-образов
 - **GitHub Actions** оркестрирует пайплайн: lint/test на public runner, build на serverAI
 - **GHCR** — registry для образов
-- **Deploy Worker** на serverDev получает webhook, пуллит образы, запускает миграции/seed
+- **Deploy Worker** на serverAI получает webhook, пуллит образы, запускает миграции/seed
 - Каждая ветка и каждый PR триггерит пересборку
 - Отдельные compose файлы: `dev` (build) и `staging` (pull из GHCR)
 - Docker profiles для мониторинга (не на staging по умолчанию)
@@ -71,10 +71,10 @@ GitHub (push / PR)
   │   │
   │   .github/workflows/deploy.yml (только main)
   │     └── POST → https://dev.april.ukituki.tech/deploy-webhook/deploy
-  │         ← через nginx serverPr01 → serverDev:9091
+  │         ← через nginx serverPr01 → serverAI:9091
   │
   ▼
-serverDev — Deploy Worker (docker-compose.staging.yml)
+serverAI — Deploy Worker (docker-compose.staging.yml)
   ├── deploy-worker (:9091) ← PORT 9091! (9090 занят prometheus)
   ├── lkfl-server           ← pull ghcr.io/.../server:{tag}
   ├── lkfl-integration-proxy← pull ghcr.io/.../proxy:{tag}
@@ -490,7 +490,7 @@ ENTRYPOINT ["deploy-worker"]
 Переписать полностью — выполняется внутри deploy-worker на сервере:
 ```bash
 #!/bin/bash
-# Выполняется внутри deploy-worker на serverDev
+# Выполняется внутри deploy-worker на serverAI
 # Доступ: Docker socket, .env.staging, docker-compose.staging.yml
 
 set -euo pipefail
@@ -524,13 +524,13 @@ wait_for_http http://lkfl-server:8080/healthz
 Обновить deploy цели:
 ```makefile
 deploy:        ## Деплой на staging (через deploy-worker API)
-  curl -X POST http://serverDev:9091/deploy ...
+  curl -X POST http://serverAI:9091/deploy ...
 
 deploy-health: ## Healthcheck через deploy-worker
-  curl http://serverDev:9091/status
+  curl http://serverAI:9091/status
 
 deploy-rollback: ## Роллбэк через deploy-worker
-  curl -X POST http://serverDev:9091/rollback
+  curl -X POST http://serverAI:9091/rollback
 
 dev-up:        ## Локальная разработка
   docker compose -f docker-compose.dev.yml up -d
@@ -546,7 +546,7 @@ dev-down:      ## Остановить локальные сервисы
 `doc/архитектура/adr/036-ci-cd-deploy-worker.md`:
 - Status: Accepted
 - Context: текущий deploy.sh через SSH ненадёжен, 35 проблем найдено при аудите
-- Decision: serverAI (self-hosted runners) → GHCR → Deploy Worker на serverDev
+- Decision: serverAI (self-hosted runners) → GHCR → Deploy Worker на serverAI
 - Consequences: сборка на мощном сервере с кэшем Docker layers, repeatable, любая ветка деплоится
 
 #### 5.2 doc/деплой.md
@@ -644,7 +644,7 @@ dev-down:      ## Остановить локальные сервисы
 
 ### E2E
 
-- [ ] Деплой на serverDev работает end-to-end: push → serverAI build → GHCR → deploy → healthz 200
+- [ ] Деплой на serverAI работает end-to-end: push → serverAI build → GHCR → deploy → healthz 200
 
 ---
 

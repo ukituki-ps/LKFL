@@ -57,7 +57,7 @@ GitHub (push / PR)
   │     └── POST → https://dev.april.ukituki.tech/deploy-webhook/deploy
   │
   ▼
-serverDev — Deploy Worker (docker-compose.staging.yml)
+serverAI — Deploy Worker (docker-compose.staging.yml)
   ├── deploy-worker (:9091) ← webhook receiver
   ├── lkfl-server           ← pull ghcr.io/.../server:{tag}
   ├── lkfl-integration-proxy← pull ghcr.io/.../proxy:{tag}
@@ -135,11 +135,11 @@ strategy:
     service: [server, proxy, frontend, deploy-worker]
 ```
 
-### Перенос staging: serverDev (arm64) → serverAi (amd64)
+### Перенос staging: serverAI (arm64) → serverAi (amd64)
 
 | Поле | Значение |
 |------|----------|
-| Причина | serverDev (arm64) не мог использовать amd64-образы из GHCR, QEMU emulation недоступна |
+| Причина | serverAI (arm64) не мог использовать amd64-образы из GHCR, QEMU emulation недоступна |
 | Решение | Staging переведён на serverAi (192.168.1.46, amd64, 30GB RAM), где уже работают CI runners |
 | Внешний nginx | serverPr01 → upstream 192.168.1.46:8888 |
 
