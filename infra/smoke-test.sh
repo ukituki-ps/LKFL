@@ -83,11 +83,18 @@ echo ""
 
 # ─── 4. Keycloak accessibility ───
 echo "4. Keycloak через Nginx proxy"
-KC_REALMS=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/realms" 2>/dev/null || echo "000")
-if [[ "$KC_REALMS" == "200" || "$KC_REALMS" == "302" ]]; then
-    pass "GET /realms → $KC_REALMS (Keycloak доступен через Nginx)"
+# Discovery endpoint конкретного realm (Keycloak не поддерживает /realms listing)
+KC_DISCOVERY=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/realms/lkfl-sdek/.well-known/openid-configuration" 2>/dev/null || echo "000")
+if [[ "$KC_DISCOVERY" == "200" ]]; then
+    # Проверим что issuer содержит public URL, не internal hostname
+    KC_ISSUER=$(curl -s "$BASE_URL/realms/lkfl-sdek/.well-known/openid-configuration" 2>/dev/null | grep -o '"issuer":"[^"]*"' | head -1)
+    if echo "$KC_ISSUER" | grep -q "keycloak:8080"; then
+        fail "Keycloak issuer содержит internal hostname: $KC_ISSUER"
+    else
+        pass "Keycloak discovery → 200, issuer OK: $KC_ISSUER"
+    fi
 else
-    fail "GET /realms → $KC_REALMS (Keycloak недоступен через Nginx proxy)"
+    fail "Keycloak discovery → $KC_DISCOVERY (Keycloak недоступен через Nginx proxy)"
 fi
 echo ""
 
