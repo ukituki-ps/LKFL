@@ -101,7 +101,6 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
-      KC_HTTP_ENABLED: "true"
       # hostname:v2 config:
       # KC_HOSTNAME — primary hostname, используется для issuer и всех URL генерации.
       # KC_FRONTEND_URL — browser-visible URL (HTTPS).
@@ -115,6 +114,9 @@ services:
       KC_HOSTNAME_STRICT_HTTP: "false"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
+      # Backchannel URL: discovery endpoint и token exchange используют этот URL.
+      # Без него Keycloak использует KC_HOSTNAME + HTTP scheme (так как KC_HTTP_ENABLED не установлен).
+      KC_HOSTNAME_BACKCHANNEL_URL: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
     command: start-dev --import-realm
     volumes:
