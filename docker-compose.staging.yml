@@ -179,6 +179,7 @@ services:
       RATE_LIMIT_ADMIN: "200"
       # Trust self-signed cert for Keycloak HTTPS discovery through nginx:443
       SSL_CERT_FILE: /etc/nginx/ssl/server.crt
+      TLS_INSECURE: "true"  # staging: fallback если cert не загрузился
     volumes:
       - ./infra/nginx/ssl/server.crt:/etc/nginx/ssl/server.crt:ro
     depends_on:
