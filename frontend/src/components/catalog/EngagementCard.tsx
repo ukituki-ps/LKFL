@@ -1,6 +1,21 @@
-import { Card, Badge as MantineBadge, Text, Group, Box, Paper } from '@mantine/core'
+import { Card, Badge as MantineBadge, Text, Group, Box } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import type { EngagementTypeResponse } from '@/api/types'
+import {
+	AprilIconHeart,
+	AprilIconSuccess,
+	AprilIconPlusCircle,
+	AprilIconUsers,
+	AprilIconDumbbell,
+	AprilIconGift,
+	AprilIconCoffee,
+	AprilIconGraduationCap,
+	AprilIconBrain,
+	AprilIconLanguages,
+	AprilIconShoppingBag,
+	AprilIconDashboard,
+	type AprilLucideIcon,
+} from '@ukituki-ps/april-ui'
 
 // ─── Props ──
 
@@ -47,73 +62,92 @@ function pluralizeOffers(count: number): string {
 	return 'вариантов'
 }
 
-// ─── Lucide icon mapping ──
+// ─── Icon mapping ──
 
-/** Рендерит Lucide-иконку по имени из metadata.icon_name. */
-function renderIcon(name: string, _color: string) {
-	const icons: Record<string, string> = {
-		'heart-pulse': '❤️',
-		'shield-plus': '🛡️',
-		users: '👥',
-		dumbbell: '🏋️',
-		bike: '🚴',
-		utensils: '🍴',
-		'graduation-cap': '🎓',
-		brain: '🧠',
-		languages: '🌍',
-		'shopping-bag': '🛍️',
-		smile: '😁',
-		coffee: '☕',
-	}
-	const emoji = icons[name] || '📋'
-	return (
-		<Text size="xl" style={{ fontSize: 48 }}>
-			{emoji}
-		</Text>
-	)
+/** Маппинг icon_name → AprilIcon из DS. */
+const iconMap: Record<string, AprilLucideIcon> = {
+	'heart-pulse': AprilIconHeart,
+	'shield-plus': AprilIconPlusCircle,
+	'shield-check': AprilIconSuccess,
+	users: AprilIconUsers,
+	dumbbell: AprilIconDumbbell,
+	bike: AprilIconGift,
+	utensils: AprilIconCoffee,
+	'graduation-cap': AprilIconGraduationCap,
+	brain: AprilIconBrain,
+	languages: AprilIconLanguages,
+	'shopping-bag': AprilIconShoppingBag,
+	smile: AprilIconHeart,
+	coffee: AprilIconCoffee,
+	default: AprilIconDashboard,
+}
+
+/** Рендерит AprilIcon по имени из metadata.icon_name. */
+function renderIcon(name: string) {
+	const Icon = name ? iconMap[name] || iconMap.default : iconMap.default
+	return <Icon size={24} style={{ color: 'var(--brand-green)' }} />
 }
 
 // ─── Component ──
 
-/** Карточка льготы/активности для каталога. */
+/** Форматирует cost_cents в строку «X ₽» (с разделителем тысяч). */
+function formatPrice(cents: number): string {
+	const rubles = Math.round(cents / 100)
+	return `${rubles.toLocaleString('ru-RU')} ₽`
+}
+
+/**
+ * Карточка льготы/активности для каталога.
+ *
+ * Layout по прототипу:
+ * ┌─────────────────────────┐
+ * │  [icon 44×44 bg-gray]   │
+ * │  Название (14px fw:700) │
+ * │  Провайдер (11px muted) │
+ * │  Описание (12px muted)  │
+ * ├─────────────────────────┤
+ * │  Цена        [badge]    │
+ * └─────────────────────────┘
+ */
 export function EngagementCard({ engagement }: EngagementCardProps) {
 	const badgeColor = getBadgeColor(engagement.badge_color, engagement.badge)
-	const priceDisplay = engagement.price_display || ''
+	const priceDisplay =
+		engagement.price_display ||
+		(engagement.cost_cents != null ? formatPrice(engagement.cost_cents) : '')
 
 	return (
-		<Card withBorder padding="lg" radius="md" shadow="sm">
+		<Card
+			withBorder
+			padding="lg"
+			radius="var(--brand-radius-card, 14px)"
+			shadow="var(--brand-shadow-card)"
+			style={{
+				display: 'flex',
+				flexDirection: 'column',
+			}}
+		>
 			<Link
 				to={`/catalog/${engagement.slug}`}
-				style={{ textDecoration: 'none', color: 'inherit' }}
+				style={{ textDecoration: 'none', color: 'inherit', flex: 1, display: 'flex', flexDirection: 'column' }}
 			>
 				<Box>
-					{/* Icon placeholder */}
-					<Paper
-						radius="md"
+					{/* Icon */}
+					<Group
+						gap={8}
 						mb="md"
 						style={{
-							height: 160,
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							backgroundColor: badgeColor === 'green' ? '#f0fdf4' :
-								badgeColor === 'blue' ? '#eff6ff' :
-								badgeColor === 'yellow' ? '#fefce8' : '#f8fafc',
+							padding: '12px',
+							borderRadius: 'var(--brand-radius-card, 14px)',
+							backgroundColor: 'var(--brand-row, #F9FAFB)',
+							height: 44,
 						}}
 					>
-						{engagement.icon_name
-							? renderIcon(engagement.icon_name, badgeColor)
-							: <Text c="dimmed" size="sm">Нет изображения</Text>
-						}
-					</Paper>
+						{renderIcon(engagement.icon_name || '')}
+					</Group>
 
 					{/* Badge + Category */}
 					<Group justify="space-between" mb="xs">
-						<MantineBadge
-							color={badgeColor}
-							size="sm"
-							variant="light"
-						>
+						<MantineBadge color={badgeColor} size="sm" variant="light">
 							{engagement.badge}
 						</MantineBadge>
 
@@ -125,9 +159,16 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 					</Group>
 
 					{/* Name */}
-					<Text fw={600} size="lg" mb="xs" lineClamp={1}>
+					<Text fw={700} size="md" mb="xs" lineClamp={1}>
 						{engagement.name}
 					</Text>
+
+					{/* Provider */}
+					{engagement.provider_name && (
+						<Text size="xs" c="dimmed" mb="xs">
+							{engagement.provider_name}
+						</Text>
+					)}
 
 					{/* Description */}
 					{engagement.description && (
@@ -135,19 +176,20 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 							{engagement.description}
 						</Text>
 					)}
+				</Box>
 
-					{/* Footer */}
+				{/* Footer — price + badge */}
+				<Box mt="auto" pt="md" style={{ borderTop: '1px solid var(--brand-border)' }}>
 					<Group justify="space-between" wrap="nowrap">
-						{engagement.provider_name && (
-							<Text size="xs" c="dimmed" lineClamp={1}>
-								{engagement.provider_name}
-							</Text>
-						)}
-
 						{priceDisplay && (
-							<Text fw={600} size="sm" c="var(--mantine-color-blue-7)">
+							<Text fw={700} size="md" style={{ color: 'var(--brand-green)' }}>
 								{priceDisplay}
 							</Text>
+						)}
+						{engagement.badge && (
+							<MantineBadge color={badgeColor} size="xs" variant="light">
+								{engagement.badge}
+							</MantineBadge>
 						)}
 					</Group>
 
@@ -166,7 +208,7 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 
 // ─── Grid ──
 
-/** Сетка карточек для каталога. */
+/** Сетка карточек для каталога — 3 колонки. */
 export function EngagementGrid({
 	engagements,
 }: {
@@ -176,7 +218,7 @@ export function EngagementGrid({
 		<div
 			style={{
 				display: 'grid',
-				gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+				gridTemplateColumns: 'repeat(3, 1fr)',
 				gap: '16px',
 			}}
 		>

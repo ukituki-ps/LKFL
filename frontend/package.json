@@ -17,8 +17,8 @@
     "generate-types": "openapi-typescript ./openapi/spec.yaml -o ./src/api/types.generated.ts"
   },
   "dependencies": {
-    "@ukituki-ps/april-ui": "0.1.13",
-    "@ukituki-ps/april-tokens": "0.1.13",
+    "@ukituki-ps/april-ui": "0.1.16",
+    "@ukituki-ps/april-tokens": "0.1.16",
     "@mantine/core": "^7.17.8",
     "@mantine/hooks": "^7.17.8",
     "react": "^18.3.1",

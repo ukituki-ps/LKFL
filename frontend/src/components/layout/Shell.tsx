@@ -1,15 +1,24 @@
-import { Outlet, useLocation } from 'react-router-dom'
-import { AppShell, Group, Burger } from '@mantine/core'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { AprilProductHeader, AprilIconPanelLeft } from '@ukituki-ps/april-ui'
+import { Drawer, Group, Text, UnstyledButton, Stack } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { useAuthStore } from '@/stores/authStore'
-import { EmployeeNav } from './EmployeeNav'
-import { AdminNav } from './AdminNav'
-import { UserMenu } from './UserMenu'
+import { employeeRoutes } from '@/routes/employee'
+import { adminRoutes } from '@/routes/admin'
+import { HeaderNav } from './HeaderNav'
+import { HeaderRight } from './HeaderRight'
 
+/**
+ * Корневой layout приложения.
+ *
+ * Горизонтальный layout с AprilProductHeader (DS).
+ * Sidebar убран (desktop). Мобильная навигация — Burger → Drawer.
+ */
 export function Shell() {
-	const [opened, { toggle, close }] = useDisclosure(false)
+	const [drawerOpened, { open: openDrawer, close: closeDrawer }] = useDisclosure(false)
 	const { userRoles } = useAuthStore()
 	const location = useLocation()
+	const navigate = useNavigate()
 	const isMobile = useMediaQuery('(max-width: 768px)')
 
 	const isAdminRoute = location.pathname.startsWith('/admin')
@@ -18,35 +27,121 @@ export function Shell() {
 	)
 
 	return (
-		<AppShell
-			header={{ height: 60 }}
-			navbar={{ width: 250, breakpoint: 'sm' }}
-			padding="md"
+		<div
+			style={{
+				minHeight: '100vh',
+				backgroundColor: 'var(--brand-bg, #F2F2F2)',
+			}}
 		>
 			{/* Header */}
-			<AppShell.Header>
-				<Group h="100%" px="md" justify="space-between">
-					<Group>
-						{isMobile && <Burger opened={opened} onClick={toggle} size="sm" />}
-						<span style={{ fontWeight: 600, fontSize: 20 }}>ЛКФЛ</span>
+			<AprilProductHeader
+				left={
+					<UnstyledButton
+						onClick={() => navigate(isAdminRoute ? '/admin/hr' : '/')}
+						style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
+					>
+						<Text
+							style={{
+								fontWeight: 700,
+								fontSize: 18,
+								color: 'var(--brand-text, #1A1A1A)',
+							}}
+						>
+							ЛКФЛ
+						</Text>
+					</UnstyledButton>
+				}
+				center={
+					!isMobile && (
+						<HeaderNav isAdmin={hasAdminAccess && isAdminRoute} />
+					)
+				}
+				right={
+					<Group gap={8}>
+						{isMobile && (
+							<UnstyledButton
+								onClick={openDrawer}
+								style={{
+									display: 'flex',
+									alignItems: 'center',
+									justifyContent: 'center',
+									width: 34,
+									height: 34,
+									backgroundColor: 'var(--brand-row, #F9FAFB)',
+									borderRadius: 9999,
+								}}
+							>
+								<AprilIconPanelLeft size={18} />
+							</UnstyledButton>
+						)}
+						<HeaderRight />
 					</Group>
-					<UserMenu />
-				</Group>
-			</AppShell.Header>
-
-			{/* Sidebar */}
-			<AppShell.Navbar p="md">
-				{hasAdminAccess && isAdminRoute ? (
-					<AdminNav onClose={close} />
-				) : (
-					<EmployeeNav onClose={close} />
-				)}
-			</AppShell.Navbar>
+				}
+				sticky
+			/>
 
 			{/* Main content */}
-			<AppShell.Main>
+			<main
+				style={{
+					maxWidth: 1100,
+					margin: '0 auto',
+					padding: '28px 28px 56px',
+				}}
+			>
 				<Outlet />
-			</AppShell.Main>
-		</AppShell>
+			</main>
+
+			{/* Mobile Drawer */}
+			{isMobile && (
+				<Drawer
+					opened={drawerOpened}
+					onClose={closeDrawer}
+					position="left"
+					title="Меню"
+					size="xs"
+					padding="md"
+				>
+					<Stack gap="xs">
+						{(hasAdminAccess && isAdminRoute
+							? adminRoutes.filter((item) =>
+									item.roles.some((role) =>
+										userRoles.includes(role as never),
+									),
+								)
+							: employeeRoutes
+						).map((item) => {
+							const isActive = location.pathname === item.path
+							return (
+								<UnstyledButton
+									key={item.path}
+									onClick={() => {
+										navigate(item.path)
+										closeDrawer()
+									}}
+									style={{
+										width: '100%',
+										display: 'flex',
+										alignItems: 'center',
+										padding: '10px 12px',
+										borderRadius: 8,
+										backgroundColor: isActive
+											? 'var(--brand-green-light, #F0FDF4)'
+											: 'transparent',
+										color: isActive
+											? 'var(--brand-green, #00B33C)'
+											: 'var(--brand-text-muted, #6B7280)',
+										fontWeight: isActive ? 600 : 400,
+										fontSize: 14,
+										textDecoration: 'none',
+									}}
+								>
+									{item.label}
+								</UnstyledButton>
+							)
+						})}
+					</Stack>
+				</Drawer>
+			)}
+		</div>
 	)
 }

@@ -145,6 +145,26 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 - [ ] `report.md` заполнен
 - [ ] Нет хардкода брендов/провайдеров (проверка на «Три нуля»)
 
+### 🔒 Секреты
+
+**НИКОГДА не передавать секреты в чат:**
+
+| Тип | Пример | Где хранить |
+|-----|--------|-------------|
+| GitHub PAT | `ghp_xxxxxxxxxxxx` | `.env.staging`, GH Actions secrets |
+| Sudo-пароль | `Da40BV...` | `sshpass`, `sudoers NOPASSWD` |
+| DB пароль | `postgres://user:pass@...` | `.env.staging` (в `.gitignore`) |
+| API key | `sk-xxx`, `key_xxx` | `.env.staging`, GH Actions secrets |
+| JWT secret | `JWT_SECRET=xxx` | `.env.staging` (в `.gitignore`) |
+
+**Правила:**
+1. Если нужен токен для работы — **спросить у пользователя**
+2. При работе с `.env.*` — использовать только `${VAR:?required}` или `os.Getenv()` — не хардкодить значения
+3. Если в чате появился токен — **предупредить пользователя о ротации**
+4. Инфраструктурные секреты — передавать через `env_file`, `environment`, GH Actions secrets
+
+**Инцидент 2026-05-28:** В сессии `ses_18fbf8df9ffebzj1DR3WAlRdcW` были переданы sudo-пароль и GitHub PAT в открытом виде. Оба токена требуют ротации.
+
 ### Что НЕ делать без спроса
 
 - Менять `go.mod` или добавлять зависимости
@@ -153,3 +173,4 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 - Менять номенклатуру именования путей/файлов
 - Нарушать tenant isolation
 - Игнорировать требования 152-ФЗ и ФСТЭК
+- **Передавать секреты в чат** — использовать env_file, GH Actions secrets, спрашивать у пользователя

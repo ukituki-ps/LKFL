@@ -1,6 +1,9 @@
-# plan.yaml — T2214.1 Brand tokens, тема, шрифт
+# plan.yaml — T2214.1 Brand tokens, тема, шрифт, DS upgrade
 
 checklist:
+  - id: 0
+    name: npm install @ukituki-ps/april-ui@0.1.16 @ukituki-ps/april-tokens@0.1.16
+    done: false
   - id: 1
     name: Создать BrandTokens.css
     done: false
@@ -21,4 +24,7 @@ checklist:
     done: false
   - id: 7
     name: Запустить тесты — убедиться, что ничего не сломалось
+    done: false
+  - id: 8
+    name: Проверить компиляцию импорта AprilProductHeader из DS
     done: false

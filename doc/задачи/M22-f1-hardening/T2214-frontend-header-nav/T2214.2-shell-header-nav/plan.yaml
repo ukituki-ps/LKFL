@@ -5,10 +5,10 @@ checklist:
     name: Создать HeaderNav.tsx (5 ссылок + active underline)
     done: false
   - id: 2
-    name: Создать HeaderRight.tsx (BalancePill + Bell + UserMenu)
+    name: Создать HeaderRight.tsx (BalancePill + Bell + UserMenu, AprilIconCoins/Bell)
     done: false
   - id: 3
-    name: Заменить Shell.tsx → AprilProductHeader + <main> layout
+    name: Заменить Shell.tsx → AprilProductHeader (из DS) + <main> layout
     done: false
   - id: 4
     name: Упростить EmployeeNav.tsx (только мобильный Drawer)

@@ -115,6 +115,56 @@ serverDev — Deploy Worker (docker-compose.staging.yml)
 - Deploy Worker требует Docker socket mount (безопасность)
 - X-Tenant-ID sdek остаётся hardcoded (staging-only limitation, M23+)
 
+## Operational decisions (2026-05-28)
+
+Решения, принятые при деплое staging на serverAI.
+
+### max-parallel: 2 в build-push matrix
+
+| Поле | Значение |
+|------|----------|
+| Проблема | serverAI имеет 1 Docker daemon, 4 параллельных buildx перегружают его → buildx connection error |
+| Решение | `max-parallel: 2` в `strategy.matrix` build.yml → не более 2 одновременных buildx |
+| Файл | `.github/workflows/build.yml` |
+
+```yaml
+strategy:
+  fail-fast: false
+  max-parallel: 2  # serverAI: 1 Docker daemon, не перегружать buildx
+  matrix:
+    service: [server, proxy, frontend, deploy-worker]
+```
+
+### Перенос staging: serverDev (arm64) → serverAi (amd64)
+
+| Поле | Значение |
+|------|----------|
+| Причина | serverDev (arm64) не мог использовать amd64-образы из GHCR, QEMU emulation недоступна |
+| Решение | Staging переведён на serverAi (192.168.1.46, amd64, 30GB RAM), где уже работают CI runners |
+| Внешний nginx | serverPr01 → upstream 192.168.1.46:8888 |
+
+### Порт deploy-worker: 9091 → 9092
+
+| Поле | Значение |
+|------|----------|
+| Причина | Port 9091 конфликтовал с legacy prometheus конфигурацией |
+| Решение | Deploy Worker переведён на порт 9092 |
+| Файлы | `Dockerfile.deploy-worker`, `config.go`, `docker-compose.staging.yml` |
+
+### docker-compose plugin v2.38.0 в образе
+
+| Поле | Значение |
+|------|----------|
+| Причина | Образ deploy-worker без docker-compose плагина → `docker compose: command not found` |
+| Решение | `Dockerfile.deploy-worker`: apk docker-cli + compose plugin v2.38.0 + верификация `docker compose version` при сборке |
+
+### GHCR login через Docker daemon host
+
+| Поле | Значение |
+|------|----------|
+| Причина | Deploy-worker не может залогиниться в GHCR из контейнера (Docker daemon на хосте) |
+| Решение | `gh auth login` на serverAI → Docker daemon auth → deploy-worker pull без явного login |
+
 ## Зависимости
 
 - T2209 (Docker Production) — multi-stage Dockerfile

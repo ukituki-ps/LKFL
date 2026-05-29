@@ -2,25 +2,25 @@
 
 checklist:
   - id: 1
-    name: Добавить lucide-react в package.json, npm install
+    name: Создать StubBadge.tsx (только dev, tooltip, !import.meta.env.DEV)
     done: false
   - id: 2
-    name: Создать StubBadge.tsx (только dev, tooltip)
+    name: Реврайт Dashboard.tsx → моки по прототипу (AprilIcon*)
     done: false
   - id: 3
-    name: Реврайт Dashboard.tsx → моки по прототипу
-    done: false
-  - id: 4
     name: Реализовать Points.tsx → моки по прототипу
     done: false
-  - id: 5
+  - id: 4
     name: Реализовать Documents.tsx → моки по прототипу
     done: false
-  - id: 6
+  - id: 5
     name: Реализовать Support.tsx → моки по прототипу
     done: false
-  - id: 7
+  - id: 6
     name: Проверить StubBadge скрыт в production build
+    done: false
+  - id: 7
+    name: Проверить — lucide-react НЕ в dependencies package.json
     done: false
   - id: 8
     name: npm run dev — проверить все 4 страницы
