@@ -102,14 +102,19 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
       KC_HTTP_ENABLED: "true"
-      # hostname:v2 config: KC_PROXY_ADDRESS_FORWARDING читает Host header от nginx proxy.
+      # hostname:v2 config:
+      # KC_HOSTNAME — primary hostname, используется для issuer и всех URL генерации.
+      # KC_FRONTEND_URL — browser-visible URL (HTTPS).
+      # KC_HOSTNAME_ADMIN — admin console URL (HTTPS).
+      # KC_HOSTNAME_BACKCHANNEL_URL — internal URL для backchannel (discovery, token exchange).
       # nginx передаёт Host: dev.april.ukituki.tech → issuer: http://dev.april.ukituki.tech/...
       # lkfl-server: extra_hosts маппит dev.april.ukituki.tech → host-gateway:80 → nginx → Keycloak.
       # KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/... → совпадает с discovery и token iss.
-      KC_PROXY_ADDRESS_FORWARDING: "true"
+      KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
+      KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
     command: start-dev --import-realm
     volumes:
