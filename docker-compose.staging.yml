@@ -106,7 +106,7 @@ services:
       # KC_FRONTEND_URL — browser-visible URL (HTTPS).
       # KC_HOSTNAME_ADMIN — admin console URL (HTTPS).
       # Issuer внутри Docker-сети: http://keycloak:8080/realms/lkfl-sdek.
-      KC_HOSTNAME: dev.april.ukituki.tech
+      KC_HOSTNAME: keycloak
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
