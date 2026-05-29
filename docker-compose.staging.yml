@@ -245,9 +245,9 @@ services:
   lkfl-frontend:
     image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/frontend:${IMAGE_TAG:-main-latest}
     restart: unless-stopped
-    # ADR-037: порт 8081 напрямую для external nginx (без internal nginx)
+    # ADR-037: порт 8084 напрямую для external nginx (без internal nginx)
     ports:
-      - "8081:80"
+      - "8084:80"
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
       interval: 15s
