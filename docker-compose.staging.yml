@@ -156,7 +156,7 @@ services:
     env_file:
       - .env.staging
     environment:
-      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
+      DB_DSN: ${DB_DSN}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
       # Нет SSL_CERT_FILE / TLS_INSECURE — TLS termination только на external nginx.
@@ -278,7 +278,7 @@ services:
     env_file:
       - .env.staging
     environment:
-      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
+      DB_DSN: ${DB_DSN}
     depends_on:
       postgres:
         condition: service_healthy
@@ -295,7 +295,7 @@ services:
     env_file:
       - .env.staging
     environment:
-      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
+      DB_DSN: ${DB_DSN}
     depends_on:
       postgres:
         condition: service_healthy

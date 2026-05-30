@@ -150,7 +150,7 @@ services:
     env_file:
       - .env.prod
     environment:
-      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD}@postgres:5432/lkfl_platform?sslmode=disable
+      DB_DSN: ${DB_DSN}
       REDIS_URL: ${REDIS_URL:-redis://:${REDIS_PASSWORD}@redis:6379}
       # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
       KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
@@ -267,7 +267,7 @@ services:
     env_file:
       - .env.prod
     environment:
-      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD}@postgres:5432/lkfl_platform?sslmode=disable
+      DB_DSN: ${DB_DSN}
     depends_on:
       postgres:
         condition: service_healthy
@@ -284,7 +284,7 @@ services:
     env_file:
       - .env.prod
     environment:
-      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD}@postgres:5432/lkfl_platform?sslmode=disable
+      DB_DSN: ${DB_DSN}
     depends_on:
       postgres:
         condition: service_healthy
