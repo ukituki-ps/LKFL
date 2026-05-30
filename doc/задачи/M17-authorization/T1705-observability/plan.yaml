@@ -1,0 +1,40 @@
+# T1705 plan.yaml
+
+task_id: T1705
+milestone: M17
+title: "Observability"
+type: code
+status: pending
+progress: 0%
+parent: T1700
+depends_on: [T1701]  # T1702 убрано — задача откладывается до M18 при необходимости
+estimate: 2 days
+risk: "Grafana дашборды JSON — ручной ввод, легко устареть; Loki — проверить volume persistence"
+deferred_to: "M18 (при необходимости)"
+
+checklist:
+  - id: 1
+    section: "Observability (docker-compose)"
+    items:
+      - id: 1.1
+        desc: "docker-compose.yml — +prometheus, +grafana, +loki"
+        done: false
+      - id: 1.2
+        desc: "infra/prometheus/prometheus.yml — scrape configs (lkfl-server, proxy, postgres, redis, keycloak)"
+        done: false
+      - id: 1.3
+        desc: "infra/grafana/provisioning/ — auto-provisioned dashboards"
+        done: false
+      - id: 1.4
+        desc: "infra/grafana/dashboards/ — JSON: Platform Overview, Backend Metrics, Infrastructure, Application Logs"
+        done: false
+
+  - id: 2
+    section: "Loki (логи)"
+    items:
+      - id: 2.1
+        desc: "Loki в docker-compose — Docker logs driver → Loki"
+        done: false
+      - id: 2.2
+        desc: "Grafana Explore: filter по tenant_id, level, svc"
+        done: false

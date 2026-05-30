@@ -8,7 +8,7 @@
 
 Архитектура переводит контекст в техническое проектирование. Она отвечает на вопросы:
 - **Из каких сервисов состоит система?** — `lkfl-server` (монолит, 16 internal пакетов) + `lkfl-integration-proxy` (отдельный бинарник, gRPC), React SPA
-- **Какой стек используем?** — Go 1.22, Keycloak OIDC, PostgreSQL, Redis, React + Mantine + @april/ui
+- **Какой стек используем?** — Go 1.24, Keycloak OIDC, PostgreSQL, Redis, React + Mantine + @april/ui
 - **Как интегрируемся с внешними системами?** — `lkfl-integration-proxy` (отдельный бинарник, gRPC :8090) — точка контакта с benefit-провайдерами. Монолит → proxy через `internal/integrationclient/` (gRPC client). HR → `internal/user/` напрямую (Asynq worker). 1C → `internal/billing/payroll/` напрямую (REST API). Платежи → `internal/payments/` (PCI DSS). [ADR-035]
 - **Какие архитектурные решения приняты?** — 35 ADR в формате ХАДД (26 Accepted, 4 Superseded, 5 Note)
 - **Как обеспечиваем безопасность?** — OWASP, 152-ФЗ, ФСТЭК, multi-tenancy, consent lifecycle, PCI DSS (Payment Gateway)

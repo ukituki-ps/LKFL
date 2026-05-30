@@ -10,7 +10,7 @@
 
 ## Решение
 
-**Backend:** Go 1.22 — type safety, concurrency (goroutines), low memory footprint, native Docker support, единый стек с April Profile/Worker.
+**Backend:** Go 1.24 — type safety, concurrency (goroutines), low memory footprint, native Docker support, единый стек с April Profile/Worker.
 
 **Frontend:** React 18 + Mantine + `@april/ui` — единая DS с April экосистемой, production-ready компоненты, a11y, dark mode.
 

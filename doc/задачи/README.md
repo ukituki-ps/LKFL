@@ -71,3 +71,4 @@ T{MM}{NN}-{name}/
 | M14-survey-implementation | Реализация Go-кода Survey Engine: engagement/survey/*.go, TagResolver.AggregateSurveyTags, FlowEngine.ExecuteStep integration, admin/ survey-analytics endpoint | ⛔ отменена |
 | M15-архитектура-фронтенда | Архитектура React SPA: фронтенд.md (10 разделов) + фронтенд-mobile-forms.md + 4 ADR + обновление ADR-029 + навигация | ✅ выполнено |
 | M16-integration-proxy | Integration Proxy: ADR-035 (T1601), gRPC proto (T1602), интеграции.md (T1603), пакеты-platform (T1604), schema (T1605), api (T1606), модули (T1607), стек (T1608), безопасность (T1609), навигация (T1610), план (T1611), контекст (T1612), final consistency (T1613) | ✅ выполнено |
+| M17-authorization | Authorization + CI/CD: 5 code — T1701 (инфра), T1702 (backend auth), T1703 (frontend auth), T1704 (CI/CD), T1705 (Observability, отложить) | ⏳ в работе |

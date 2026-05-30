@@ -1,0 +1,82 @@
+# T1701 plan.yaml
+
+task_id: T1701
+milestone: M17
+title: "Инфраструктура и bootstrap проекта"
+type: code
+status: pending
+progress: 0%
+parent: T1700
+depends_on: []  # Первая задача кода, нет зависимостей
+estimate: 3 days
+risk: "Keycloak 26.x — проверить стабильность; Go 1.24 + pgx v5 — проверить совместимость"
+
+checklist:
+  - id: 1
+    section: "Go проект"
+    items:
+      - id: 1.1
+        desc: "go.mod инициализация (lkfl, Go 1.24+, key dependencies: go-oidc, golang-jwt, pgx, redis, asynq, chi)"
+        done: false
+      - id: 1.2
+        desc: "cmd/server/main.go — stub (log.Println(\"lkfl-server\"), os.Exit(0)) для go build проверки"
+        done: false
+      - id: 1.3
+        desc: "cmd/integration-proxy/main.go — stub (log.Println(\"lkfl-integration-proxy\"), os.Exit(0)) для go build проверки и Dockerfile.proxy"
+        done: false
+
+  - id: 2
+    section: "Docker"
+    items:
+      - id: 2.1
+        desc: "Dockerfile.server — stub (single-stage, golang:1.24-alpine), компилирует cmd/server stub. Заменён на multi-stage в T1704."
+        done: false
+      - id: 2.2
+        desc: "Dockerfile.proxy — stub (single-stage, golang:1.24-alpine), компилирует cmd/integration-proxy stub. Заменён на multi-stage в T1704."
+        done: false
+      - id: 2.3
+        desc: "docker-compose.yml — PostgreSQL 17, Redis 7, Keycloak 26.x, Nginx, frontend"
+        done: false
+      - id: 2.4
+        desc: ".env.example — переменные окружения для всех сервисов"
+        done: false
+      - id: 2.5
+        desc: ".dockerignore"
+        done: false
+
+  - id: 3
+    section: "CI (GitHub Actions) — smoke check"
+    items:
+      - id: 3.1
+        desc: ".github/workflows/go.yml — минимальный: go build ./... на push/PR (заменяется на ci.yml в T1704)"
+        done: false
+      - id: 3.2
+        desc: ".github/workflows/frontend.yml — минимальный: npm ci && npm run build на push/PR (заменяется на ci.yml в T1704)"
+        done: false
+
+  - id: 4
+    section: "Makefile"
+    items:
+      - id: 4.1
+        desc: "Makefile — make run, make build, make test, make migrate, make docker-up, make docker-down"
+        done: false
+
+  - id: 5
+    section: "Keycloak"
+    items:
+      - id: 5.1
+        desc: "infra/keycloak/realm/tenant-template.json — realm per tenant шаблон"
+        done: false
+      - id: 5.2
+        desc: "infra/keycloak/scripts/create-tenant-realm.sh — скрипт создания realm"
+        done: false
+      - id: 5.3
+        desc: "infra/keycloak/seed-demo.sh — seed: realm demo + users (admin, employee) + clients (lkfl-frontend, lkfl-server)"
+        done: false
+
+  - id: 6
+    section: "Nginx"
+    items:
+      - id: 6.1
+        desc: "infra/nginx/lkfl.conf — route table, security headers, SPA fallback, metrics whitelist"
+        done: false

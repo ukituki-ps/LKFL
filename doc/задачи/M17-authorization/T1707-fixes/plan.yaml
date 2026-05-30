@@ -1,0 +1,84 @@
+# T1707 plan.yaml
+
+task_id: T1707
+milestone: M17
+title: "Исправление критических дефектов M17"
+type: code
+status: done
+progress: 100%
+parent: T1700
+depends_on: [T1702, T1704]
+estimate: 3 days
+
+checklist:
+  - id: 1
+    section: "SQL миграции"
+    items:
+      - id: 1.1
+        desc: "migrations/001_create_tenants.sql — tenants table (согласно schema.md)"
+        done: true
+      - id: 1.2
+        desc: "migrations/002_create_tenant_brand.sql — tenant_brand table"
+        done: true
+      - id: 1.3
+        desc: "migrations/003_create_users.sql — users table"
+        done: true
+      - id: 1.4
+        desc: "migrations/atlas.hcl — Atlas config"
+        done: true
+
+  - id: 2
+    section: "RSA JWKS верификация"
+    items:
+      - id: 2.1
+        desc: "Добавить github.com/MicahParks/keyfunc/v3 в go.mod"
+        done: true
+      - id: 2.2
+        desc: "shared/pkg/auth/verifier.go — RSA JWKS через keyfunc"
+        done: true
+      - id: 2.3
+        desc: "shared/pkg/auth/verifier_test.go — адаптировать тесты"
+        done: true
+
+  - id: 3
+    section: "migrate/seed subcommands"
+    items:
+      - id: 3.1
+        desc: "cmd/server/main.go — CLI parsing: migrate, seed"
+        done: true
+      - id: 3.2
+        desc: "Makefile — migrate target запускает lkfl-server migrate"
+        done: true
+      - id: 3.3
+        desc: "Dockerfile.server — COPY migrations/"
+        done: true
+
+  - id: 4
+    section: "Thread-safe + config"
+    items:
+      - id: 4.1
+        desc: "internal/tenant/repository.go — sync.RWMutex в InMemoryRepository"
+        done: true
+      - id: 4.2
+        desc: "shared/pkg/auth/tenantresolver.go — cache entry с TTL expiry"
+        done: true
+      - id: 4.3
+        desc: "shared/pkg/auth/middleware.go — KeycloakURL из os.Getenv"
+        done: true
+
+  - id: 5
+    section: "Docker + фронтенд"
+    items:
+      - id: 5.1
+        desc: "docker-compose.yml — lkfl-frontend запускает npm run dev"
+        done: true
+
+  - id: 6
+    section: "Верификация"
+    items:
+      - id: 6.1
+        desc: "go build ./... — чистая компиляция"
+        done: true
+      - id: 6.2
+        desc: "go test ./... — все тесты зелёные"
+        done: true

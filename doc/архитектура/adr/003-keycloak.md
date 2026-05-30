@@ -16,7 +16,7 @@
 
 ## Решение
 
-**Keycloak 25.0** как центральный IdP:
+**Keycloak 26.x** как центральный IdP:
 - OIDC для платформы (backend — OIDC client через `go-oidc`)
 - SAML / OIDC Identity Broker для внешних провайдеров (сквозная авторизация)
 - On-premise deploy (ФСТЭК, 152-ФЗ)

@@ -1,3 +1,24 @@
+<<<<<<< HEAD
+# Deploy Staging — Pull images from GHCR + restart on serverAi
+# Self-hosted runners — runs directly on the target server
+
+name: Deploy Staging
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'Dockerfile.*'
+      - 'docker-compose.prod.yml'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+=======
 # T2213 — Manual Deploy
 # Ручной деплой на staging через deploy-worker API
 #
@@ -22,10 +43,49 @@ env:
 
 permissions:
   contents: read
+>>>>>>> origin/main
 
 jobs:
   deploy:
     name: Deploy to Staging
+<<<<<<< HEAD
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: read
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Sync deploy config to server
+        run: |
+          cp docker-compose.prod.yml ~/lkfl/docker-compose.prod.yml
+
+      - name: Pull images
+        run: |
+          cd ~/lkfl
+          docker compose -f docker-compose.prod.yml pull
+
+      - name: Deploy
+        run: |
+          cd ~/lkfl
+          docker compose -f docker-compose.prod.yml up -d
+
+      - name: Clean old images
+        run: docker image prune -f
+
+      - name: Verify health
+        run: |
+          echo "=== Health checks ==="
+          sleep 5
+          curl -sf http://127.0.0.1:80/healthz && echo " backend: OK" || echo " backend: FAIL"
+          curl -sf http://127.0.0.1:80/ > /dev/null && echo "  frontend: OK" || echo "  frontend: FAIL"
+          curl -sf http://127.0.0.1:9090/-/healthy > /dev/null && echo " prometheus: OK" || echo " prometheus: FAIL"
+=======
     runs-on: ubuntu-latest
     steps:
       - name: Deploy
@@ -74,3 +134,4 @@ jobs:
         run: |
           chmod +x infra/smoke-test.sh
           infra/smoke-test.sh https://dev.april.ukituki.tech
+>>>>>>> origin/main

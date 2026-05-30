@@ -1,0 +1,114 @@
+# T1703 plan.yaml
+
+task_id: T1703
+milestone: M17
+title: "Frontend: auth"
+type: code
+status: pending
+progress: 0%
+parent: T1700
+depends_on: [T1701]
+estimate: 4 days
+risk: "keycloak-js — API нестабилен между мажорными версиями; @ukituki-ps/april-ui — проверить совместимость"
+
+checklist:
+  - id: 1
+    section: "Bootstrap"
+    items:
+      - id: 1.1
+        desc: "Vite bootstrap + package.json (React 18, keycloak-js, @tanstack/react-query, zustand, @ukituki-ps/april-ui, Mantine)"
+        done: false
+
+  - id: 1b
+    section: "Tenant resolution (frontend)"
+    items:
+      - id: 1b.1
+        desc: "src/utils/tenant.ts — extractTenantSlug(hostname): 'sdek.lkfl.ru' → 'sdek', localhost → 'demo'"
+        done: false
+      - id: 1b.2
+        desc: "src/utils/tenant.ts — buildKeycloakConfig(slug): {url, realm=slug, clientId='lkfl-frontend'}"
+        done: false
+
+  - id: 2
+    section: "Keycloak интеграция"
+    items:
+      - id: 2.1
+        desc: "src/keycloak.ts — Keycloak instance, init (realm из extractTenantSlug, не из env)"
+        done: false
+      - id: 2.2
+        desc: "src/keycloak-token-subscribers.ts — token rotation notification"
+        done: false
+
+  - id: 3
+    section: "API и store"
+    items:
+      - id: 3.1
+        desc: "src/api/platform.ts — authorizedFetch (401 retry + token refresh), React Query integration"
+        done: false
+      - id: 3.2
+        desc: "src/store/auth.ts — Zustand auth store (user, roles, tenant, status, fetchMe, logout)"
+        done: false
+
+  - id: 4
+    section: "Auth state machine"
+    items:
+      - id: 4.1
+        desc: "src/App.tsx — auth state machine (guest → transition → authorized/forbidden/no-context)"
+        done: false
+      - id: 4.2
+        desc: "src/main.tsx — Sentry init, auth init, <AprilProviders>, render <App>"
+        done: false
+      - id: 4.3
+        desc: "src/components/auth/RequireAuth.tsx — auth guard с role checking"
+        done: false
+      - id: 4.4
+        desc: "src/components/auth/GuestZone.tsx — landing page + login button"
+        done: false
+      - id: 4.5
+        desc: "src/components/auth/ForbiddenZone.tsx — 403 screen"
+        done: false
+      - id: 4.6
+        desc: "src/components/auth/AuthorizedShell.tsx — full nav + role filtering"
+        done: false
+
+  - id: 5
+    section: "Layout и страницы"
+    items:
+      - id: 5.1
+        desc: "src/components/layout/Header.tsx, Sidebar.tsx, PageLayout.tsx — layout компоненты"
+        done: false
+      - id: 5.2
+        desc: "src/pages/Dashboard.tsx — stub: баланс, активные льготы, события"
+        done: false
+      - id: 5.3
+        desc: "src/pages/Catalog.tsx — stub: каталог льгот"
+        done: false
+
+  - id: 6
+    section: "Unit-тесты (vitest)"
+    items:
+      - id: 6.1
+        desc: "Тесты tenant.ts (extractTenantSlug: sdek.lkfl.ru→sdek, localhost→demo; buildKeycloakConfig)"
+        done: false
+      - id: 6.2
+        desc: "Тесты store/auth.ts (Zustand store: fetchMe, logout, state transitions)"
+        done: false
+      - id: 6.3
+        desc: "Тесты api/platform.ts (authorizedFetch: 401 retry, token refresh, error handling)"
+        done: false
+      - id: 6.4
+        desc: "Тесты App.tsx (state machine: guest → transition → authorized/forbidden/no-context)"
+        done: false
+
+  - id: 7
+    section: "Playwright E2E"
+    items:
+      - id: 7.1
+        desc: "playwright.config.ts — конфигурация, dev server, auth fixture"
+        done: false
+      - id: 7.2
+        desc: "tests/e2e/login.spec.ts — login flow E2E (guest → Keycloak login → Dashboard)"
+        done: false
+      - id: 7.3
+        desc: "tests/e2e/forbidden.spec.ts — 403 screen для неавторизованного доступа"
+        done: false
