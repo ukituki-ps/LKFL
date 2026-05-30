@@ -69,4 +69,4 @@
 - **Не тронута структура config'ов** (`playwright.config.ts`, `playwright.staging.config.ts`)
 - **Staging тесты не запущены** — требуют живой staging и Keycloak (проверка после push в CI)
 - **Локальные тесты не запущены** — требуют установленные Playwright браузеры (проверка после push в CI)
-- **GitHub Secrets** `E2E_USERNAME` и `E2E_PASSWORD` должны быть настроены для e2e-staging job'а
+- **E2E credentials** из `.env.staging` на serverAi — добавить `E2E_USERNAME` и `E2E_PASSWORD` в `.env.staging`
