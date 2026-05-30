@@ -34,7 +34,7 @@ Go modular monolith backend (`lkfl-server`) + React SPA frontend.
 
 ### Архитектура — Modular Monolith
 
-**Два бинарника (`lkfl-server` + `lkfl-integration-proxy`), один `go.mod`, 16 internal-пакетов монолита.**
+**Два бинарника (`lkfl-server` + `lkfl-integration-proxy`), один `go.mod`, 17 internal-пакетов монолита.**
 
 ```
 lkfl-server (:8080)
@@ -57,9 +57,10 @@ lkfl-server (:8080)
 │   ├── recommendations/ # Stub (Phase 2, M15)
 │   └── api/             # Public + Admin router'а
 ├── shared/pkg/
-│   ├── auth/            # verifier, middleware, rbac
+│   ├── auth/            # verifier, middleware, rbac (M19)
 │   └── celcontext/      # CELContext type
 ├── cmd/server/          # HTTP entry point
+├── cmd/seed/            # Seed data (M18)
 └── cmd/worker/          # Asynq background jobs
 
 lkfl-integration-proxy (:8090 gRPC + :8091 HTTP webhooks) [M16, ADR-035]
@@ -87,7 +88,7 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 - `doc/README.md` — карта всей документации
 - `doc/NAVIGATION.md` — навигация для агентов (вопрос → файл:строка)
 - `doc/контекст/` — 6 файлов: философия, проблема, акторы, ограничения, negative-criteria, настраиваемость
-- `doc/архитектура/` — 9 файлов + 35 ADR: модули, стек, интеграции, безопасность, schema.md (47 таблиц), cel-engine, engagement, теги, пакеты-platform
+- `doc/архитектура/` — 10 файлов + 35 ADR: модули, стек, интеграции, безопасность, риски, schema.md (47 таблиц), cel-engine, engagement, теги, пакеты-platform
 - `doc/архитектура/adr/` — 35 ADR. Индекс: [`adr/README.md`](./doc/архитектура/adr/README.md)
 - `doc/спецификация/` — артефакты (30), journeys (57), API (118 endpoints), критерии приёмки (66)
 - `doc/план/` — вехи M00→M16 (doc) + M17→M44 (code), задачи T{MM}{NN}, зависимости, exit criteria
@@ -114,9 +115,15 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 
 ### Текущее состояние
 
+<<<<<<< HEAD
 - **Документация:** 63/72 задач ✅ (87.5%). M01→M13 + M15 + M16 завершены. M14 отменена.
 - **Код:** 0/5 задач. Go-код не начат.
 - **Следующая задача:** M17 T1701 — инфраструктура и bootstrap (→ T1702+T1703 параллельно → T1704 CI/CD)
+=======
+- **Документация:** 63/67 задач ✅ (94.0%). M01→M13 + M15 + M16 завершены. M14 отменена.
+- **Код:** 17/240 задач ✅ (M17(6) + M18(5) + M19(6)). M20 ready (brief.md уточнены после M19).
+- **Следующая задача:** M20 T2001 — migrations engagement
+>>>>>>> origin/main
 - **M14:** ⛔ отменена (Survey Implementation). Архитектура (M13, ADR-025) сохранена.
 
 ### Ключевые метрики
@@ -125,7 +132,7 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 |---------|----------|
 | Бизнес-проблем | 12 |
 | Акторов | 10 |
-| Internal-пакетов монолита | 16 (14 business + tenant + api + integrationclient) |
+| Internal-пакетов монолита | 17 (15 business + tenant + api + integrationclient + auth) |
 | ADR | 35 (26 Accepted, 4 Superseded, 5 Note) |
 | Таблиц БД | 47 (41 lkfl_platform + 6 lkfl_integration) |
 | API endpoints | 118 |
@@ -133,7 +140,11 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 | Артефактов | 30 |
 | Критериев приёмки | 66 |
 | Doc задач (M00→M16) | 67 (63 doc ✅, 1 code ⛔ отменена, 3 не учитываются M00) |
+<<<<<<< HEAD
 | Code задач (M17+) | 5 code (T1701–T1705) |
+=======
+| Code задач (M17→M44) | 240 (17 выполнено: M17(6) + M18(5) + M19(6), 223 осталось, 4 фазы) |
+>>>>>>> origin/main
 
 ### Что НЕ делать без спроса
 

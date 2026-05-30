@@ -1,0 +1,22 @@
+# T2210 — Деплой на стенд
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] docker-compose.staging.yml
+- [x] Nginx config (reverse proxy + TLS self-signed)
+- [x] .env.staging
+- [x] Все сервисы запущены
+- [x] Backend healthz → 200
+- [x] Frontend загружается
+- [x] Seed data загружена
+- [x] Login через Keycloak работает
+- [x] Каталог доступен
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2209]

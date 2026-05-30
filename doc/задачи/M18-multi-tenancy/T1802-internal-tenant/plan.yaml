@@ -1,0 +1,23 @@
+# T1802 — internal/tenant/ (CRUD + Brand Config)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `internal/tenant/model.go` — Tenant + BrandConfig structs
+- [x] Создать `internal/tenant/repository.go` — Repository interface + pgx impl
+- [x] Создать `internal/tenant/service.go` — business logic
+- [x] Создать `internal/tenant/handler.go` — admin HTTP handlers
+- [x] Slug validation regex
+- [x] Slug uniqueness check
+- [x] Status check (suspended tenant)
+- [x] Pagination (page/per_page)
+- [x] Custom error types
+- [x] Unit tests
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1801]

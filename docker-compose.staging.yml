@@ -1,0 +1,486 @@
+# LKFL — Docker Compose Staging
+# Веха M22 — F1 Hardening
+#
+# Staging стенд: pull образов из GHCR, деплой через deploy-worker.
+# Запуск:   docker compose -f docker-compose.staging.yml up -d
+# Миграции: docker compose -f docker-compose.staging.yml run --rm lkfl-migrate
+# Сид:      docker compose -f docker-compose.staging.yml run --rm lkfl-seed
+# Логи:     docker compose -f docker-compose.staging.yml logs -f
+# Мониторинг: docker compose -f docker-compose.staging.yml --profile monitoring up -d
+#
+# Требуется .env.staging (скопируйте из .env.staging.example)
+# Образы: GHCR (ghcr.io/ukituki-ps/lkfl)
+
+services:
+  # =========================================================================
+  # PostgreSQL 17 — основная база данных платформы
+  # Schema: lkfl_platform (основная), keycloak (для Keycloak)
+  # =========================================================================
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    ports:
+      - "15432:5432"
+    env_file:
+      - .env.staging
+    environment:
+      POSTGRES_DB: lkfl_platform
+      TZ: Europe/Moscow
+    volumes:
+      - staging_pg_data:/var/lib/postgresql/data
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lkfl} -d lkfl_platform"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+    networks:
+      - lkfl_backend
+
+  # =========================================================================
+  # Redis 7 — кэш, сессии, очереди (Asynq)
+  # =========================================================================
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "16379:6379"
+    command: >
+      redis-server
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+      --bind 0.0.0.0
+    env_file:
+      - .env.staging
+    volumes:
+      - staging_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 64M
+          cpus: "0.1"
+    networks:
+      - lkfl_backend
+
+  # =========================================================================
+  # Keycloak 25.0 — OIDC Identity Provider
+  # Realm per tenant (lkfl-sdek, lkfl-tenant2, ...)
+  # Staging: start-dev режим для быстрого запуска
+  # =========================================================================
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    restart: unless-stopped
+    ports:
+      - "19081:8080"
+    env_file:
+      - .env.staging
+    environment:
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
+      KC_HTTP_RELATIVE_PATH: /
+   # ADR-037: hostname:v2 без KC_PROXY_HEADERS + KC_HOSTNAME_STRICT_HTTPS.
+      # KC_HOSTNAME — browser redirect URI hostname.
+      # KC_FRONTEND_URL — browser-visible URL (HTTPS).
+      # KC_HOSTNAME_ADMIN — admin console URL (HTTPS).
+      # Issuer внутри Docker-сети: http://keycloak:8080/realms/lkfl-sdek.
+      KC_HOSTNAME: dev.april.ukituki.tech
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTP: "false"
+      KC_FRONTEND_URL: https://dev.april.ukituki.tech
+      # ADR-037: backchannel issuer для внутреннего discovery (lkfl-server → Keycloak)
+      KC_HOSTNAME_BACKCHANNEL_URL: http://keycloak:8080
+      KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
+      TZ: Europe/Moscow
+      RATE_LIMIT_AUTH: "100"
+      RATE_LIMIT_CATALOG: "500"
+      RATE_LIMIT_ADMIN: "200"
+    command: start-dev --import-realm
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      # Quarkus SmallRye Health — management port 9000
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/localhost/9000 && exec 3>&-"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1"
+        reservations:
+          memory: 512M
+          cpus: "0.5"
+    networks:
+      - lkfl_backend
+      - lkfl_frontend
+
+  # =========================================================================
+  # lkfl-server — Go backend (modular monolith)
+  # Pull из GHCR, graceful shutdown 30s → stop_grace_period 35s
+  # =========================================================================
+  lkfl-server:
+    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/server:${IMAGE_TAG:-main-latest}
+    restart: unless-stopped
+    stop_grace_period: 35s
+    ports:
+      - "18080:8080"
+    extra_hosts:
+      - "dev.april.ukituki.tech:192.168.1.29"
+      - "host.docker.internal:host-gateway"
+    env_file:
+      - .env.staging
+    environment:
+      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
+      # Нет SSL_CERT_FILE / TLS_INSECURE — TLS termination только на external nginx.
+      KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/realms/lkfl-sdek
+      KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
+      SERVER_PORT: "8080"
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      JWT_SECRET: ${JWT_SECRET:-changeme-staging}
+      TZ: Europe/Moscow
+      RATE_LIMIT_AUTH: "100"
+      RATE_LIMIT_CATALOG: "500"
+      RATE_LIMIT_ADMIN: "200"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      # Distroless/base-debian12: нет shell, wget, curl.
+      # Docker healthcheck невозможен. Рely на HTTP healthcheck deploy-worker.
+      test: ["NONE"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        tag: "lkfl-server"
+    networks:
+      - lkfl_backend
+      - lkfl_frontend
+
+  # =========================================================================
+  # lkfl-integration-proxy — gRPC proxy к провайдерам льгот
+  # Pull из GHCR
+  # =========================================================================
+  lkfl-integration-proxy:
+    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/proxy:${IMAGE_TAG:-main-latest}
+    restart: unless-stopped
+    ports:
+      - "18090:8090"
+      - "18091:8091"
+    env_file:
+      - .env.staging
+    environment:
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      TZ: Europe/Moscow
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      # Distroless/base-debian12: нет shell, wget, curl.
+      # Docker healthcheck невозможен. Рely на HTTP healthcheck deploy-worker.
+      test: ["NONE"]
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        tag: "lkfl-integration-proxy"
+    networks:
+      - lkfl_backend
+      - lkfl_frontend
+
+  # =========================================================================
+  # lkfl-frontend — React SPA (отдельный образ из GHCR)
+  # nginx:alpine serving dist/ внутри образа
+  # =========================================================================
+  lkfl-frontend:
+    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/frontend:${IMAGE_TAG:-main-latest}
+    restart: unless-stopped
+    # ADR-037: порт 8084 напрямую для external nginx (без internal nginx)
+    ports:
+      - "8084:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+          cpus: "0.25"
+        reservations:
+          memory: 32M
+          cpus: "0.05"
+    networks:
+      - lkfl_frontend
+
+  # =========================================================================
+  # lkfl-migrate — one-shot: применяет DB миграции
+  # Запуск: docker compose -f docker-compose.staging.yml run --rm lkfl-migrate
+  # =========================================================================
+  lkfl-migrate:
+    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/server:${IMAGE_TAG:-main-latest}
+    command: ["migrate"]
+    env_file:
+      - .env.staging
+    environment:
+      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lkfl_backend
+
+  # =========================================================================
+  # lkfl-seed — one-shot: загружает seed-данные
+  # Запуск: docker compose -f docker-compose.staging.yml run --rm lkfl-seed
+  # =========================================================================
+  lkfl-seed:
+    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/server:${IMAGE_TAG:-main-latest}
+    command: ["seed"]
+    env_file:
+      - .env.staging
+    environment:
+      DB_DSN: postgresql://${POSTGRES_USER:-lkfl}:${POSTGRES_PASSWORD:-lkfl}@postgres:5432/lkfl_platform?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - lkfl_backend
+
+  # =========================================================================
+  # lkfl-deploy-worker — webhook receiver → auto-deploy staging
+  # Принимает webhook от GitHub Actions, пулит новые образы из GHCR,
+  # применяет миграции и перезапускает сервисы.
+  # Порт 9092 (не 9090 — конфликт с prometheus!)
+  # =========================================================================
+  lkfl-deploy-worker:
+    image: ${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}/deploy-worker:main-latest
+    restart: always
+    stop_grace_period: 15s
+    ports:
+      - "9092:9092"
+    env_file:
+      - .env.staging
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./infra:/home/ukituki/LKFL-staging/infra:ro
+      - ./.env.staging:/home/ukituki/LKFL-staging/.env.staging:ro
+      - ./docker-compose.staging.yml:/home/ukituki/LKFL-staging/docker-compose.staging.yml:ro
+    environment:
+      PORT: "9092"
+      COMPOSE_FILE: /home/ukituki/LKFL-staging/docker-compose.staging.yml
+      COMPOSE_DIR: /home/ukituki/LKFL-staging
+    networks:
+      - lkfl_backend
+      - lkfl_frontend
+
+  # =========================================================================
+  # Мониторинг — profiles: [monitoring]
+  # Включение: docker compose --profile monitoring up -d
+  # =========================================================================
+
+  # Prometheus — сбор метрик с lkfl-server и lkfl-integration-proxy
+  prometheus:
+    profiles: [monitoring]
+    image: prom/prometheus:v2.53.0
+    restart: unless-stopped
+    ports:
+      - "19090:9090"
+    volumes:
+      - ./infra/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - staging_prometheus_data:/prometheus
+    command: >
+      --config.file=/etc/prometheus/prometheus.yml
+      --storage.tsdb.path=/prometheus
+      --storage.tsdb.retention.time=15d
+      --web.enable-lifecycle
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:9090/-/healthy || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+    networks:
+      - lkfl_backend
+
+  # Grafana — визуализация метрик + алертинг
+  grafana:
+    profiles: [monitoring]
+    image: grafana/grafana:11.1.0
+    restart: unless-stopped
+    ports:
+      - "13000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_SERVER_ROOT_URL: "http://localhost:3000"
+      TZ: Europe/Moscow
+    volumes:
+      - ./infra/grafana/provisioning/datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml:ro
+      - ./infra/grafana/dashboards/datasource.yml:/etc/grafana/provisioning/dashboards/datasource.yml:ro
+      - ./infra/grafana/dashboards/platform-f1.json:/etc/grafana/provisioning/dashboards/platform-f1.json:ro
+      - staging_grafana_data:/var/lib/grafana
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.5"
+        reservations:
+          memory: 64M
+          cpus: "0.1"
+    networks:
+      - lkfl_backend
+
+  # Loki — агрегатор логов (LogQL), default config Loki 3.0
+  loki:
+    profiles: [monitoring]
+    image: grafana/loki:3.0.0
+    restart: unless-stopped
+    ports:
+      - "13100:3100"
+    volumes:
+      - staging_loki_data:/tmp/loki
+    # Use Loki 3.0 default config (built-in)
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q http://localhost:3100/ready || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.1"
+    networks:
+      - lkfl_backend
+
+  # Promtail — сбор логов из Docker-контейнеров → Loki
+  promtail:
+    profiles: [monitoring]
+    image: grafana/promtail:3.0.0
+    restart: unless-stopped
+    volumes:
+      - ./infra/loki/promtail.yml:/etc/promtail/config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      loki:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: "0.25"
+        reservations:
+          memory: 64M
+          cpus: "0.05"
+    networks:
+      - lkfl_backend
+
+# =========================================================================
+# Persistent volumes (staging: named volumes с префиксом staging_)
+# =========================================================================
+volumes:
+  staging_pg_data:
+    driver: local
+  staging_redis_data:
+    driver: local
+  staging_keycloak_data:
+    driver: local
+  staging_prometheus_data:
+    driver: local
+  staging_grafana_data:
+    driver: local
+  staging_loki_data:
+    driver: local
+
+# =========================================================================
+# Networks
+# backend  — PostgreSQL, Redis, серверы, мониторинг (внутренняя сеть)
+# frontend — Nginx, серверы, Keycloak, lkfl-frontend (внешние подключения)
+# =========================================================================
+networks:
+  lkfl_backend:
+    driver: bridge
+    name: lkfl_backend_staging
+  lkfl_frontend:
+    driver: bridge
+    name: lkfl_frontend_staging

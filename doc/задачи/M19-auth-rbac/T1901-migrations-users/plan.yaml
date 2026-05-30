@@ -1,0 +1,22 @@
+# T1901 — Migrations: Users + Accounts + Roles
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `migrations/20260526120000_users.sql`
+- [x] `users` таблица
+- [x] `accounts` таблица
+- [x] `user_roles` таблица
+- [x] UNIQUE на keycloak_sub
+- [x] UNIQUE на tenant_id + email
+- [x] CHECK на status и role
+- [x] Indexes
+- [x] Migration apply + rollback OK
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1801]

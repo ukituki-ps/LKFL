@@ -1,0 +1,21 @@
+# T1903 — internal/auth/ (Auth handlers)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `internal/auth/handler.go`
+- [x] Создать `internal/auth/service.go`
+- [x] LoginRedirect → Keycloak authorize
+- [x] LoginCallback → verify → create/update → session
+- [x] Logout → session removal
+- [x] Me → user profile
+- [x] State parameter CSRF
+- [x] Unit tests
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1901, T1902, T1802]

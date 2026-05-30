@@ -1,0 +1,21 @@
+# T1705 — Atlas Migrations (init)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `migrations/` директорию
+- [x] Создать `atlas.hcl` config
+- [x] Создать `20260526100000_init.sql` — schema + extensions
+- [ ] Goose annotations → отменено. Atlas использует plain SQL без аннотаций Goose (см. report.md)
+- [ ] Atlas migrate apply работает — требует запущенного PostgreSQL
+- [ ] Schema `lkfl_platform` создана — требует запущенного PostgreSQL
+- [ ] Extensions установлены — требует запущенного PostgreSQL
+- [ ] Rollback работает — требует запущенного PostgreSQL
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1702]

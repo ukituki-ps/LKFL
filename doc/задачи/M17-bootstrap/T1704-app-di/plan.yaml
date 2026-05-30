@@ -1,0 +1,25 @@
+# T1704 — DI Wiring (app/)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `app/config.go` — Config struct + viper loading + validation
+- [x] Создать `app/wire.go` — Provide() функция
+- [x] Создать `app/server.go` — chi router + middleware chain
+- [x] Config: `.env` → ENV → defaults
+- [x] DB pool (pgxpool) с connection limits
+- [x] Redis client (go-redis/v9) с retry
+- [x] OIDC verifier (go-oidc)
+- [x] Logger (structured JSON)
+- [x] Prometheus custom registry
+- [x] CORS configurable
+- [x] `/healthz` → 200 OK
+- [x] `/metrics` → Prometheus endpoint
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1701]

@@ -1,0 +1,21 @@
+# T1906 — Keycloak Realm Config
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `infra/keycloak/realm-lkfl-sdek.json`
+- [x] Realm: lkfl-sdek
+- [x] Client: lkfl-spa (public, PKCE S256)
+- [x] Client: lkfl-service (confidential)
+- [x] Roles: employee, hr, catalog_manager, admin
+- [x] Dev admin user
+- [x] Docker volume import
+- [x] Login через Keycloak работает
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1702]

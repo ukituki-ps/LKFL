@@ -1,0 +1,22 @@
+# T2106 — /catalog страница
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Fetch GET /api/v1/engagements с фильтрами
+- [x] Fetch GET /api/v1/engagements/categories для filter dropdown
+- [x] Фильтры: category, type (benefit/activity), status
+- [x] Поиск (debounced 300ms)
+- [x] Пагинация (page, per_page, total_pages из PaginationResponse)
+- [x] Loading state (skeleton)
+- [x] Empty state (иллюстрация + текст)
+- [x] Error state (retry button)
+- [x] React Query useQuery для data fetching
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2105, T2109]

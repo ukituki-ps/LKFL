@@ -1,0 +1,24 @@
+# plan.yaml — T2214.4 Каталог: EngagementCard + AprilFilterPills
+
+checklist:
+  - id: 1
+    name: EngagementCard → полный реврайт (AprilIcon* + iconMap)
+    done: false
+  - id: 2
+    name: FilterBar → AprilFilterPills из DS (обёртка)
+    done: false
+  - id: 3
+    name: Catalog.tsx → grid 3 колонки
+    done: false
+  - id: 4
+    name: Обновить EngagementCard.test.tsx (новый DOM, AprilIcon*)
+    done: false
+  - id: 5
+    name: Проверить — lucide-react НЕ импортируется напрямую
+    done: false
+  - id: 6
+    name: npm run dev — проверить каталог визуально
+    done: false
+  - id: 7
+    name: Запустить тесты — убедиться, что все проходят
+    done: false

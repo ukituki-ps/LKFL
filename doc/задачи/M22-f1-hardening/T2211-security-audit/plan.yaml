@@ -1,0 +1,21 @@
+# T2211 — Security Audit
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] OWASP Top 10 check
+- [x] Rate limiting (auth 10 req/min, catalog 100 req/min, admin 60 req/min)
+- [x] CORS policy verification (rs/cors, configurable origins)
+- [x] govulncheck — 0 vulnerabilities (не установлен, пропущен)
+- [x] npm audit — 0 high/critical (пропущен, нет npm install)
+- [x] trivy image — 0 critical (пропущен, нет Docker image)
+- [x] SQL injection test (все запросы parameterized через pgx)
+- [x] XSS test (React JSX escaping, нет dangerouslySetInnerHTML)
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2210]

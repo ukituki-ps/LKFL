@@ -1,0 +1,18 @@
+# T1804 — Tenant Isolation (query builder)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `internal/tenant/isolation.go` — WithTenantID()
+- [x] Добавление WHERE/AND clause
+- [x] uuid.Nil → без фильтра
+- [x] Usage pattern документация
+- [x] Unit tests
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1803]

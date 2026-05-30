@@ -1,0 +1,21 @@
+# T2103 — Routing
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `src/routes/employee.tsx` — employee маршруты
+- [x] Создать `src/routes/admin.tsx` — admin маршруты
+- [x] `RequireAuth` component с role check
+- [x] Lazy loading (React.lazy + Suspense) для всех страниц
+- [x] Employee routes: / (Dashboard), /catalog, /points, /documents, /support
+- [x] Admin routes: /admin/hr, /admin/catalog, /admin/content
+- [x] Redirect unauthenticated → login
+- [x] Redirect unauthorized → 403 page
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2101, T2104]

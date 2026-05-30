@@ -1,0 +1,21 @@
+# T2003 — Public API: Каталог
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `internal/engagement/catalog/handler.go`
+- [x] List — фильтры + pagination
+- [x] Get — детали с category + offers
+- [x] Categories — список категорий
+- [x] Badge computation (stub: "Доступна" → TODO M26)
+- [x] Pagination response format
+- [x] Error handling
+- [x] Unit tests
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2002, T1904]

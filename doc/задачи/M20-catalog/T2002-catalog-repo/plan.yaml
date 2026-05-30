@@ -1,0 +1,23 @@
+# T2002 — internal/engagement/catalog/ (Repository + Service)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `internal/engagement/catalog/model.go`
+- [x] Создать `internal/engagement/catalog/repository.go`
+- [x] Создать `internal/engagement/catalog/service.go`
+- [x] ListTypes с N-фильтрами
+- [x] GetTypeByID с offers + category
+- [x] GetCategories
+- [x] Admin CRUD
+- [x] Pagination
+- [x] Promo first ordering
+- [x] Unit tests
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2001, T1904]

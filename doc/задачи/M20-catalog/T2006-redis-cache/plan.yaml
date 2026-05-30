@@ -1,0 +1,20 @@
+# T2006 — Redis Cache: Каталог
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `internal/engagement/catalog/cache.go`
+- [x] GetList/SetList (TTL 5min, key с tenant_id)
+- [x] GetType/SetType (key с tenant_id)
+- [x] Invalidate при admin изменении (по tenant_id)
+- [x] Cache miss → DB fallback
+- [x] Integration в service
+- [x] Unit tests
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2002, T2004]

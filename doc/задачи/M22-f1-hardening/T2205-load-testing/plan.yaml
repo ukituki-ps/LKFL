@@ -1,0 +1,21 @@
+# T2205 — Нагрузочное тестирование (k6)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] k6 setup (v0.50+)
+- [x] loadtest/catalog.js (500 RPS, P95 < 200ms)
+- [x] loadtest/auth.js (100 RPS, P95 < 500ms)
+- [x] loadtest/profile.js (200 RPS, P95 < 100ms)
+- [x] loadtest/combined.js
+- [x] Thresholds настроены
+- [x] HTML + JSON reports
+- [x] CI artifacts
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2203]

@@ -1,0 +1,21 @@
+# T1703 — Makefile
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `Makefile` с targets: build, test, lint, docker, migrations, dev
+- [x] `.PHONY` на всех targets
+- [x] DB_DSN из `.env`
+- [x] `make build` — собирает lkfl-server
+- [x] `make test` — запускает тесты с race detector
+- [x] `make up` — docker compose up
+- [x] `make lint` — golangci-lint
+- [x] `make migrate-up` — atlas migrate apply
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: []

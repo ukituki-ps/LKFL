@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # LKFL Go backend — основные метрики HTTP + кастомные метрики
+  - job_name: 'lkfl-server'
+    static_configs:
+      - targets: ['lkfl-server:8080']
+    metrics_path: '/metrics'
+
+  # LKFL Integration Proxy — gRPC + HTTP webhook метрики
+  - job_name: 'lkfl-integration-proxy'
+    static_configs:
+      - targets: ['lkfl-integration-proxy:8091']
+    metrics_path: '/metrics'

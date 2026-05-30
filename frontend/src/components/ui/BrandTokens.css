@@ -1,0 +1,28 @@
+/* Brand tokens — CSS переменные для white-label бренда.
+ *
+ * В M22 — хардкод для прототипа. В M22+ будут переопределяться
+ * brand CSS из API tenant'а (GET /admin/tenants/{id}/brand).
+ */
+:root {
+  /* Green palette */
+  --brand-green:        #00B33C;
+  --brand-green-dark:   #009A33;
+  --brand-green-light:  #F0FDF4;
+  --brand-green-border: #BBF7D0;
+
+  /* Neutrals */
+  --brand-bg:           #F2F2F2;
+  --brand-card:         #FFFFFF;
+  --brand-text:         #1A1A1A;
+  --brand-text-muted:   #6B7280;
+  --brand-text-subtle:  #9CA3AF;
+  --brand-border:       #EBEBEB;
+  --brand-row:          #F9FAFB;
+
+  /* Radii */
+  --brand-radius-card:  14px;
+  --brand-radius-btn:   6px;
+
+  /* Shadow */
+  --brand-shadow-card:  0 1px 4px rgba(0, 0, 0, 0.06);
+}

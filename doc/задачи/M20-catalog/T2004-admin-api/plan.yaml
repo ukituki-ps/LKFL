@@ -1,0 +1,21 @@
+# T2004 — Admin API: Каталог
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Categories CRUD
+- [x] Types CRUD
+- [x] Offers CRUD
+- [x] Status transitions
+- [x] Slug uniqueness
+- [x] Delete protection (stub: soft delete → TODO M26)
+- [x] Request validation
+- [x] Unit tests
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2002, T1904]

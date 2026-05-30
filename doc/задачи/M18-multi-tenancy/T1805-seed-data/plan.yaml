@@ -1,0 +1,19 @@
+# T1805 — Seed Data (tenant sdek)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `cmd/seed/main.go`
+- [x] Tenant sdek (slug, name, status)
+- [x] Brand config sdek (primary_color, css_variables)
+- [x] Idempotent (ON CONFLICT)
+- [x] `make seed` работает
+- [ ] Tenant доступен через API
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1802]

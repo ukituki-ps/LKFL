@@ -1,0 +1,22 @@
+# T2209 — Docker Production
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] lkfl-server Dockerfile (multi-stage, distroless)
+- [x] lkfl-integration-proxy Dockerfile (multi-stage)
+- [x] Non-root user (uid 1001)
+- [x] Read-only filesystem
+- [x] Healthcheck endpoint
+- [x] Image signing (cosign)
+- [x] .dockerignore
+- [x] docker-compose.prod.yml
+- [x] Размер образа < 50MB
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2208]

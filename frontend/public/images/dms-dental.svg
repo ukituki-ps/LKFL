@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 260" width="400" height="260">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#00B33C"/>
+      <stop offset="100%" stop-color="#E8F8ED"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="260" rx="16" fill="url(#bg)"/>
+  <g transform="translate(152, 82) scale(3.2)" stroke="#00B33C" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
+  </g>
+  <text x="200" y="232" text-anchor="middle" font-family="Inter, sans-serif" font-size="22" font-weight="700" fill="#00B33C" opacity="0.85">ДМС</text>
+</svg>

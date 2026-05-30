@@ -1,0 +1,20 @@
+# T2109 — API Layer
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] `src/api/client.ts` — fetch wrapper
+- [x] Authorization header injection (Bearer token из authStore)
+- [x] Error handling: 401 → redirect login, 403 → forbidden page
+- [x] Retry logic (exponential backoff для 5xx, max 2 retries)
+- [x] Timeout 25s (клиент < серверный 30s)
+- [x] Typed API functions: getEngagements, getEngagementById, getCategories
+- [x] TypeScript interfaces matching Go response types
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2101, T2104]

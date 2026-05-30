@@ -1,0 +1,33 @@
+# plan.yaml — T2214.2 Shell → AprilProductHeader, навигация
+
+checklist:
+  - id: 1
+    name: Создать HeaderNav.tsx (5 ссылок + active underline)
+    done: false
+  - id: 2
+    name: Создать HeaderRight.tsx (BalancePill + Bell + UserMenu, AprilIconCoins/Bell)
+    done: false
+  - id: 3
+    name: Заменить Shell.tsx → AprilProductHeader (из DS) + <main> layout
+    done: false
+  - id: 4
+    name: Упростить EmployeeNav.tsx (только мобильный Drawer)
+    done: false
+  - id: 5
+    name: Упростить AdminNav.tsx (только мобильный Drawer)
+    done: false
+  - id: 6
+    name: Обновить UserMenu.tsx (avatar → зелёный, 34px)
+    done: false
+  - id: 7
+    name: Мобильная навигация: Burger → Drawer
+    done: false
+  - id: 8
+    name: Проверить admin маршруты в header'е
+    done: false
+  - id: 9
+    name: npm run dev — проверить все страницы
+    done: false
+  - id: 10
+    name: Запустить E2E тесты — убедиться, что ничего не сломалось
+    done: false

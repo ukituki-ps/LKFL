@@ -1,0 +1,21 @@
+# T2203 — Integration тесты
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] testutil package
+- [x] Tenant CRUD integration (5+ тестов) — 13 тестов, все проходят
+- [x] Auth flow integration (5+ тестов) — 12 тестов, все проходят
+- [x] User CRUD integration (5+ тестов) — 13 тестов, все проходят
+- [x] Catalog flow integration (5+ тестов) — 13 тестов, все проходят
+- [x] Multi-tenant isolation (3+ тестов) — 6 тестов, все проходят
+- [x] Cache invalidation (2+ тестов) — включено в catalog тесты
+- [x] go test -tags=integration 0 failures — все 57 тестов проходят ✅
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2202]

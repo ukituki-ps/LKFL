@@ -1,0 +1,58 @@
+# LKFL — Docker ignore rules
+# Исключает ненужные файлы из Docker build context для уменьшения размера и ускорения сборки.
+
+# Node modules (frontend)
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Git
+.git/
+.gitignore
+
+# Документация (не нужна в production образе)
+doc/
+артефакты/
+*.md
+
+# Тесты и нагрузочное тестирование
+test/
+loadtest/
+**/*_test.go
+frontend/e2e/
+frontend/test-results/
+frontend/playwright-report/
+
+# Build артефакты (генерируются внутри Docker)
+**/*.exe
+**/*.tar.gz
+
+# IDE и конфиги
+.vscode/
+.idea/
+.kilo/
+.kilocode/
+*.swp
+*.swo
+*~
+
+# Окружение и секреты
+.env
+.env.*
+!.env.example
+
+# OS файлы
+.DS_Store
+Thumbs.db
+
+# Логи
+*.log
+
+# Docker (не нужны внутри build context)
+docker-compose.yml
+docker-compose.prod.yml
+Dockerfile
+.dockerignore
+
+# Makefile (не нужен в образе)
+Makefile

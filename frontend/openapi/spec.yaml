@@ -1,0 +1,503 @@
+openapi: 3.0.3
+info:
+  title: LKFL Platform API
+  version: 0.1.0
+  description: White-label multi-tenant платформа корпоративных льгот
+
+paths:
+  /api/v1/engagements/categories:
+    get:
+      summary: Список категорий
+      operationId: getCategories
+      tags: [engagements]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список категорий
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EngagementCategoryResponse'
+
+  /api/v1/engagements:
+    get:
+      summary: Список энгейджментов
+      operationId: getEngagements
+      tags: [engagements]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [benefit, activity]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, active, promo, hidden, completed]
+            default: active
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Список энгейджментов с пагинацией
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+
+  /api/v1/engagements/{id}:
+    get:
+      summary: Детали энгейджмента
+      operationId: getEngagement
+      tags: [engagements]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Энгейджмент
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementTypeResponse'
+
+  /api/v1/users/me:
+    get:
+      summary: Профиль текущего пользователя
+      operationId: getUserProfile
+      tags: [users]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /api/v1/auth/me:
+    get:
+      summary: Профиль через auth endpoint
+      operationId: getAuthMe
+      tags: [auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Профиль пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  email:
+                    type: string
+                  first_name:
+                    type: string
+                  last_name:
+                    type: string
+
+  /api/v1/auth/login:
+    get:
+      summary: Редирект на Keycloak
+      operationId: login
+      tags: [auth]
+      responses:
+        '302':
+          description: Redirect to Keycloak
+
+  /api/v1/auth/callback:
+    get:
+      summary: Keycloak callback
+      operationId: authCallback
+      tags: [auth]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Auth result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+                  roles:
+                    type: array
+                    items:
+                      type: string
+
+  /api/v1/auth/logout:
+    post:
+      summary: Логаут
+      operationId: logout
+      tags: [auth]
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Logged out
+
+  /admin/engagements/categories:
+    post:
+      summary: Создать категорию
+      operationId: createCategory
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '201':
+          description: Категория создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementCategoryResponse'
+
+  /admin/engagements/categories/{id}:
+    put:
+      summary: Обновить категорию
+      operationId: updateCategory
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCategoryRequest'
+      responses:
+        '200':
+          description: Категория обновлена
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementCategoryResponse'
+    delete:
+      summary: Удалить категорию
+      operationId: deleteCategory
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Категория удалена
+
+  /admin/engagements/types:
+    post:
+      summary: Создать энгейджмент
+      operationId: createEngagementType
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTypeRequest'
+      responses:
+        '201':
+          description: Энгейджмент создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementTypeResponse'
+
+  /admin/engagements/types/{id}/status:
+    patch:
+      summary: Сменить статус энгейджмента
+      operationId: updateEngagementStatus
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStatusRequest'
+      responses:
+        '200':
+          description: Статус обновлён
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementTypeResponse'
+
+  /admin/engagements/types/{id}/offers:
+    post:
+      summary: Создать оффер для энгейджмента
+      operationId: createOffer
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOfferRequest'
+      responses:
+        '201':
+          description: Оффер создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EngagementOfferResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    EngagementCategoryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        sort_order:
+          type: integer
+      required: [id, slug, name, sort_order]
+
+    EngagementOfferResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        cost_cents:
+          type: integer
+        sort_order:
+          type: integer
+      required: [id, name, cost_cents, sort_order]
+
+    EngagementTypeResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [benefit, activity]
+        status:
+          type: string
+          enum: [draft, active, promo, hidden, completed]
+        cost_cents:
+          type: integer
+        provider_name:
+          type: string
+        image_url:
+          type: string
+        category:
+          $ref: '#/components/schemas/EngagementCategoryResponse'
+        offers:
+          type: array
+          items:
+            $ref: '#/components/schemas/EngagementOfferResponse'
+        badge:
+          type: string
+      required: [id, slug, name, type, status, badge]
+
+    PaginationResponse:
+      type: object
+      properties:
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        total_pages:
+          type: integer
+      required: [page, per_page, total, total_pages]
+
+    ListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EngagementTypeResponse'
+        pagination:
+          $ref: '#/components/schemas/PaginationResponse'
+      required: [data, pagination]
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+        first_name:
+          type: string
+        last_name:
+          type: string
+        tenant_id:
+          type: string
+        keycloak_sub:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+      required: [id, email, first_name, last_name]
+
+    CreateCategoryRequest:
+      type: object
+      properties:
+        slug:
+          type: string
+        name:
+          type: string
+        icon:
+          type: string
+        sort_order:
+          type: integer
+      required: [slug, name, icon, sort_order]
+
+    CreateTypeRequest:
+      type: object
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [benefit, activity]
+        status:
+          type: string
+          enum: [draft, active, promo, hidden, completed]
+        cost_cents:
+          type: integer
+        provider_name:
+          type: string
+        image_url:
+          type: string
+      required: [category_id, slug, name, type, status]
+
+    UpdateStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [draft, active, promo, hidden, completed]
+      required: [status]
+
+    CreateOfferRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        cost_cents:
+          type: integer
+        sort_order:
+          type: integer
+      required: [name, cost_cents, sort_order]

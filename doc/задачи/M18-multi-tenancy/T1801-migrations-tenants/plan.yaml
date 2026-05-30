@@ -1,0 +1,23 @@
+# T1801 — Migrations: Tenants
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `migrations/20260526110000_tenants.sql`
+- [x] `tenants` таблица (id, slug, name, status, settings, timestamps)
+- [x] `tenant_brand_config` таблица (id, tenant_id, colors, logo, css_variables, timestamps)
+- [x] UNIQUE index на `slug`
+- [x] CHECK constraint на `status`
+- [x] UNIQUE index на `tenant_brand_config.tenant_id`
+- [x] ON DELETE CASCADE
+- [x] Goose annotations (Up/Down)
+- [ ] Migration apply OK
+- [ ] Migration rollback OK
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1705]

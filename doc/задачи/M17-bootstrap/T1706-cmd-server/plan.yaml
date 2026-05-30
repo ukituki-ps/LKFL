@@ -1,0 +1,21 @@
+# T1706 — cmd/server/main.go (HTTP entry point)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `cmd/server/main.go`
+- [x] Load config → Provide() → Start server
+- [x] Graceful shutdown (SIGINT/SIGTERM, 30s timeout)
+- [x] Error handling (os.Stderr + exit 1)
+- [x] `go run ./cmd/server/` запускает server
+- [x] `/healthz` → 200 OK
+- [x] SIGINT → graceful shutdown
+- [x] Config error → exit 1
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1704]

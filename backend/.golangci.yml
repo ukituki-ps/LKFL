@@ -1,0 +1,41 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - gofmt
+    - goconst
+    - revive
+    - unused
+    - staticcheck
+
+linters-settings:
+  goconst:
+    min-occurrences: 4
+    ignore-calls: true
+  revive:
+    rules:
+      - name: empty-block
+      - name: package-comments
+
+issues:
+  exclude-rules:
+    # goconst не проверяет test файлы
+    - path: '_test\.go'
+      linters:
+        - goconst
+    # SA1012 (nil context) не проверяет test файлы
+    - path: '_test\.go'
+      linters:
+        - staticcheck
+      text: "SA1012"
+    # goconst не проверяет seed (хардкод seed-данных — нормально)
+    - path: 'cmd/seed/'
+      linters:
+        - goconst
+    # goconst не проверяет engagement catalog (русская строка льгот — не константы)
+    - path: 'internal/engagement/catalog/handler\.go'
+      linters:
+        - goconst

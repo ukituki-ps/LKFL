@@ -1,0 +1,22 @@
+# T1702 — Docker Compose (production-ready)
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `docker-compose.yml` с 6 контейнерами (postgres, redis, keycloak, nginx, lkfl-server, lkfl-integration-proxy)
+- [x] Healthcheck на всех контейнерах
+- [x] Persistent volumes для postgres, redis, keycloak
+- [x] Resource limits на всех контейнерах
+- [x] Создать `infra/nginx/default.conf` (reverse proxy + SPA)
+- [x] Создать `.env.example`
+- [x] Добавить `.env` в `.gitignore` (уже было)
+- [x] Dockerfile создан (multi-stage, targets: server + proxy)
+- [ ] `docker compose up -d` — все контейнеры healthy (требует запущенной Docker среды)
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: []

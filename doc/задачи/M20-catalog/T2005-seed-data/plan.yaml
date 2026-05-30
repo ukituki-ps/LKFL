@@ -1,0 +1,18 @@
+# T2005 — Seed Data: Каталог
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] 6 категорий в seed
+- [x] 6 типов в seed
+- [x] Tenant: sdek
+- [x] Idempotent
+- [x] Каталог загружается через API
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2001, T1805]

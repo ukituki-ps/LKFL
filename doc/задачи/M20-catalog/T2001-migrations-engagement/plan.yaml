@@ -1,0 +1,22 @@
+# T2001 — Migrations: Engagement
+
+## Прогресс
+
+100%
+
+## Checklist
+
+- [x] Создать `migrations/20260526130000_engagement.sql`
+- [x] `engagement_categories` таблица
+- [x] `engagement_types` таблица
+- [x] `engagement_offers` таблица
+- [x] CHECK на type (benefit/activity)
+- [x] CHECK на status (draft/active/promo/hidden/completed)
+- [x] Unique indexes
+- [x] Filter indexes
+- [x] Migration apply + rollback OK
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1801]
