@@ -1,0 +1,19 @@
+# T1700 plan.yaml (ЭПИК — только в документации)
+
+task_id: T1700
+milestone: M17
+title: "Полная система авторизации"
+type: epic
+status: pending
+progress: 0%
+depends_on: []
+subtasks: [T1701, T1702, T1703, T1704, T1705]
+estimate: 19 days  # T1701(3d) + T1702(5d) + T1703(4d) + T1704(5d) + T1705(2d)
+critical_path: 13 days  # T1701(3d) → T1702(5d) + T1703(4d parallel) → T1704(5d)
+
+# Это эпик. Реальный checklist разбит по подзадачам:
+# - T1701: инфраструктура (go.mod, cmd stubs, docker-compose, Makefile, CI smoke, Keycloak, Nginx)
+# - T1702: backend auth + unit тесты (shared/pkg/auth, internal, migrations auth-таблицы, cmd)
+# - T1703: frontend auth + vitest + Playwright E2E (Vite, keycloak-js, Zustand, state machine)
+# - T1704: CI/CD pipeline (Фаза A: GitHub Actions, Dockerfile, ghcr.io; Фаза B: testcontainers, OpenAPI)
+# - T1705: Observability (Prometheus + Grafana + Loki, дашборды) — можно отложить до M18

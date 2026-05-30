@@ -1,0 +1,97 @@
+# T1702 plan.yaml
+
+task_id: T1702
+milestone: M17
+title: "Backend: auth core"
+type: code
+status: pending
+progress: 0%
+parent: T1700
+depends_on: [T1701]
+estimate: 5 days
+risk: "JWKS per realm — сложность кэширования; RBAC — согласовать роли с Keycloak template; миграции — только auth-таблицы, остальные 44 таблицы — будущие вехи; seed-demo.sh — Keycloak Admin API может отличаться между версиями"
+
+checklist:
+  - id: 1
+    section: "shared/pkg/auth"
+    items:
+      - id: 1.1
+        desc: "tenantresolver.go — TenantResolver: subdomain→slug, cache, DB lookup, context"
+        done: false
+      - id: 1.2
+        desc: "verifier.go — JWT Verifier: RS256, JWKS per realm, iss/azp/exp validation"
+        done: false
+      - id: 1.3
+        desc: "middleware.go — JWT middleware wrapper (extracts Bearer, calls verifier, stores in context)"
+        done: false
+      - id: 1.4
+        desc: "rbac.go — RBACGuard middleware (realm roles check)"
+        done: false
+      - id: 1.5
+        desc: "claims.go — Claims struct, context helpers (ClaimsFromContext, TenantIDFromContext, RolesFromContext)"
+        done: false
+      - id: 1.6
+        desc: "errors.go — Auth errors (401/403), error response format, writeError helper"
+        done: false
+      - id: 1.7
+        desc: "cache.go — JWKS cache per realm with TTL, Redis integration"
+        done: false
+
+  - id: 2
+    section: "internal пакеты"
+    items:
+      - id: 2.1
+        desc: "internal/auth/ — OIDCVerifier (thin wrapper), tenant config builder"
+        done: false
+      - id: 2.2
+        desc: "internal/tenant/ — Tenant CRUD, brand config, repository, service"
+        done: false
+      - id: 2.3
+        desc: "internal/api/ — router с middleware chain, route registration, health endpoints"
+        done: false
+
+  - id: 3
+    section: "Миграции"
+    items:
+      - id: 3.1
+        desc: "Atlas init, migrations/schema — только auth-таблицы: tenants, tenant_brand, users (согласно schema.md §lkfl_platform). Остальные 44 таблицы — в будущих вехах."
+        done: false
+      - id: 3.2
+        desc: "Seed data — демо tenant (slug: demo), демо users с ролями"
+        done: false
+
+  - id: 3b
+    section: "Seed Keycloak (demo realm + users)"
+    items:
+      - id: 3b.1
+        desc: "infra/keycloak/seed-demo.sh — создание realm 'demo' из tenant-template.json"
+        done: false
+      - id: 3b.2
+        desc: "Создание пользователя admin (роль admin, пароль admin) + employee (роль employee, пароль employee) через Keycloak Admin API"
+        done: false
+      - id: 3b.3
+        desc: "Создание client lkfl-frontend (public) + lkfl-server (confidential) в realm demo"
+        done: false
+
+  - id: 4
+    section: "cmd"
+    items:
+      - id: 4.1
+        desc: "cmd/server/main.go — заменить stub (из T1701) на рабочий: DI, middleware chain, route registration, graceful shutdown"
+        done: false
+      - id: 4.2
+        desc: "cmd/worker/main.go — stub (Asynq worker, нужен для `go build ./...`, не используется в M17)"
+        done: false
+
+  - id: 5
+    section: "Unit-тесты"
+    items:
+      - id: 5.1
+        desc: "shared/pkg/auth — verifier, middleware, rbac, tenant resolver (unit тесты)"
+        done: false
+      - id: 5.2
+        desc: "internal/tenant — CRUD, brand config (unit тесты)"
+        done: false
+      - id: 5.3
+        desc: "internal/api — router middleware chain (unit тесты)"
+        done: false

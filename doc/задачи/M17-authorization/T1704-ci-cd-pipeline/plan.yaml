@@ -1,0 +1,69 @@
+# T1704 plan.yaml
+
+task_id: T1704
+milestone: M17
+title: "CI/CD pipeline"
+type: code
+status: pending
+progress: 0%
+parent: T1700
+depends_on: [T1702, T1703]
+estimate: 5 days  # Фаза A (3d): Dockerfiles + GitHub Actions. Фаза B (2d): testcontainers + integration tests + OpenAPI.
+risk: "testcontainers Keycloak — может быть медленным в CI; OpenAPI генерация из Go types — выбрать библиотеку"
+
+# Фаза A: Dockerfiles + GitHub Actions (3 дня)
+# Фаза B: testcontainers + integration tests + OpenAPI (2 дня)
+
+checklist:
+  - id: 1
+    section: "Dockerfiles (multi-stage — заменяет stub из T1701)"  # Фаза A
+    items:
+      - id: 1.1
+        desc: "Dockerfile.server — multi-stage: golang:1.24-alpine → alpine:3.20 (заменяет stub single-stage из T1701)"
+        done: false
+      - id: 1.2
+        desc: "Dockerfile.proxy — multi-stage: golang:1.24-alpine → alpine:3.20 (заменяет stub single-stage из T1701)"
+        done: false
+      - id: 1.3
+        desc: "Dockerfile.frontend — multi-stage: node:20-alpine → nginx:1.27-alpine"
+        done: false
+
+  - id: 2
+    section: "GitHub Actions"  # Фаза A
+    items:
+      - id: 2.1
+        desc: ".github/workflows/ci.yml — lint + test + build + Playwright E2E на PR (заменяет go.yml/frontend.yml из T1701)"
+        done: false
+      - id: 2.2
+        desc: ".github/workflows/cd.yml — docker build + push ghcr.io на merge"
+        done: false
+      - id: 2.3
+        desc: ".github/workflows/deploy.yml — dev deploy (auto), staging (manual approve)"
+        done: false
+
+  - id: 3
+    section: "Docker Compose production"  # Фаза A
+    items:
+      - id: 3.1
+        desc: "docker-compose.prod.yml — production конфигурация (без observability, ghcr.io images)"
+        done: false
+
+  - id: 4
+    section: "Integration tests (testcontainers-go)"  # Фаза B
+    items:
+      - id: 4.1
+        desc: "internal/testutil/containers.go — PG + Redis + Keycloak контейнеры"
+        done: false
+      - id: 4.2
+        desc: "*_integration_test.go — integration тесты с testcontainers"
+        done: false
+
+  - id: 5
+    section: "OpenAPI spec"  # Фаза B
+    items:
+      - id: 5.1
+        desc: "openapi/openapi.yaml — master spec (auto-generated from Go types)"
+        done: false
+      - id: 5.2
+        desc: "CI step: redocly lint openapi.yaml"
+        done: false

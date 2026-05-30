@@ -40,7 +40,7 @@
 |-----------|------|------|
 | PostgreSQL 17 | Реляционная БД | Основной хранилище всех бизнес-данных |
 | Redis 7 | In-memory cache | Key prefixes: `asynq:` (scheduler), `jwt:` (sessions), `cel:` (CEL + tags), `catalog:` (cache), `rate:` (limiting) |
-| Keycloak 25.0 | External IdP | OIDC auth, realms per tenant (`lkfl-{slug}`), roles, session mgmt |
+| Keycloak 26.x | External IdP | OIDC auth, realms per tenant (`lkfl-{slug}`), roles, session mgmt |
 | MinIO / S3 | Object storage | PDF-документы, изображения баннеров, Excel-реестры |
 
 ### Multi-tenancy стратегия
@@ -135,21 +135,47 @@ erDiagram
 ```sql
 CREATE TABLE tenants (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    slug            VARCHAR(50) NOT NULL,
+    slug            VARCHAR(50) NOT NULL UNIQUE,
     name            VARCHAR(200) NOT NULL,
-    brand_css_url   TEXT,
+    keycloak_realm  VARCHAR(50) NOT NULL,
+    keycloak_url    VARCHAR(500) NOT NULL DEFAULT 'http://keycloak:8080',
     currency_config JSONB NOT NULL DEFAULT '{"currency":"points","symbol":"₽"}'::jsonb,
     rate_limits     JSONB NOT NULL DEFAULT '{"api_rps":100,"burst":200}'::jsonb,
     retention_config JSONB NOT NULL DEFAULT '{}'::jsonb,
     cel_enabled     BOOLEAN NOT NULL DEFAULT TRUE,
     status          VARCHAR(20) NOT NULL DEFAULT 'active',
     created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT chk_tenants_status CHECK (status IN ('active', 'suspended', 'deleted'))
 );
-CREATE INDEX idx_tenants_slug ON tenants(slug);
+CREATE UNIQUE INDEX idx_tenants_slug ON tenants(slug);
+CREATE INDEX idx_tenants_keycloak_realm ON tenants(keycloak_realm);
 ```
 
-**Go package owner:** `internal/tenant/` (системная — нет владельца)
+#### tenant_brand (Системная, M17)
+
+> **Бренд-конфигурация tenant.** Отдельная таблица для white-label: CSS-тема, логотип, цвета, копирайты.
+> Связь 1:1 с tenants. New tenant = новый CSS + конфиг, без изменения кода (принцип «нулевая привязка к бренду»).
+
+```sql
+CREATE TABLE tenant_brand (
+    id              SERIAL PRIMARY KEY,
+    tenant_id       UUID NOT NULL UNIQUE REFERENCES tenants(id) ON DELETE CASCADE,
+    logo_url        TEXT,
+    favicon_url     TEXT,
+    primary_color   VARCHAR(7) NOT NULL DEFAULT '#2563EB',      -- hex
+    secondary_color VARCHAR(7) NOT NULL DEFAULT '#64748B',      -- hex
+    css_theme_url   TEXT,                                       -- URL к кастомному CSS
+    meta_title      VARCHAR(200),
+    meta_description TEXT,
+    footer_text     TEXT,
+    created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX idx_tenant_brand_tenant ON tenant_brand(tenant_id);
+```
+
+**Go package owner (tenants + tenant_brand):** `internal/tenant/` (системная)
 **Source:** `архитектура/модули.md` → Multi-tenancy, `контекст/настраиваемость.md`
 
 ---

@@ -1,6 +1,6 @@
 # ADR — Архитектурные решения
 
-> **35 файлов.** 26 Accepted, 4 Superseded, 5 Note.
+> **36 файлов.** 27 Accepted, 4 Superseded, 5 Note.
 
 ---
 
@@ -43,6 +43,7 @@
 | [033](./033-frontend-testing.md) | Frontend Testing — Vitest + Playwright | ✅ | 118 |
 | [034](./034-i18n-yagni.md) | i18n — YAGNI | ✅ | 84 |
 | [035](./035-integration-proxy.md) | Integration Proxy — вынос внешних интеграций из монолита | ✅ Accepted | 438 |
+| [036](./036-authorization-system.md) | **Авторизация — адаптация April → LKFL** | ✅ Accepted | ~600 |
 
 ---
 
