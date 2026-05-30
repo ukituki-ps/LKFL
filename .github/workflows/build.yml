@@ -313,9 +313,15 @@ jobs:
           fi
 
       - name: Sync nginx config and reload
+        continue-on-error: true
         run: |
-          cp infra/nginx/serverAi.conf /etc/nginx/sites-available/lkfl-staging.conf
-          nginx -t && nginx -s reload || echo "Warning: nginx reload failed"
+          # Copy nginx config to staging dir (manual reload needed if path differs)
+          cp infra/nginx/serverAi.conf /home/ukituki/LKFL-staging/
+          echo "INFO: nginx config synced to /home/ukituki/LKFL-staging/serverAi.conf"
+          echo "INFO: Manual action required — copy to /etc/nginx/sites-available/ and reload"
+          # Try to reload (may fail without sudo)
+          sudo nginx -t 2>/dev/null && sudo nginx -s reload 2>/dev/null || \
+            echo "WARN: nginx reload requires sudo — check serverAi.conf port mapping manually"
 
       - name: Pull images
         working-directory: /home/ukituki/LKFL-staging
