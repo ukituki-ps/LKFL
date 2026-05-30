@@ -73,7 +73,7 @@ describe('authStore', () => {
 
 			expect(fetch).toHaveBeenCalledWith('/api/v1/auth/logout', {
 				method: 'POST',
-				headers: { Authorization: 'Bearer token' },
+				credentials: 'include', // D2: cookie-based session
 			})
 
 			const state = useAuthStore.getState()
@@ -123,7 +123,7 @@ describe('authStore', () => {
 
 			expect(result).toEqual(mockProfile)
 			expect(fetch).toHaveBeenCalledWith('/api/v1/auth/me', {
-				headers: { Authorization: 'Bearer valid-token' },
+				credentials: 'include', // D2: cookie-based auth
 			})
 		})
 

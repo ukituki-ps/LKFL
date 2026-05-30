@@ -32,9 +32,7 @@ describe('apiRequest', () => {
 		expect(fetch).toHaveBeenCalledWith(
 			'/api/v1/test',
 			expect.objectContaining({
-				headers: expect.objectContaining({
-					Authorization: 'Bearer test-token',
-				}),
+				credentials: 'include', // D2: cookie-based auth
 			})
 		)
 	})
