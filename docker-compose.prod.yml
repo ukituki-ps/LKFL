@@ -115,7 +115,9 @@ services:
       KC_HOSTNAME_BACKCHANNEL_URL: http://keycloak:8080
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
-    command: start
+    command: start --import-realm
+    volumes:
+      - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
     depends_on:
       postgres:
         condition: service_healthy

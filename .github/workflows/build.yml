@@ -303,8 +303,8 @@ jobs:
               ALL_OK=false
             fi
 
-            # Keycloak health check
-            if curl -sf http://127.0.0.1:19081/health/ready >/dev/null 2>&1; then
+            # Keycloak health check (25.0: management port not exposed, use HTTP)
+            if docker compose -f /home/ukituki/LKFL-staging/docker-compose.staging.yml -p lkfl-staging ps keycloak 2>/dev/null | grep -q healthy; then
               echo "  ✅ keycloak healthy"
             else
               echo "  ❌ keycloak not ready"

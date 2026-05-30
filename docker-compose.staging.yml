@@ -106,18 +106,18 @@ services:
       # KC_FRONTEND_URL — browser-visible URL (HTTPS).
       # KC_HOSTNAME_ADMIN — admin console URL (HTTPS).
       # Issuer внутри Docker-сети: http://keycloak:8080/realms/lkfl-sdek.
-      KC_HOSTNAME: dev.april.ukituki.tech
+      KC_HOSTNAME: keycloak
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
-      # ADR-037: backchannel issuer для внутреннего discovery (lkfl-server → Keycloak)
-      KC_HOSTNAME_BACKCHANNEL_URL: http://keycloak:8080
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
       RATE_LIMIT_AUTH: "100"
       RATE_LIMIT_CATALOG: "500"
       RATE_LIMIT_ADMIN: "200"
     command: start-dev --import-realm
+    volumes:
+      - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
     depends_on:
       postgres:
         condition: service_healthy
@@ -150,9 +150,6 @@ services:
     stop_grace_period: 35s
     ports:
       - "18080:8080"
-    extra_hosts:
-      - "dev.april.ukituki.tech:192.168.1.29"
-      - "host.docker.internal:host-gateway"
     env_file:
       - .env.staging
     environment:
@@ -160,7 +157,7 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
       # Нет SSL_CERT_FILE / TLS_INSECURE — TLS termination только на external nginx.
-      KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/realms/lkfl-sdek
+      KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
