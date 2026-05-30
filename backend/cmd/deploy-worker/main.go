@@ -42,6 +42,7 @@ func main() {
 	mux.HandleFunc("GET /deploy-webhook/status", handler.handleStatus)
 	mux.HandleFunc("GET /deploy-webhook/logs", handler.handleLogs)
 	mux.HandleFunc("GET /deploy-webhook/healthz", handler.handleHealthz)
+	mux.HandleFunc("GET /deploy-webhook/history", handler.handleHistory)
 	// Aliases без префикса (для прямого доступа через internal nginx)
 	mux.HandleFunc("POST /deploy", handler.handleDeploy)
 	mux.HandleFunc("POST /deploy/pr", handler.handleDeployPR)
@@ -49,6 +50,7 @@ func main() {
 	mux.HandleFunc("GET /status", handler.handleStatus)
 	mux.HandleFunc("GET /logs", handler.handleLogs)
 	mux.HandleFunc("GET /healthz", handler.handleHealthz)
+	mux.HandleFunc("GET /history", handler.handleHistory)
 
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	log.Printf("deploy-worker listening on %s", addr)

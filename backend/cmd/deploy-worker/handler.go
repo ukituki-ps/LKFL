@@ -168,6 +168,15 @@ func (h *handler) handleLogs(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprint(w, logs)
 }
 
+// handleHistory обрабатывает GET /history — история деплоев.
+func (h *handler) handleHistory(w http.ResponseWriter, r *http.Request) {
+	history := h.deployer.sm.getHistory()
+	_ = writeJSON(w, map[string]interface{}{
+		"count":   len(history),
+		"history": history,
+	})
+}
+
 // handleHealthz обрабатывает GET /healthz — health check эндпоинт.
 func (h *handler) handleHealthz(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)

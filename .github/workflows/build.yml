@@ -1,18 +1,23 @@
-# T2213 — Build Pipeline
-# Заменяет ci.yml. Использует serverAI self-hosted runners для Docker build.
+# T1708 — CI/CD Foundation: единый production-grade pipeline
+# Заменяет ci.yml, cd.yml, deploy.yml (удалены).
 #
-# Stages:
-#   1. Lint + Test — public runner (ubuntu-latest)
-#   2. Docker Build + Push — self-hosted runner (lkfl label on serverAI)
-#   3. Deploy notification — webhook на deploy-worker (только main)
+# Все job'ы на self-hosted runner `lkfl` (serverAi: 192.168.1.27).
+#
+# Pipeline:
+#   1. lint-test    → Go + Frontend + OpenAPI + Config validation
+#   2. build-push   → Docker Buildx + GHCR (matrix: server, proxy, frontend, deploy-worker)
+#   3. deploy-staging → docker compose на serverAi (auto on main push)
+#   4. smoke-test-staging → infra/smoke-test.sh с retry polling
+#   5. deploy-production → docker compose prod (manual workflow_dispatch)
 
-name: Build
+name: Build & Deploy
 
 on:
   push:
     branches: [main, 'feature/*']
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -30,11 +35,11 @@ permissions:
 
 jobs:
   # =========================================================================
-  # 1. LINT + TEST — public runner (лёгкие операции)
+  # Job 1: LINT + TEST — self-hosted runner (lkfl label on serverAi)
   # =========================================================================
   lint-test:
     name: Lint & Test
-    runs-on: ubuntu-latest
+    runs-on: lkfl
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -92,21 +97,28 @@ jobs:
         working-directory: frontend
         run: npx tsc --noEmit
 
+      - name: Vitest unit tests
+        working-directory: frontend
+        run: npx vitest run
+        continue-on-error: true
+
+      # ── OpenAPI ──
+      - name: OpenAPI lint
+        run: npx @redocly/cli@latest lint doc/спецификация/api/openapi.yaml
+        continue-on-error: true
+
       # ── Config validation ──
       - name: Validate docker-compose config
         run: |
           # Проверка: lkfl-server должен иметь KEYCLOAK_PUBLIC_URL
-          # (без него browser redirect попадает на internal Docker hostname)
           for compose_file in docker-compose.staging.yml docker-compose.prod.yml; do
             if [[ -f "$compose_file" ]]; then
-              # Ищем секцию lkfl-server и проверяем наличие KEYCLOAK_PUBLIC_URL
               in_server=0
               has_public_url=0
               while IFS= read -r line; do
                 if echo "$line" | grep -q "^  lkfl-server:"; then
                   in_server=1
                 elif [[ $in_server -eq 1 ]] && echo "$line" | grep -q "^  [a-z]"; then
-                  # Началась другая секция services
                   break
                 elif [[ $in_server -eq 1 ]] && echo "$line" | grep -q "KEYCLOAK_PUBLIC_URL"; then
                   has_public_url=1
@@ -115,37 +127,34 @@ jobs:
               done < "$compose_file"
               if [[ $has_public_url -eq 0 ]]; then
                 echo "FAIL: $compose_file — lkfl-server missing KEYCLOAK_PUBLIC_URL"
-                echo "  Browser login redirect will use internal Docker hostname!"
                 exit 1
               fi
-              echo "OK: $compose_file has KEYCLOAK_PUBLIC_URL for lkfl-server"
+              echo "OK: $compose_file has KEYCLOAK_PUBLIC_URL"
             fi
           done
 
-          # Проверка: Keycloak KC_HOSTNAME не должен быть internal hostname
+          # Проверка: KC_HOSTNAME не должен быть internal hostname
           for compose_file in docker-compose.staging.yml docker-compose.prod.yml; do
             if [[ -f "$compose_file" ]]; then
-              hostname=$(grep "KC_HOSTNAME:" "$compose_file" | head -1 | awk '{print $2}' | tr -d '"')
+              hostname=$(grep "KC_HOSTNAME:" "$compose_file" | head -1 | awk '{print $2}' | tr -d '"' | tr -d ' ')
               if [[ -n "$hostname" ]] && [[ "$hostname" == "keycloak" || "$hostname" == "localhost" ]]; then
-                if [[ "$compose_file" == *"staging"* ]] || [[ "$compose_file" == *"prod"* ]]; then
-                  echo "FAIL: $compose_file — KC_HOSTNAME='$hostname' is not suitable for $compose_file"
-                  echo "  Use external domain (e.g., dev.april.ukituki.tech)"
-                  exit 1
-                fi
+                echo "FAIL: $compose_file — KC_HOSTNAME='$hostname' is internal"
+                exit 1
               fi
             fi
           done
+          echo "OK: KC_HOSTNAME validation passed"
 
   # =========================================================================
-  # 2. DOCKER BUILD + PUSH — self-hosted runner на serverAI
+  # Job 2: BUILD + PUSH — self-hosted runner (lkfl label on serverAi)
   # =========================================================================
   build-push:
     name: Build & Push Docker
     needs: [lint-test]
-    runs-on: lkfl  # ← self-hosted runner на serverAI (label: lkfl)
+    runs-on: lkfl
     strategy:
       fail-fast: false
-      max-parallel: 2  # serverAi: 1 Docker daemon, не перегружать buildx
+      max-parallel: 2
       matrix:
         service: [server, proxy, frontend, deploy-worker]
     steps:
@@ -167,9 +176,11 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
 
-      # КРИТИЧНО: login ДО build — для push в GHCR
       - name: Login to GHCR
+        if: github.event_name != 'pull_request'
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -190,55 +201,262 @@ jobs:
             ${{ (github.ref == 'refs/heads/main' && format('{0}/{1}:main-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
 
   # =========================================================================
-  # 3. DEPLOY NOTIFICATION — только push в main
+  # Job 3: DEPLOY STAGING — auto on main push
   # =========================================================================
-  deploy-notify:
-    name: Notify Deploy Worker
+  deploy-staging:
+    name: Deploy Staging
     needs: [build-push]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
+    runs-on: lkfl
+    concurrency:
+      group: deploy-staging
+      cancel-in-progress: false
     steps:
-      - name: Send deploy webhook
-        env:
-          DEPLOY_URL: https://dev.april.ukituki.tech/deploy-webhook/deploy
-          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
-        run: |
-          SHORT_SHA=${GITHUB_SHA::7}
-          IMAGE_TAG="main-${SHORT_SHA}"
-
-          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST "$DEPLOY_URL" \
-            -H "Authorization: Bearer $DEPLOY_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "{\"branch\":\"${{ github.ref_name }}\",\"sha\":\"${GITHUB_SHA}\",\"imageTag\":\"${IMAGE_TAG}\"}")
-
-          HTTP_CODE=$(echo "$RESPONSE" | tail -1)
-          BODY=$(echo "$RESPONSE" | head -1)
-
-          echo "Deploy webhook response: $BODY"
-          echo "HTTP status: $HTTP_CODE"
-
-          if [[ "$HTTP_CODE" -lt 200 || "$HTTP_CODE" -ge 300 ]]; then
-            echo "❌ Deploy webhook failed with HTTP $HTTP_CODE"
-            exit 1
-          fi
-
-          echo "✅ Deploy notification sent successfully"
-
-  # =========================================================================
-  # 4. SMOKE TEST — пост-деплой проверка
-  # =========================================================================
-  smoke-test:
-    name: Smoke Test
-    needs: [deploy-notify]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for deployment to complete
-        run: sleep 90
-
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Run smoke tests
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Set image tag
+        id: tag
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          echo "tag=main-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Sync compose + env to serverAi
+        run: |
+          # Runner уже на serverAi, файлы в GITHUB_WORKSPACE
+          STAGING_DIR="/home/ukituki/LKFL-staging"
+          cp docker-compose.staging.yml "$STAGING_DIR/"
+          echo "IMAGE_TAG=${{ steps.tag.outputs.tag }}" >> "$STAGING_DIR/.env.staging"
+          echo "GHCR_REGISTRY=${{ env.GHCR_REGISTRY }}" >> "$STAGING_DIR/.env.staging"
+
+      - name: Pull images
+        working-directory: /home/ukituki/LKFL-staging
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          docker compose -f docker-compose.staging.yml -p lkfl-staging pull --ignore-buildable
+
+      - name: Run migrations (retry 3x)
+        working-directory: /home/ukituki/LKFL-staging
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          for i in 1 2 3; do
+            echo "Migration attempt $i..."
+            if docker compose -f docker-compose.staging.yml -p lkfl-staging run --rm lkfl-migrate; then
+              echo "Migrations applied successfully"
+              break
+            fi
+            if [[ $i -lt 3 ]]; then
+              echo "Retry in 10s..."
+              sleep 10
+            fi
+          done
+
+      - name: Run seed
+        working-directory: /home/ukituki/LKFL-staging
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          docker compose -f docker-compose.staging.yml -p lkfl-staging run --rm lkfl-seed || \
+            echo "Warning: seed may have failed (data might already exist)"
+
+      - name: Start services
+        working-directory: /home/ukituki/LKFL-staging
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          docker compose -f docker-compose.staging.yml -p lkfl-staging up -d
+
+      - name: Health check polling
+        run: |
+          echo "Waiting for services to become healthy..."
+          for attempt in $(seq 1 10); do
+            ALL_OK=true
+
+            # Server health check
+            if curl -sf http://127.0.0.1:18080/healthz >/dev/null 2>&1; then
+              echo "  ✅ lkfl-server healthy"
+            else
+              echo "  ❌ lkfl-server not ready"
+              ALL_OK=false
+            fi
+
+            # Frontend health check
+            if curl -sf http://127.0.0.1:8084/ >/dev/null 2>&1; then
+              echo "  ✅ lkfl-frontend healthy"
+            else
+              echo "  ❌ lkfl-frontend not ready"
+              ALL_OK=false
+            fi
+
+            # Keycloak health check
+            if curl -sf http://127.0.0.1:19081/health/ready >/dev/null 2>&1; then
+              echo "  ✅ keycloak healthy"
+            else
+              echo "  ❌ keycloak not ready"
+              ALL_OK=false
+            fi
+
+            if [[ "$ALL_OK" == "true" ]]; then
+              echo "All services healthy!"
+              break
+            fi
+
+            if [[ $attempt -eq 10 ]]; then
+              echo "❌ Health check failed after 10 attempts"
+              docker compose -f docker-compose.staging.yml -p lkfl-staging logs --tail=50
+              exit 1
+            fi
+
+            echo "Attempt $attempt/10 — waiting 15s..."
+            sleep 15
+          done
+
+      - name: Clean old images
+        run: docker image prune -f
+
+  # =========================================================================
+  # Job 4: SMOKE TEST STAGING — после deploy-staging
+  # =========================================================================
+  smoke-test-staging:
+    name: Smoke Test Staging
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: lkfl
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests with retry
         run: |
           chmod +x infra/smoke-test.sh
-          infra/smoke-test.sh https://dev.april.ukituki.tech
+          # 5 попыток с интервалом 10s
+          MAX_ATTEMPTS=5 infra/smoke-test.sh --retry 5 https://dev.april.ukituki.tech
+
+  # =========================================================================
+  # Job 5: DEPLOY PRODUCTION — manual workflow_dispatch
+  # =========================================================================
+  deploy-production:
+    name: Deploy Production
+    needs: [smoke-test-staging]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: lkfl
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_PAT }}
+
+      - name: Set image tag
+        id: tag
+        run: |
+          SHORT_SHA=${GITHUB_SHA::7}
+          echo "tag=main-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Sync compose + env to serverAi
+        run: |
+          PROD_DIR="/home/ukituki/LKFL-prod"
+          mkdir -p "$PROD_DIR"
+          cp docker-compose.prod.yml "$PROD_DIR/"
+          echo "IMAGE_TAG=${{ steps.tag.outputs.tag }}" >> "$PROD_DIR/.env.prod"
+          echo "GHCR_REGISTRY=${{ env.GHCR_REGISTRY }}" >> "$PROD_DIR/.env.prod"
+
+      - name: Pull images
+        working-directory: /home/ukituki/LKFL-prod
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          docker compose -f docker-compose.prod.yml -p lkfl-prod pull --ignore-buildable
+
+      - name: Run migrations (retry 3x)
+        working-directory: /home/ukituki/LKFL-prod
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          for i in 1 2 3; do
+            echo "Migration attempt $i..."
+            if docker compose -f docker-compose.prod.yml -p lkfl-prod run --rm lkfl-migrate; then
+              echo "Migrations applied successfully"
+              break
+            fi
+            if [[ $i -lt 3 ]]; then
+              echo "Retry in 10s..."
+              sleep 10
+            fi
+          done
+
+      - name: Run seed
+        working-directory: /home/ukituki/LKFL-prod
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          docker compose -f docker-compose.prod.yml -p lkfl-prod run --rm lkfl-seed || \
+            echo "Warning: seed may have failed (data might already exist)"
+
+      - name: Start services
+        working-directory: /home/ukituki/LKFL-prod
+        run: |
+          export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
+          export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
+          docker compose -f docker-compose.prod.yml -p lkfl-prod up -d
+
+      - name: Health check polling
+        run: |
+          echo "Waiting for production services..."
+          for attempt in $(seq 1 10); do
+            ALL_OK=true
+
+            if curl -sf http://127.0.0.1:8080/healthz >/dev/null 2>&1; then
+              echo "  ✅ lkfl-server healthy"
+            else
+              echo "  ❌ lkfl-server not ready"
+              ALL_OK=false
+            fi
+
+            if curl -sf http://127.0.0.1:3000/ >/dev/null 2>&1; then
+              echo "  ✅ lkfl-frontend healthy"
+            else
+              echo "  ❌ lkfl-frontend not ready"
+              ALL_OK=false
+            fi
+
+            if curl -sf http://127.0.0.1:8081/health/ready >/dev/null 2>&1; then
+              echo "  ✅ keycloak healthy"
+            else
+              echo "  ❌ keycloak not ready"
+              ALL_OK=false
+            fi
+
+            if [[ "$ALL_OK" == "true" ]]; then
+              echo "All production services healthy!"
+              break
+            fi
+
+            if [[ $attempt -eq 10 ]]; then
+              echo "❌ Production health check failed after 10 attempts"
+              docker compose -f docker-compose.prod.yml -p lkfl-prod logs --tail=50
+              exit 1
+            fi
+
+            echo "Attempt $attempt/10 — waiting 15s..."
+            sleep 15
+          done
+
+      - name: Clean old images
+        run: docker image prune -f

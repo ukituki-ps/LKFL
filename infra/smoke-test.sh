@@ -3,130 +3,265 @@
 # Проверяет базовую работоспособность после деплоя.
 #
 # Запуск:
-#   ./infra/smoke-test.sh                          # по умолчанию staging
+#   ./infra/smoke-test.sh                          # по умолчанию staging, 1 попытка
 #   ./infra/smoke-test.sh https://dev.april.ukituki.tech
+#   ./infra/smoke-test.sh --retry 5                # CI-режим: 5 попыток с интервалом 10s
+#   MAX_ATTEMPTS=5 ./infra/smoke-test.sh           # через env var
 #
-# Выход: 0 = все ок, 1 = есть проблемы
+# Выход: 0 = все ок, 1 = есть проблемы после всех попыток, 2 = ошибка скрипта
 
 set -euo pipefail
 
-BASE_URL="${1:-https://dev.april.ukituki.tech}"
-FAILED=0
-PASSED=0
+# ─── Цвета ───
+if [[ -t 1 ]]; then
+    GREEN='\033[0;32m'
+    RED='\033[0;31m'
+    YELLOW='\033[0;33m'
+    NC='\033[0m'
+else
+    GREEN=''
+    RED=''
+    YELLOW=''
+    NC=''
+fi
 
 pass() {
-    echo "  ✅ $1"
-    PASSED=$((PASSED + 1))
+    echo "  ${GREEN}✅ $1${NC}"
+    echo "$1" >> "$TMPLOG"
 }
 
 fail() {
-    echo "  ❌ $1"
-    FAILED=$((FAILED + 1))
+    echo "  ${RED}❌ $1${NC}"
+    echo "FAIL: $1" >> "$TMPLOG"
 }
+
+warn() {
+    echo "  ${YELLOW}⚠️  $1${NC}"
+}
+
+# ─── Аргументы ───
+MAX_ATTEMPTS=1
+BASE_URL="https://dev.april.ukituki.tech"
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --retry)
+            MAX_ATTEMPTS="${2:-5}"
+            shift 2
+            ;;
+        --url)
+            BASE_URL="$2"
+            shift 2
+            ;;
+        -*)
+            echo "Unknown option: $1" >&2
+            exit 2
+            ;;
+        *)
+            BASE_URL="$1"
+            shift
+            ;;
+    esac
+done
+
+# Переопределить через env var (приоритет над дефолтом, но не над --retry)
+MAX_ATTEMPTS="${MAX_ATTEMPTS:-${MAX_ATTEMPTS:-1}}"
+
+TMPLOG=$(mktemp /tmp/smoke-test-XXXXXX.log)
+trap 'rm -f "$TMPLOG"' EXIT
 
 echo "======================================"
 echo "Smoke test: $BASE_URL"
+echo "Max attempts: $MAX_ATTEMPTS"
 echo "======================================"
 echo ""
 
-# ─── 1. Health check ───
-echo "1. Health check"
-HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/healthz" 2>/dev/null || echo "000")
-if [[ "$HEALTH" == "200" ]]; then
-    pass "GET /healthz → 200"
-else
-    fail "GET /healthz → $HEALTH (expected 200)"
-fi
-echo ""
+# ─── Функция запуска 6 чекпоинтов ───
+# Возвращает количество прошедших чекпоинтов (0..6)
+run_checkpoints() {
+    local passed=0
+    local checkpoint_failed=0
 
-# ─── 2. Nginx health ───
-echo "2. Nginx health"
-NGINX_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/nginx-health" 2>/dev/null || echo "000")
-if [[ "$NGINX_HEALTH" == "200" ]]; then
-    pass "GET /nginx-health → 200"
-else
-    fail "GET /nginx-health → $NGINX_HEALTH (expected 200)"
-fi
-echo ""
-
-# ─── 3. Login redirect URL (КРИТИЧНО) ───
-echo "3. Login redirect (KEYCLOAK_PUBLIC_URL)"
-# Следующий redirect с GET /api/v1/auth/login и проверяем Location header
-LOGIN_REDIRECT=$(curl -s -o /dev/null -w "%{redirect_url}" -L --max-redirs 0 "$BASE_URL/api/v1/auth/login" 2>/dev/null || echo "")
-if [[ -n "$LOGIN_REDIRECT" ]]; then
-    # Проверка: URL не должен содержать internal Docker hostname
-    if echo "$LOGIN_REDIRECT" | grep -q "keycloak:8080"; then
-        fail "Login redirect содержит internal hostname 'keycloak:8080': $LOGIN_REDIRECT"
-        fail "KEYCLOAK_PUBLIC_URL не настроен или равен KEYCLOAK_ISSUER"
-    elif echo "$LOGIN_REDIRECT" | grep -q "localhost"; then
-        fail "Login redirect содержит 'localhost': $LOGIN_REDIRECT"
-    else
-        pass "Login redirect URL не содержит internal hostname"
-        echo "       → $LOGIN_REDIRECT"
-    fi
-else
-    # curl не получил redirect — может быть 500 или другой код
-    LOGIN_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/auth/login" 2>/dev/null || echo "000")
-    if [[ "$LOGIN_CODE" == "302" ]]; then
-        # Есть redirect но curl не показал URL — пробуем другой способ
-        LOGIN_LOCATION=$(curl -s -I "$BASE_URL/api/v1/auth/login" 2>/dev/null | grep -i "^location:" | awk '{print $2}' | tr -d '\r')
-        if echo "$LOGIN_LOCATION" | grep -q "keycloak:8080"; then
-            fail "Login redirect содержит internal hostname: $LOGIN_LOCATION"
+    # ─── 1. Health check ───
+    echo "  1. Health check"
+    local health
+    health=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "$BASE_URL/healthz" 2>/dev/null) || {
+        fail "GET /healthz → connection error (timeout or unreachable)"
+        checkpoint_failed=1
+    }
+    if [[ $checkpoint_failed -eq 0 ]]; then
+        if [[ "$health" == "200" ]]; then
+            pass "GET /healthz → 200"
+            passed=$((passed + 1))
         else
-            pass "Login redirect OK: $LOGIN_LOCATION"
+            fail "GET /healthz → $health (expected 200)"
         fi
-    else
-        fail "GET /api/v1/auth/login → $LOGIN_CODE (expected 302)"
     fi
-fi
-echo ""
 
-# ─── 4. Keycloak accessibility ───
-echo "4. Keycloak через Nginx proxy"
-# Discovery endpoint конкретного realm (Keycloak не поддерживает /realms listing)
-KC_DISCOVERY=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/realms/lkfl-sdek/.well-known/openid-configuration" 2>/dev/null || echo "000")
-if [[ "$KC_DISCOVERY" == "200" ]]; then
-    # Проверим что issuer содержит public URL, не internal hostname
-    KC_ISSUER=$(curl -s "$BASE_URL/realms/lkfl-sdek/.well-known/openid-configuration" 2>/dev/null | grep -o '"issuer":"[^"]*"' | head -1)
-    if echo "$KC_ISSUER" | grep -q "keycloak:8080"; then
-        fail "Keycloak issuer содержит internal hostname: $KC_ISSUER"
-    else
-        pass "Keycloak discovery → 200, issuer OK: $KC_ISSUER"
+    # ─── 2. Nginx health ───
+    echo "  2. Nginx health"
+    local nginx_health
+    nginx_health=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "$BASE_URL/nginx-health" 2>/dev/null) || {
+        fail "GET /nginx-health → connection error"
+        checkpoint_failed=1
+    }
+    if [[ $checkpoint_failed -eq 0 ]]; then
+        if [[ "$nginx_health" == "200" ]]; then
+            pass "GET /nginx-health → 200"
+            passed=$((passed + 1))
+        else
+            fail "GET /nginx-health → $nginx_health (expected 200)"
+        fi
     fi
-else
-    fail "Keycloak discovery → $KC_DISCOVERY (Keycloak недоступен через Nginx proxy)"
-fi
-echo ""
 
-# ─── 5. Frontend loads ───
-echo "5. Frontend SPA"
-FRONTEND=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/" 2>/dev/null || echo "000")
-if [[ "$FRONTEND" == "200" ]]; then
-    pass "GET / → 200 (frontend загружается)"
-else
-    fail "GET / → $FRONTEND (expected 200)"
-fi
-echo ""
+    # ─── 3. Login redirect URL (КРИТИЧНО) ───
+    echo "  3. Login redirect (KEYCLOAK_PUBLIC_URL)"
+    checkpoint_failed=0
+    local login_redirect
+    login_redirect=$(curl -s -o /dev/null -w "%{redirect_url}" -L --max-redirs 0 --connect-timeout 10 --max-time 15 "$BASE_URL/api/v1/auth/login" 2>/dev/null) || {
+        fail "GET /api/v1/auth/login → connection error"
+        checkpoint_failed=1
+    }
+    if [[ $checkpoint_failed -eq 0 ]]; then
+        if [[ -n "$login_redirect" ]]; then
+            if echo "$login_redirect" | grep -q "keycloak:8080"; then
+                fail "Login redirect содержит internal hostname 'keycloak:8080': $login_redirect"
+                fail "KEYCLOAK_PUBLIC_URL не настроен или равен KEYCLOAK_ISSUER"
+            elif echo "$login_redirect" | grep -q "localhost"; then
+                fail "Login redirect содержит 'localhost': $login_redirect"
+            else
+                pass "Login redirect URL не содержит internal hostname"
+                echo "       → $login_redirect"
+                passed=$((passed + 1))
+            fi
+        else
+            local login_code
+            login_code=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "$BASE_URL/api/v1/auth/login" 2>/dev/null || echo "000")
+            if [[ "$login_code" == "302" ]]; then
+                local login_location
+                login_location=$(curl -s -I --connect-timeout 10 --max-time 15 "$BASE_URL/api/v1/auth/login" 2>/dev/null | grep -i "^location:" | awk '{print $2}' | tr -d '\r')
+                if echo "$login_location" | grep -q "keycloak:8080"; then
+                    fail "Login redirect содержит internal hostname: $login_location"
+                else
+                    pass "Login redirect OK: $login_location"
+                    passed=$((passed + 1))
+                fi
+            else
+                fail "GET /api/v1/auth/login → $login_code (expected 302)"
+            fi
+        fi
+    fi
 
-# ─── 6. API endpoint ───
-echo "6. API endpoint"
-API=$(curl -s -o /dev/null -w "%{http_code}" "$BASE_URL/api/v1/engagements/" 2>/dev/null || echo "000")
-# Ожидаем 401 (unauthorized) — значит API работает, просто нет токена
-if [[ "$API" == "401" ]]; then
-    pass "GET /api/v1/engagements/ → 401 (API работает, auth required)"
-elif [[ "$API" == "404" ]]; then
-    fail "GET /api/v1/engagements/ → 404 (API route не найден)"
-else
-    fail "GET /api/v1/engagements/ → $API (expected 401)"
-fi
-echo ""
+    # ─── 4. Keycloak accessibility ───
+    echo "  4. Keycloak через Nginx proxy"
+    checkpoint_failed=0
+    local kc_discovery
+    kc_discovery=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "$BASE_URL/realms/lkfl-sdek/.well-known/openid-configuration" 2>/dev/null) || {
+        fail "Keycloak discovery → connection error"
+        checkpoint_failed=1
+    }
+    if [[ $checkpoint_failed -eq 0 ]]; then
+        if [[ "$kc_discovery" == "200" ]]; then
+            local kc_issuer
+            kc_issuer=$(curl -s --connect-timeout 10 --max-time 15 "$BASE_URL/realms/lkfl-sdek/.well-known/openid-configuration" 2>/dev/null | grep -o '"issuer":"[^"]*"' | head -1)
+            if echo "$kc_issuer" | grep -q "keycloak:8080"; then
+                fail "Keycloak issuer содержит internal hostname: $kc_issuer"
+            else
+                pass "Keycloak discovery → 200, issuer OK: $kc_issuer"
+                passed=$((passed + 1))
+            fi
+        else
+            fail "Keycloak discovery → $kc_discovery (Keycloak недоступен через Nginx proxy)"
+        fi
+    fi
+
+    # ─── 5. Frontend loads ───
+    echo "  5. Frontend SPA"
+    checkpoint_failed=0
+    local frontend
+    frontend=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "$BASE_URL/" 2>/dev/null) || {
+        fail "GET / → connection error"
+        checkpoint_failed=1
+    }
+    if [[ $checkpoint_failed -eq 0 ]]; then
+        if [[ "$frontend" == "200" ]]; then
+            pass "GET / → 200 (frontend загружается)"
+            passed=$((passed + 1))
+        else
+            fail "GET / → $frontend (expected 200)"
+        fi
+    fi
+
+    # ─── 6. API endpoint ───
+    echo "  6. API endpoint"
+    checkpoint_failed=0
+    local api
+    api=$(curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 "$BASE_URL/api/v1/engagements/" 2>/dev/null) || {
+        fail "GET /api/v1/engagements/ → connection error"
+        checkpoint_failed=1
+    }
+    if [[ $checkpoint_failed -eq 0 ]]; then
+        if [[ "$api" == "401" ]]; then
+            pass "GET /api/v1/engagements/ → 401 (API работает, auth required)"
+            passed=$((passed + 1))
+        elif [[ "$api" == "404" ]]; then
+            fail "GET /api/v1/engagements/ → 404 (API route не найден)"
+        else
+            fail "GET /api/v1/engagements/ → $api (expected 401)"
+        fi
+    fi
+
+    echo ""
+    echo $passed
+}
+
+# ─── Основной цикл с retry ───
+SUMMARY=""
+overall_result=1  # по умолчанию FAIL
+
+for attempt in $(seq 1 "$MAX_ATTEMPTS"); do
+    echo "--- Попытка $attempt из $MAX_ATTEMPTS ---"
+    rm -f "$TMPLOG"
+    touch "$TMPLOG"
+
+    passed=$(run_checkpoints)
+    failed=$((6 - passed))
+
+    # Сводка попытки
+    if [[ $passed -eq 6 ]]; then
+        SUMMARY="${SUMMARY}Attempt $attempt: $passed/6 PASS${GREEN} → OK${NC}
+"
+        overall_result=0
+        break
+    else
+        SUMMARY="${SUMMARY}Attempt $attempt: $passed/6 PASS, $failed FAIL
+"
+    fi
+
+    # Если это не последняя попытка — подождём
+    if [[ $attempt -lt $MAX_ATTEMPTS ]]; then
+        echo "${YELLOW}Не все чекпоинты прошли. Ожидание 10s перед следующей попыткой...${NC}"
+        sleep 10
+        echo ""
+    fi
+done
 
 # ─── Итог ───
 echo "======================================"
-echo "Result: $PASSED passed, $FAILED failed"
+echo "Результат:"
+echo "$SUMMARY" | sed 's/^/  /'
 echo "======================================"
 
-if [[ $FAILED -gt 0 ]]; then
+# Проверяем были ли network ошибки
+if grep -q "connection error" "$TMPLOG" 2>/dev/null && [[ $overall_result -ne 0 ]]; then
+    warn "Обнаружены сетевые ошибки — проверьте доступность $BASE_URL"
+    exit 2
+fi
+
+if [[ $overall_result -eq 0 ]]; then
+    echo "  ${GREEN}✅ Все 6 чекпоинтов прошли${NC}"
+    exit 0
+else
+    echo "  ${RED}❌ Есть непройденные чекпоинты${NC}"
     exit 1
 fi
-exit 0
