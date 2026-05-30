@@ -118,7 +118,7 @@ jobs:
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
           nvm use 20
-          npx @redocly/cli@latest lint openapi/openapi.yaml
+          npx @redocly/cli@latest lint docs/api/openapi.yaml
         continue-on-error: true
 
   # ── E2E Tests ─────────────────────────────────────────────
