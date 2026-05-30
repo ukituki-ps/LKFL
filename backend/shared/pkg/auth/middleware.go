@@ -2,7 +2,6 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -24,37 +23,35 @@ const (
 // JWTMiddleware создаёт HTTP-мидлвэр для верификации JWT Bearer токенов.
 //
 // Алгоритм работы:
-//  1. Извлекает Authorization header (Bearer token)
+//  1. Извлекает токен из Authorization header (Bearer) или cookie (lkfl_session)
 //  2. Верифицирует токен через OIDC verifier
 //  3. Извлекает claims и roles из ID Token
 //  4. Добавляет claims и roles в context запроса
 //  5. Извлекает tenant slug из issuer и ставит X-Tenant-ID header
 //
+// D2: токен ищется сначала в Authorization: Bearer, затем в cookie lkfl_session
+// (backward compat — оба источника работают).
+//
 // При любой ошибке возвращает JSON-ответ с соответствующим статусом.
 func JWTMiddleware(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			authHeader := r.Header.Get("Authorization")
-			if authHeader == "" {
-				writeJSONError(w, http.StatusUnauthorized, "unauthorized")
-				return
-			}
-
-			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-			if tokenString == authHeader {
-				writeJSONError(w, http.StatusUnauthorized, "invalid token format")
+			// D2: сначала проверяем Authorization: Bearer header, затем cookie
+			tokenString := extractToken(r)
+			if tokenString == "" {
+				WriteAuthError(w, http.StatusUnauthorized, "unauthorized")
 				return
 			}
 
 			idToken, err := verifier.Verify(r.Context(), tokenString)
 			if err != nil {
-				writeJSONError(w, http.StatusUnauthorized, "invalid token")
+				WriteAuthError(w, http.StatusUnauthorized, "invalid token")
 				return
 			}
 
 			claims, roles, err := ExtractClaims(idToken)
 			if err != nil {
-				writeJSONError(w, http.StatusUnauthorized, "claim parsing error")
+				WriteAuthError(w, http.StatusUnauthorized, "claim parsing error")
 				return
 			}
 
@@ -67,7 +64,7 @@ func JWTMiddleware(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handl
 			// Это заменяет JWTClaimsTenantMiddleware — slug доступен
 			// для tenant middleware даже если nginx не поставил header.
 			if r.Header.Get("X-Tenant-ID") == "" && claims.Issuer != "" {
-				if slug := extractTenantSlug(claims.Issuer); slug != "" {
+				if slug := ResolveTenantSlug(claims.Issuer); slug != "" {
 					r = r.Clone(ctx)
 					r.Header.Set("X-Tenant-ID", slug)
 					next.ServeHTTP(w, r)
@@ -80,15 +77,28 @@ func JWTMiddleware(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handl
 	}
 }
 
-// extractTenantSlug извлекает slug tenant'а из issuer URL.
-// Формат: https://host/realms/lkfl-{slug} → slug
-func extractTenantSlug(issuer string) string {
-	parts := strings.Split(issuer, "/")
-	for _, p := range parts {
-		if strings.HasPrefix(p, "lkfl-") {
-			return strings.TrimPrefix(p, "lkfl-")
+// sessionCookieName — имя httpOnly cookie для сессионного токена (D2).
+const sessionCookieName = "lkfl_session"
+
+// extractToken извлекает токен из запроса.
+// Сначала проверяет Authorization: Bearer <token>, затем cookie lkfl_session.
+// Это обеспечивает backward compatibility — оба источника работают.
+func extractToken(r *http.Request) string {
+	// Приоритет 1: Authorization: Bearer header
+	authHeader := r.Header.Get("Authorization")
+	if authHeader != "" {
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString != authHeader {
+			return tokenString
 		}
 	}
+
+	// Приоритет 2: httpOnly cookie (D2: 152-ФЗ compliance)
+	cookie, err := r.Cookie(sessionCookieName)
+	if err == nil && cookie.Value != "" {
+		return cookie.Value
+	}
+
 	return ""
 }
 
@@ -112,14 +122,4 @@ func RolesFromContext(ctx context.Context) []string {
 		return nil
 	}
 	return roles
-}
-
-// writeJSONError пишет JSON-ответ с ошибкой.
-//
-// Формат ответа: {"error": "<message>"}
-// Content-Type: application/json
-func writeJSONError(w http.ResponseWriter, status int, message string) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
 }

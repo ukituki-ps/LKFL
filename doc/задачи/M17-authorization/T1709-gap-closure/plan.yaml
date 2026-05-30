@@ -1,0 +1,109 @@
+# T1709 plan.yaml
+
+task_id: T1709
+milestone: M17
+title: "Закрытие гэпов M17 (Gap Closure)"
+type: code
+status: completed
+progress: 100%
+parent: T1700
+depends_on: [T1707, T1708]
+estimate: 3.5 days
+critical_path: 1.5 days  # D2(1d) → D1(2h) + docs(0.5d)
+risk: "D2 (httpOnly cookie) — требует изменения auth flow frontend+backend; D4 (keyfunc) — нужно решить: добавить зависимость или исправить report; D1 (realm) — требует tenant resolution в frontend"
+
+checklist:
+  - id: 1
+    section: "Критические дефекты"
+    items:
+      - id: 1.1
+        desc: "D3: Fix cmd/server/main.go:110 и :243 — mErr вместо err в fmt.Fprintf"
+        done: true
+      - id: 1.2
+        desc: "D4: Reconcile go.mod + verifier.go — либо добавить keyfunc, либо исправить T1707 report"
+        done: true
+      - id: 1.3
+        desc: "D5: Создать migrations/atlas.hcl или удалить упоминание из plan/report"
+        done: true
+      - id: 1.4
+        desc: "D9: Fix ExtractRolesFromJWT — сделать private или добавить verif подписи"
+        done: true
+      - id: 1.5
+        desc: "D1: Fix Callback.tsx — заменить hard-coded lkfl-sdek на VITE_KEYCLOAK_REALM / tenant resolution"
+        done: true
+      - id: 1.6
+        desc: "D2: Fix token storage — заменить localStorage на httpOnly cookie (backend Set-Cookie + frontend credentials: include)"
+        done: true
+
+  - id: 2
+    section: "Средние дефекты"
+    items:
+      - id: 2.1
+        desc: "D6: Реализовать roles в CreateOrUpdateUser или убрать TODO"
+        done: true
+      - id: 2.2
+        desc: "D7: Добавить комментарий DEV ONLY к credentials в docker-compose.yml"
+        done: true
+      - id: 2.3
+        desc: "D8: Сделать retry count в verifier configurable (env var / config)"
+        done: true
+      - id: 2.4
+        desc: "D10: Добавить KEYCLOAK_PUBLIC_URL в docker-compose.yml lkfl-server"
+        done: true
+      - id: 2.5
+        desc: "D11: Fix Callback.tsx fallback — заменить 'token-from-backend' на error/panic"
+        done: true
+      - id: 2.6
+        desc: "D13: Refactor дублирующийся код миграций — runMigrationsDB + applyMigrations → shared/pkg/migrate/"
+        done: true
+
+  - id: 3
+    section: "Missing файлы из plan.yaml"
+    items:
+      - id: 3.1
+        desc: "Создать shared/pkg/auth/tenantresolver.go — вынести из middleware.go"
+        done: true
+      - id: 3.2
+        desc: "Создать shared/pkg/auth/errors.go — вынести writeJSONError + auth error types"
+        done: true
+      - id: 3.3
+        desc: "Создать shared/pkg/auth/cache.go — JWKS cache per realm (или обосновать удаление из плана)"
+        done: true
+      - id: 3.4
+        desc: "Создать shared/pkg/auth/verifier_test.go — unit тесты verifier с mock JWKS"
+        done: true
+
+  - id: 4
+    section: "Документация"
+    items:
+      - id: 4.1
+        desc: "Обновить T1700 report.md — статус ✅, заполнить фактическое содержание"
+        done: true
+      - id: 4.2
+        desc: "Обновить T1701 report.md — статус ✅, заполнить фактическое содержание"
+        done: true
+      - id: 4.3
+        desc: "Обновить T1702 report.md — статус ✅, заполнить фактическое содержание"
+        done: true
+      - id: 4.4
+        desc: "Обновить T1703 report.md — статус ✅, заполнить фактическое содержание"
+        done: true
+      - id: 4.5
+        desc: "Обновить T1704 report.md — статус ✅, заполнить фактическое содержание"
+        done: true
+      - id: 4.6
+        desc: "Обновить T1705 report.md — статус ⚠️ (частично: Prometheus/Loki/Grafana без dashboards)"
+        done: true
+
+  - id: 5
+    section: "Финальная проверка"
+    items:
+      - id: 5.1
+        desc: "go build ./... — все бинарники собираются"
+        done: true
+      - id: 5.2
+        desc: "go test ./... — все тесты проходят (53+ PASS)"
+        done: true
+      - id: 5.3
+        desc: "CI build.yml — все job'ы PASS"
+        done: false

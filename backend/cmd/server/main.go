@@ -12,9 +12,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"sort"
-	"strings"
 	"syscall"
 	"time"
 
@@ -22,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"lkfl/internal/app"
+	"lkfl/shared/pkg/migrate"
 )
 
 func main() {
@@ -106,116 +104,11 @@ func runMigrate() {
 
 	ctx := context.Background()
 
-	if mErr := runMigrationsDB(ctx, conn); mErr != nil {
-		fmt.Fprintf(os.Stderr, "migrations error: %v\n", err)
+	if mErr := migrate.Apply(ctx, conn, nil, true); mErr != nil {
+		fmt.Fprintf(os.Stderr, "migrations error: %v\n", mErr)
 		os.Exit(1)
 	}
 	fmt.Println("Migrations completed successfully!")
-}
-
-func runMigrationsDB(ctx context.Context, conn *pgx.Conn) error {
-	// Create schema
-	_, err := conn.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS lkfl_platform")
-	if err != nil {
-		return fmt.Errorf("create schema: %w", err)
-	}
-
-	// Create migration tracking table
-	_, err = conn.Exec(ctx, `
-		CREATE TABLE IF NOT EXISTS lkfl_platform.schema_migrations (
-			id SERIAL PRIMARY KEY,
-			filename VARCHAR(255) NOT NULL UNIQUE,
-			applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-		)
-	`)
-	if err != nil {
-		return fmt.Errorf("create schema_migrations: %w", err)
-	}
-
-	// Find migrations directory
-	migrationDir := findMigrationsDir()
-	if migrationDir == "" {
-		fmt.Println("  Warning: migrations directory not found, skipping")
-		return nil
-	}
-
-	entries, err := os.ReadDir(migrationDir)
-	if err != nil {
-		return fmt.Errorf("read migrations dir: %w", err)
-	}
-
-	var migrationFiles []string
-	for _, e := range entries {
-		if !e.IsDir() && strings.HasSuffix(e.Name(), ".sql") && !strings.HasSuffix(e.Name(), ".sql.down") {
-			migrationFiles = append(migrationFiles, e.Name())
-		}
-	}
-	sort.Strings(migrationFiles)
-
-	applied := 0
-	skipped := 0
-	for _, name := range migrationFiles {
-		// Check if already applied
-		var exists bool
-		err = conn.QueryRow(ctx, `
-			SELECT EXISTS(SELECT 1 FROM lkfl_platform.schema_migrations WHERE filename = $1)
-		`, name).Scan(&exists)
-		if err != nil {
-			return fmt.Errorf("check migration %s: %w", name, err)
-		}
-
-		if exists {
-			skipped++
-			continue
-		}
-
-		data, err := os.ReadFile(filepath.Join(migrationDir, name))
-		if err != nil {
-			return fmt.Errorf("read migration %s: %w", name, err)
-		}
-
-		_, err = conn.Exec(ctx, string(data))
-		if err != nil {
-			return fmt.Errorf("apply migration %s: %w", name, err)
-		}
-
-		// Record migration
-		_, err = conn.Exec(ctx, `
-			INSERT INTO lkfl_platform.schema_migrations (filename) VALUES ($1)
-		`, name)
-		if err != nil {
-			return fmt.Errorf("record migration %s: %w", name, err)
-		}
-
-		fmt.Printf("  Applied: %s\n", name)
-		applied++
-	}
-
-	if applied == 0 && skipped > 0 {
-		fmt.Printf("  All %d migrations already applied\n", skipped)
-	} else if applied > 0 {
-		fmt.Printf("  Applied %d, skipped %d\n", applied, skipped)
-	}
-
-	return nil
-}
-
-func findMigrationsDir() string {
-	candidates := []string{
-		"migrations",
-		"../migrations",
-		"../../migrations",
-		"../../../migrations",
-		"../../../../migrations",
-		"/app/migrations",
-	}
-	for _, c := range candidates {
-		info, err := os.Stat(c)
-		if err == nil && info.IsDir() {
-			return c
-		}
-	}
-	return ""
 }
 
 // ─── Seed subcommand ───
@@ -239,8 +132,8 @@ func runSeed() {
 
 	// ─── Миграции ───
 	fmt.Println("Running migrations...")
-	if mErr := runMigrationsDB(ctx, conn); mErr != nil {
-		fmt.Fprintf(os.Stderr, "migrations error: %v\n", err)
+	if mErr := migrate.Apply(ctx, conn, nil, true); mErr != nil {
+		fmt.Fprintf(os.Stderr, "migrations error: %v\n", mErr)
 		os.Exit(1)
 	}
 	fmt.Println("  Migrations OK")

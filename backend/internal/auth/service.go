@@ -12,6 +12,8 @@ package auth
 import (
 	"context"
 	"fmt"
+	"log/slog"
+	"strings"
 
 	"github.com/google/uuid"
 	"lkfl/internal/tenant"
@@ -63,7 +65,20 @@ func (s *Service) CreateOrUpdateUser(ctx context.Context, claims *sharedauth.Cla
 		existing.Email = claims.Email
 		existing.FirstName = claims.GivenName
 		existing.LastName = claims.FamilyName
-		return s.userRepo.Update(ctx, existing)
+		updated, errUpdate := s.userRepo.Update(ctx, existing)
+
+		// Синхронизируем роли из Keycloak (добавляем новые)
+		for _, role := range roles {
+			_, errAdd := s.userRepo.AddRole(ctx, existing.ID, role, nil)
+			if errAdd != nil && !strings.Contains(errAdd.Error(), "duplicate") {
+				slog.Warn("failed to sync role (may exist already)", "user_id", existing.ID, "role", role, "error", errAdd)
+			}
+		}
+
+		if errUpdate != nil {
+			return user.User{}, fmt.Errorf("update user: %w", errUpdate)
+		}
+		return updated, nil
 	}
 
 	// Пользователь не найден — создаём нового
@@ -92,9 +107,21 @@ func (s *Service) CreateOrUpdateUser(ctx context.Context, claims *sharedauth.Cla
 		return user.User{}, fmt.Errorf("create user: %w", err)
 	}
 
-	// TODO: назначить роли из Keycloak (roles) через user.RoleRepository
-	// Пока роли назначаются вручную админом
-	_ = roles
+	// Назначаем роли из Keycloak.
+	// Для новых пользователей назначаем базовую роль "employee" + роли из Keycloak.
+	// Для существующих — синхронизируем роли из Keycloak (добавляем новые).
+	allRoles := roles
+	if len(allRoles) == 0 {
+		// Если Keycloak не вернул роли, назначаем роль сотрудника по умолчанию
+		allRoles = []string{user.RoleEmployee}
+	}
+	for _, role := range allRoles {
+		_, err := s.userRepo.AddRole(ctx, created.ID, role, nil)
+		if err != nil && !strings.Contains(err.Error(), "duplicate") {
+			// Неблокирующее логирование — если роль уже есть, это OK
+			slog.Warn("failed to assign role (may exist already)", "user_id", created.ID, "role", role, "error", err)
+		}
+	}
 
 	return created, nil
 }

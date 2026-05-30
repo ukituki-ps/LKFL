@@ -6,12 +6,18 @@ import { Title, Text, Container, Stack } from '@mantine/core'
 interface CallbackResponse {
 	user: UserProfile
 	roles: UserRole[]
-	/** Session token (optional — может приходить в header X-Session-Token) */
+	/** Session token — возвращается в body, но хранится в httpOnly cookie,
+	 * не в localStorage. Поле сохраняется для обратной совместимости API. */
 	token?: string
 }
 
 const ATTEMPTS_KEY = 'lkfl_login_attempts'
 const MAX_ATTEMPTS = 2
+
+/** Получает realm tenant из env; fallback на 'lkfl' если не задано. */
+function getRealm(): string {
+	return import.meta.env.VITE_KEYCLOAK_REALM ?? 'lkfl'
+}
 
 export function Callback() {
 	const navigate = useNavigate()
@@ -33,10 +39,21 @@ export function Callback() {
 		const attemptCount = parseInt(sessionStorage.getItem(ATTEMPTS_KEY) || '0', 10) + 1
 		sessionStorage.setItem(ATTEMPTS_KEY, String(attemptCount))
 
+		// Handle logout — использует realm из env (не hard-coded).
+		const doLogout = () => {
+			const currentOrigin = window.location.origin
+			const realm = getRealm()
+			window.location.href =
+				`${currentOrigin}/realms/${realm}/protocol/openid-connect/logout` +
+				`?post_logout_redirect_uri=${encodeURIComponent(currentOrigin + '/')}`
+		}
+
 		// Exchange authorization code for user+roles via backend callback endpoint.
 		// Backend validates state, verifies token, creates/updates user, creates session.
+		// Session token устанавливается в httpOnly cookie (Set-Cookie header).
 		fetch(`/api/v1/auth/callback?code=${code}&state=${state || ''}`, {
 			headers: { 'Accept': 'application/json' },
+			credentials: 'include', // ← D2: отправляем/получаем cookies
 		})
 			.then(async (res) => {
 				if (!res.ok) {
@@ -45,10 +62,7 @@ export function Callback() {
 						if (attemptCount >= MAX_ATTEMPTS) {
 							// Разрыв цикла — logout из Keycloak и очистка
 							sessionStorage.removeItem(ATTEMPTS_KEY)
-							const currentOrigin = window.location.origin
-							window.location.href =
-								`${currentOrigin}/realms/lkfl-sdek/protocol/openid-connect/logout` +
-								`?post_logout_redirect_uri=${encodeURIComponent(currentOrigin + '/')}`
+							doLogout()
 							return
 						}
 						// Повторная попытка — форсируем перелогин в Keycloak
@@ -64,13 +78,19 @@ export function Callback() {
 				sessionStorage.removeItem(ATTEMPTS_KEY)
 				const data: CallbackResponse = await res.json()
 
-				// TODO(M22): заменить на реальный токен из response.
-				// Backend callback должен возвращать { user, roles, token } или
-				// устанавливать HTTP-only cookie. Пока используется session token
-				// из response header Set-Cookie или body.field.
-				const token = res.headers.get('X-Session-Token')
-					?? data.token
-					?? 'token-from-backend'
+				// D2: token берётся из response body (для store), но реальная
+				// сессия хранится в httpOnly cookie, установленной backend.
+				// Фронтенд хранит только user + roles в state (zustand).
+				// Token в store нужен только для авторизации API-запросов
+				// в переходный период; конечная цель — cookies только.
+				const token = data.token
+
+				if (!token) {
+					// D11: без токена — ошибка, не используем fallback-строку
+					setError('Ошибка авторизации: токен не получен от сервера')
+					setTimeout(() => navigate('/login', { replace: true }), 3000)
+					return
+				}
 
 				setAuth(token, data.user, data.roles ?? [])
 				navigate('/', { replace: true })
@@ -79,10 +99,7 @@ export function Callback() {
 				setError(err.message)
 				if (attemptCount >= MAX_ATTEMPTS) {
 					sessionStorage.removeItem(ATTEMPTS_KEY)
-					const currentOrigin = window.location.origin
-					window.location.href =
-						`${currentOrigin}/realms/lkfl-sdek/protocol/openid-connect/logout` +
-						`?post_logout_redirect_uri=${encodeURIComponent(currentOrigin + '/')}`
+					doLogout()
 					return
 				}
 				setTimeout(() => navigate('/login', { replace: true }), 3000)

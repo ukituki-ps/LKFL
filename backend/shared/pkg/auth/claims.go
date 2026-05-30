@@ -112,7 +112,12 @@ func extractKeycloakRoles(raw map[string]interface{}) []string {
 }
 
 // ExtractRolesFromJWT извлекает роли из сырого JWT токена (access token).
-// Используется когда ID token не содержит ролей (realm roles только в access token).
+//
+// ВНИМАНИЕ: декодирует payload БЕЗ верификации подписи.
+// Использовать ТОЛЬКО с токенами, полученными напрямую от Keycloak token endpoint
+// (внутри LoginCallback). Никогда не использовать с токенами от внешних клиентов.
+//
+// Для верифицированного извлечения ролей используйте ExtractClaims с OIDC ID Token.
 func ExtractRolesFromJWT(rawToken string) []string {
 	parts := splitJWT(rawToken)
 	if len(parts) < 2 {

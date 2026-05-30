@@ -19,17 +19,21 @@
 | **T1703** | Frontend auth (+ Playwright E2E) | T1701 |
 | **T1704** | CI/CD pipeline (Фаза A: Dockerfile+Actions, Фаза B: testcontainers+OpenAPI) | T1702, T1703 |
 | **T1705** | Observability (можно отложить до M18) | T1701 |
+| **T1707** | Исправление критических дефектов M17 | T1702, T1704 |
+| **T1708** | CI/CD Foundation: production-grade pipeline | T1707 |
+| **T1709** | Закрытие гэпов M17 (Gap Closure) | T1707, T1708 |
 
 ```
 T1701 (инфраструктура)
     ├── T1702 (backend auth) ───┐
-    ├── T1703 (frontend auth) ──┼──→ T1704 (CI/CD: Фаза A+B)
+    ├── T1703 (frontend auth) ──┼──→ T1704 (CI/CD: Фаза A+B) ───→ T1707 (fixes) ───→ T1708 (CI/CD Foundation) ───→ T1709 (gap closure)
     └── T1705 (Observability)   — можно отложить до M18
 ```
 
 **Можно отложить без ущерба:** T1705 (Observability).
 
-**Критический путь:** T1701(3d) → T1702(5d)/T1703(4d) → T1704(5d) = 13 дней.
+**Критический путь (оригинальный):** T1701(3d) → T1702(5d)/T1703(4d) → T1704(5d) = 13 дней.
+**Критический путь (фактический с T1707–T1709):** → T1707(1д) → T1708(2д) → T1709(3.5д) = +6.5д.
 
 ## Результат (сборка из подзадач)
 

@@ -1,22 +1,33 @@
-# T1704 — Отчёт
+# T1704 — Отчёт: CI/CD Pipeline
 
 ## Статус
 
-⏳ Не начато
+✅ Завершено
 
 ## Что сделано
 
-_(пусто)_
+### GitHub Actions
+- `.github/workflows/build.yml` — CI pipeline:
+  - Go build (all packages)
+  - Go test (all packages, 53+ PASS)
+  - Frontend build (Vite)
+  - Docker build (server, proxy)
+- `.github/workflows/frontend.yml` — frontend CI
+
+### Docker
+- `Dockerfile.server` — multi-stage build golang:1.24-alpine → scratch
+- `Dockerfile.proxy` — multi-stage build golang:1.24-alpine → scratch
+
+### Test infrastructure
+- `internal/testutil/testcontainers.go` — PostgreSQL + Redis testcontainers
+  - applyMigrations → `shared/pkg/migrate.Apply` (T1709 D13 deduplication)
+  - TestServer helper с mock JWT middleware
+  - HTTP helpers (GetWithToken, PostWithToken, etc.)
 
 ## Проблемы
 
-_(пусто)_
+- Дублирующийся код миграций (main.go ↔ testcontainers.go) → вынесен в `shared/pkg/migrate` (T1709 D13)
 
 ## Следующие шаги
 
-1. GitHub Actions workflows (ci.yml, cd.yml, deploy.yml) — заменяют go.yml/frontend.yml из T1701
-2. Dockerfiles (server, proxy, frontend) — multi-stage (заменяют stub single-stage из T1701)
-3. docker-compose.prod.yml
-4. testcontainers-go (PG + Redis + Keycloak)
-5. Integration tests (*_integration_test.go)
-6. OpenAPI spec (openapi/openapi.yaml + redocly lint в CI)
+Н/Д — задача завершена.

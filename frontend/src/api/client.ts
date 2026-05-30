@@ -12,17 +12,10 @@ export async function apiRequest<T>(
 	url: string,
 	options: RequestInit = {}
 ): Promise<T> {
-	const token = useAuthStore.getState().token
-
 	const headers: Record<string, string> = {
 		'Accept': 'application/json',
 		'Content-Type': 'application/json',
 		...(options.headers as Record<string, string> || {}),
-	}
-
-	// Инъекция Authorization header
-	if (token) {
-		headers['Authorization'] = `Bearer ${token}`
 	}
 
 	// AbortController для timeout
@@ -37,6 +30,7 @@ export async function apiRequest<T>(
 				...options,
 				headers,
 				signal: controller.signal,
+				credentials: 'include', // D2: отправляем httpOnly cookie (lkfl_session)
 			})
 
 			clearTimeout(timeoutId)

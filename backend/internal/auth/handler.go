@@ -23,6 +23,10 @@ import (
 
 const protoHTTPS = "https"
 
+// sessionCookieName — имя httpOnly cookie для хранения сессионного токена.
+// Cookie используется как альтернатива localStorage (D2, 152-ФЗ compliance).
+const sessionCookieName = "lkfl_session"
+
 // Handler — HTTP handlers для аутентификации.
 // Все URL используют host.docker.internal — единый адрес для браузера и бэкенда.
 type Handler struct {
@@ -281,7 +285,7 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 
 	// Если ролей нет в ID token, берём из access token (realm roles только в access token)
 	if len(roles) == 0 {
-		roles = sharedauth.ExtractRolesFromJWT(tokenSet.AccessToken)
+		roles = extractRolesFromAccessToken(tokenSet.AccessToken)
 	}
 
 	// 7. Создаём/обновляем пользователя в БД
@@ -295,6 +299,20 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 	sessionKey := fmt.Sprintf("auth:session:%s", user.ID.String())
 	h.redis.Set(r.Context(), sessionKey, tokenSet.IDToken, 24*time.Hour)
 
+	// 8.5. D2: Устанавливаем httpOnly cookie с ID token для frontend.
+	// Cookie заменяет localStorage (XSS-устойчивость, 152-ФЗ compliance).
+	// Frontend api/client.ts отправляет credentials: 'include',
+	// а middleware читает токен из cookie как fallback на Bearer header.
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    tokenSet.IDToken,
+		HttpOnly: true,
+		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == protoHTTPS,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+		MaxAge:   86400, // 24 часа
+	})
+
 	// 9. Возвращаем данные пользователя + session token
 	if h.metrics != nil {
 		h.metrics.AuthCallbackTotal.WithLabelValues("success").Inc()
@@ -307,6 +325,13 @@ func (h *Handler) LoginCallback(w http.ResponseWriter, r *http.Request) {
 		// Access token не пройдёт верификацию → 401.
 		"token": tokenSet.IDToken,
 	})
+}
+
+// extractRolesFromAccessToken извлекает роли из access token Keycloak.
+// Только для внутреннего использования в LoginCallback — токен получен
+// напрямую от Keycloak token endpoint, подпись уже проверена сервером.
+func extractRolesFromAccessToken(rawToken string) []string {
+	return sharedauth.ExtractRolesFromJWT(rawToken)
 }
 
 // isBrowserRequest проверяет, является ли запрос от браузера (ожидает HTML).
@@ -333,6 +358,17 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		sessionKey := fmt.Sprintf("auth:session:%s", userID)
 		h.redis.Del(r.Context(), sessionKey)
 	}
+
+	// D2: Удаляем httpOnly cookie сессии
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    "",
+		HttpOnly: true,
+		Secure:   r.TLS != nil || r.Header.Get("X-Forwarded-Proto") == protoHTTPS,
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+		MaxAge:   -1, // немедленная инвалидация
+	})
 
 	// Редирект на Keycloak logout
 	redirect := r.URL.Query().Get("post_logout_redirect_uri")

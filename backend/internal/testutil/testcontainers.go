@@ -16,8 +16,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
-	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -36,6 +34,7 @@ import (
 	"lkfl/internal/tenant"
 	"lkfl/internal/user"
 	sharedauth "lkfl/shared/pkg/auth"
+	"lkfl/shared/pkg/migrate"
 )
 
 // SetupTestDB запускает PostgreSQL testcontainer, применяет миграции,
@@ -74,8 +73,8 @@ func SetupTestDB(ctx context.Context) (*pgxpool.Pool, func(), error) {
 		return nil, nil, fmt.Errorf("ping: %w", err)
 	}
 
-	// Apply migrations
-	if err := applyMigrations(ctx, pool); err != nil {
+	// Apply migrations (blind mode — no tracking table for test containers)
+	if err := migrate.Apply(ctx, nil, pool, false); err != nil {
 		pool.Close()
 		_ = node.Terminate(ctx)
 		return nil, nil, fmt.Errorf("apply migrations: %w", err)
@@ -433,68 +432,6 @@ func testCORS() func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
-}
-
-// applyMigrations применяет все SQL-миграции из файла.
-func applyMigrations(ctx context.Context, pool *pgxpool.Pool) error {
-	// Create schema
-	_, err := pool.Exec(ctx, "CREATE SCHEMA IF NOT EXISTS lkfl_platform")
-	if err != nil {
-		return fmt.Errorf("create schema: %w", err)
-	}
-
-	// Find migrations directory relative to working directory
-	migrationDir := findMigrationsDir()
-	if migrationDir == "" {
-		return fmt.Errorf("migrations directory not found")
-	}
-
-	// Read all .sql files (not .down files)
-	entries, err := os.ReadDir(migrationDir)
-	if err != nil {
-		return fmt.Errorf("read migrations dir: %w", err)
-	}
-
-	var migrationFiles []string
-	for _, e := range entries {
-		if !e.IsDir() && strings.HasSuffix(e.Name(), ".sql") && !strings.HasSuffix(e.Name(), ".sql.down") {
-			migrationFiles = append(migrationFiles, e.Name())
-		}
-	}
-	sort.Strings(migrationFiles)
-
-	for _, name := range migrationFiles {
-		data, err := os.ReadFile(filepath.Join(migrationDir, name))
-		if err != nil {
-			return fmt.Errorf("read migration %s: %w", name, err)
-		}
-
-		_, err = pool.Exec(ctx, string(data))
-		if err != nil {
-			return fmt.Errorf("apply migration %s: %w", name, err)
-		}
-	}
-
-	return nil
-}
-
-// findMigrationsDir ищет директорию миграций.
-func findMigrationsDir() string {
-	// Try common locations relative to various bases
-	candidates := []string{
-		"migrations",
-		"../migrations",
-		"../../migrations",
-		"../../../migrations",
-		"../../../../migrations",
-	}
-	for _, c := range candidates {
-		info, err := os.Stat(c)
-		if err == nil && info.IsDir() {
-			return c
-		}
-	}
-	return ""
 }
 
 // ─── HTTP Helper Methods ───

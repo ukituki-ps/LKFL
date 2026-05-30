@@ -258,10 +258,10 @@ func TestExtractKeycloakRoles(t *testing.T) {
 	}
 }
 
-// TestWriteJSONError проверяет, что writeJSONError возвращает корректный JSON.
+// TestWriteJSONError проверяет, что WriteAuthError возвращает корректный JSON.
 func TestWriteJSONError(t *testing.T) {
 	rr := httptest.NewRecorder()
-	writeJSONError(rr, http.StatusUnauthorized, "unauthorized")
+	WriteAuthError(rr, http.StatusUnauthorized, "unauthorized")
 
 	if rr.Code != http.StatusUnauthorized {
 		t.Errorf("status = %d, want %d", rr.Code, http.StatusUnauthorized)

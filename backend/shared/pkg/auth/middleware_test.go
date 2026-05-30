@@ -26,23 +26,23 @@ func (m *testJWTMiddleware) Handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			writeJSONError(w, http.StatusUnauthorized, "unauthorized")
+			WriteAuthError(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
-			writeJSONError(w, http.StatusUnauthorized, "invalid token format")
+			WriteAuthError(w, http.StatusUnauthorized, "invalid token format")
 			return
 		}
 
 		if m.returnError {
-			writeJSONError(w, http.StatusUnauthorized, m.errorMessage)
+			WriteAuthError(w, http.StatusUnauthorized, m.errorMessage)
 			return
 		}
 
 		if !m.tokenValid {
-			writeJSONError(w, http.StatusUnauthorized, "invalid token")
+			WriteAuthError(w, http.StatusUnauthorized, "invalid token")
 			return
 		}
 
@@ -764,12 +764,12 @@ func TestRolesFromContext_EmptySlice(t *testing.T) {
 }
 
 // =============================================================================
-// writeJSONError Edge Cases
+// WriteAuthError Edge Cases
 // =============================================================================
 
 func TestWriteJSONError_Forbidden(t *testing.T) {
 	rr := httptest.NewRecorder()
-	writeJSONError(rr, http.StatusForbidden, "forbidden")
+	WriteAuthError(rr, http.StatusForbidden, "forbidden")
 
 	if rr.Code != http.StatusForbidden {
 		t.Errorf("expected 403, got %d", rr.Code)
@@ -781,7 +781,7 @@ func TestWriteJSONError_Forbidden(t *testing.T) {
 
 func TestWriteJSONError_BadRequest(t *testing.T) {
 	rr := httptest.NewRecorder()
-	writeJSONError(rr, http.StatusBadRequest, "bad request")
+	WriteAuthError(rr, http.StatusBadRequest, "bad request")
 
 	if rr.Code != http.StatusBadRequest {
 		t.Errorf("expected 400, got %d", rr.Code)
@@ -790,7 +790,7 @@ func TestWriteJSONError_BadRequest(t *testing.T) {
 
 func TestWriteJSONError_EmptyMessage(t *testing.T) {
 	rr := httptest.NewRecorder()
-	writeJSONError(rr, http.StatusInternalServerError, "")
+	WriteAuthError(rr, http.StatusInternalServerError, "")
 
 	if rr.Code != http.StatusInternalServerError {
 		t.Errorf("expected 500, got %d", rr.Code)
@@ -802,7 +802,7 @@ func TestWriteJSONError_EmptyMessage(t *testing.T) {
 
 func TestWriteJSONError_SpecialCharsInMessage(t *testing.T) {
 	rr := httptest.NewRecorder()
-	writeJSONError(rr, http.StatusBadRequest, "error with \"quotes\" and <script>")
+	WriteAuthError(rr, http.StatusBadRequest, "error with \"quotes\" and <script>")
 
 	if rr.Code != http.StatusBadRequest {
 		t.Errorf("expected 400, got %d", rr.Code)

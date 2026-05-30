@@ -38,7 +38,7 @@ func RBACMiddleware(requiredRoles []string) func(http.Handler) http.Handler {
 			}
 
 			if !hasRole {
-				writeJSONError(w, http.StatusForbidden, "forbidden")
+				WriteAuthError(w, http.StatusForbidden, "forbidden")
 				return
 			}
 
