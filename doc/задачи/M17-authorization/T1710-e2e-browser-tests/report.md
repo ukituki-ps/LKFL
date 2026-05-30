@@ -46,7 +46,7 @@
 - Real browser E2E тесты против staging
 - `npx playwright test --config=playwright.staging.config.ts`
 - Timeout: 15 минут
-- Secrets: `E2E_USERNAME`, `E2E_PASSWORD`
+- E2E credentials: `E2E_USERNAME`, `E2E_PASSWORD` из `.env.staging` на serverAi (не GitHub Secrets)
 
 Пайплайн обновлён: 1→7 job'ов (was 5).
 

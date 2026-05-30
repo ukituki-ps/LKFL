@@ -448,12 +448,20 @@ jobs:
         working-directory: frontend
         run: npx playwright install --with-deps chromium
 
+  - name: Load E2E credentials from staging .env
+        run: |
+          STAGING_ENV="/home/ukituki/LKFL-staging/.env.staging"
+          if [[ -f "$STAGING_ENV" ]]; then
+            # Экспортируем E2E_* переменные из .env.staging
+            grep "^E2E_" "$STAGING_ENV" | while IFS='=' read -r key value; do
+              echo "${key}=${value}" >> "$GITHUB_ENV"
+            done
+          else
+            echo "WARNING: $STAGING_ENV not found, using defaults"
+          fi
+
       - name: E2E Staging Tests
         working-directory: frontend
-        env:
-          E2E_BASE_URL: https://dev.april.ukituki.tech
-          E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
-          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
         run: npx playwright test --config=playwright.staging.config.ts
         continue-on-error: true # T1710: новые E2E тесты — не ломать pipeline
         timeout-minutes: 15

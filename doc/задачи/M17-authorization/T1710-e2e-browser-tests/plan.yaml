@@ -61,8 +61,8 @@ checklist:
       - id: 3.4
         desc: "e2e-local: запустить Vite dev server (background) перед тестами"
         done: true
-      - id: 3.5
-        desc: "e2e-staging: E2E_USERNAME + E2E_PASSWORD через GitHub Secrets"
+     - id: 3.5
+        desc: "e2e-staging: E2E_USERNAME + E2E_PASSWORD из .env.staging на serverAi (не GitHub Secrets)"
         done: true
 
   - id: 4
