@@ -133,7 +133,7 @@ jobs:
             fi
           done
 
- # Проверка: KC_HOSTNAME не должен быть localhost
+          # Проверка: KC_HOSTNAME не должен быть localhost
           for compose_file in docker-compose.staging.yml docker-compose.prod.yml; do
             if [[ -f "$compose_file" ]]; then
               hostname=$(grep "KC_HOSTNAME:" "$compose_file" | head -1 | awk '{print $2}' | tr -d '"' | tr -d ' ')
