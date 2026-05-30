@@ -241,7 +241,7 @@ jobs:
         run: |
           export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-          docker compose -f docker-compose.staging.yml -p lkfl-staging pull --ignore-buildable
+          docker compose -f docker-compose.staging.yml --env-file .env.staging -p lkfl-staging pull --ignore-buildable
 
       - name: Run migrations (retry 3x)
         working-directory: /home/ukituki/LKFL-staging
@@ -250,7 +250,7 @@ jobs:
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
           for i in 1 2 3; do
             echo "Migration attempt $i..."
-            if docker compose -f docker-compose.staging.yml -p lkfl-staging run --rm lkfl-migrate; then
+            if docker compose -f docker-compose.staging.yml --env-file .env.staging -p lkfl-staging run --rm lkfl-migrate; then
               echo "Migrations applied successfully"
               break
             fi
@@ -265,13 +265,13 @@ jobs:
         run: |
           export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-          docker compose -f docker-compose.staging.yml -p lkfl-staging run --rm lkfl-seed || \
+          docker compose -f docker-compose.staging.yml --env-file .env.staging -p lkfl-staging run --rm lkfl-seed || \
             echo "Warning: seed may have failed (data might already exist)"
 
       - name: Stop old staging services
         working-directory: /home/ukituki/LKFL-staging
         run: |
-          docker compose -f docker-compose.staging.yml -p lkfl-staging down || \
+          docker compose -f docker-compose.staging.yml --env-file .env.staging -p lkfl-staging down || \
             echo "No old staging services to stop"
 
       - name: Start services
@@ -279,7 +279,7 @@ jobs:
         run: |
           export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-          docker compose -f docker-compose.staging.yml -p lkfl-staging up -d
+          docker compose -f docker-compose.staging.yml --env-file .env.staging -p lkfl-staging up -d
 
       - name: Health check polling
         run: |
@@ -318,7 +318,7 @@ jobs:
 
             if [[ $attempt -eq 10 ]]; then
               echo "❌ Health check failed after 10 attempts"
-              docker compose -f docker-compose.staging.yml -p lkfl-staging logs --tail=50
+              docker compose -f docker-compose.staging.yml --env-file .env.staging -p lkfl-staging logs --tail=50
               exit 1
             fi
 
@@ -388,7 +388,7 @@ jobs:
         run: |
           export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-          docker compose -f docker-compose.prod.yml -p lkfl-prod pull --ignore-buildable
+          docker compose -f docker-compose.prod.yml --env-file .env.prod -p lkfl-prod pull --ignore-buildable
 
       - name: Run migrations (retry 3x)
         working-directory: /home/ukituki/LKFL-prod
@@ -397,7 +397,7 @@ jobs:
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
           for i in 1 2 3; do
             echo "Migration attempt $i..."
-            if docker compose -f docker-compose.prod.yml -p lkfl-prod run --rm lkfl-migrate; then
+            if docker compose -f docker-compose.prod.yml --env-file .env.prod -p lkfl-prod run --rm lkfl-migrate; then
               echo "Migrations applied successfully"
               break
             fi
@@ -412,13 +412,13 @@ jobs:
         run: |
           export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-          docker compose -f docker-compose.prod.yml -p lkfl-prod run --rm lkfl-seed || \
+          docker compose -f docker-compose.prod.yml --env-file .env.prod -p lkfl-prod run --rm lkfl-seed || \
             echo "Warning: seed may have failed (data might already exist)"
 
       - name: Stop old prod services
         working-directory: /home/ukituki/LKFL-prod
         run: |
-          docker compose -f docker-compose.prod.yml -p lkfl-prod down || \
+          docker compose -f docker-compose.prod.yml --env-file .env.prod -p lkfl-prod down || \
             echo "No old prod services to stop"
 
       - name: Start services
@@ -426,7 +426,7 @@ jobs:
         run: |
           export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-          docker compose -f docker-compose.prod.yml -p lkfl-prod up -d
+          docker compose -f docker-compose.prod.yml --env-file .env.prod -p lkfl-prod up -d
 
       - name: Health check polling
         run: |
@@ -462,7 +462,7 @@ jobs:
 
             if [[ $attempt -eq 10 ]]; then
               echo "❌ Production health check failed after 10 attempts"
-              docker compose -f docker-compose.prod.yml -p lkfl-prod logs --tail=50
+              docker compose -f docker-compose.prod.yml --env-file .env.prod -p lkfl-prod logs --tail=50
               exit 1
             fi
 
