@@ -312,7 +312,7 @@ jobs:
             echo "GHCR_REGISTRY=${{ env.GHCR_REGISTRY }}" >> "$STAGING_DIR/.env.staging"
           fi
 
-       - name: Sync nginx config & reload
+      - name: Sync nginx config and reload
         run: |
           cp infra/nginx/serverAi.conf /etc/nginx/sites-available/lkfl-staging.conf
           nginx -t && nginx -s reload || echo "Warning: nginx reload failed"
