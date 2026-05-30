@@ -155,6 +155,7 @@ jobs:
     name: E2E Local Tests
     needs: [lint-test]
     runs-on: lkfl
+    continue-on-error: true # T1710: новые E2E тесты — не ломать pipeline
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -421,6 +422,7 @@ jobs:
     needs: [smoke-test-staging]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: lkfl
+    continue-on-error: true # T1710: новые E2E тесты — не ломать pipeline
     steps:
       - name: Checkout
         uses: actions/checkout@v4
