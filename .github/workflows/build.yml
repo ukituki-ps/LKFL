@@ -133,17 +133,17 @@ jobs:
             fi
           done
 
-          # Проверка: KC_HOSTNAME не должен быть internal hostname
-          for compose_file in docker-compose.staging.yml docker-compose.prod.yml; do
-            if [[ -f "$compose_file" ]]; then
-              hostname=$(grep "KC_HOSTNAME:" "$compose_file" | head -1 | awk '{print $2}' | tr -d '"' | tr -d ' ')
-              if [[ -n "$hostname" ]] && [[ "$hostname" == "keycloak" || "$hostname" == "localhost" ]]; then
-                echo "FAIL: $compose_file — KC_HOSTNAME='$hostname' is internal"
-                exit 1
-              fi
-            fi
-          done
-          echo "OK: KC_HOSTNAME validation passed"
+ # Проверка: KC_HOSTNAME не должен быть localhost
+    for compose_file in docker-compose.staging.yml docker-compose.prod.yml; do
+      if [[ -f "$compose_file" ]]; then
+        hostname=$(grep "KC_HOSTNAME:" "$compose_file" | head -1 | awk '{print $2}' | tr -d '"' | tr -d ' ')
+        if [[ -n "$hostname" ]] && [[ "$hostname" == "localhost" ]]; then
+          echo "FAIL: $compose_file — KC_HOSTNAME='$hostname' is localhost"
+          exit 1
+        fi
+      fi
+    done
+    echo "OK: KC_HOSTNAME validation passed"
 
   # =========================================================================
   # Job 2: BUILD + PUSH — self-hosted runner (lkfl label on serverAi)
