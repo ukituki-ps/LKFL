@@ -6,6 +6,8 @@ title: "E2E браузерные тесты — Playwright CI integration + stag
 type: code
 status: done
 progress: 100%
+ci_run: 26696712615
+ci_conclusion: success
 parent: T1700
 depends_on: [T1709]
 estimate: 1.5 days
@@ -70,16 +72,16 @@ checklist:
     items:
       - id: 4.1
         desc: "Локальный запуск: npx playwright test --config=playwright.config.ts --project=chromium → PASS"
-        done: false
+        done: true
       - id: 4.2
         desc: "Staging запуск: npx playwright test --config=playwright.staging.config.ts → 10 PASS"
-        done: false
+        done: true
       - id: 4.3
         desc: "Коммит → push → CI pipeline → все job'ы PASS (включая e2e-local + e2e-staging)"
-        done: false
+        done: true
       - id: 4.4
         desc: "Smoke test staging — 6/6 чекпоинтов (не ломается)"
-        done: false
+        done: true
 
   - id: 5
     section: "Документация"
