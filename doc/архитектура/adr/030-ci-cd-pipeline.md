@@ -138,16 +138,55 @@ CI: `go test -tags=integration -count=1 ./...` — testcontainers поднима
 - Полная изоляция: каждый тест запускает свой set контейнеров
 - Детерминированная среда: версия image фиксирована в коде
 
+### Staging deployment — serverAi (192.168.1.27)
+
+Стенд **serverAi** — staging сервер в локальной сети. Деплой автоматический через GitHub Actions → SSH.
+
+```
+git push main
+    ↓
+[CD Pipeline — cd.yml]
+    ├── Docker build (multi-stage × 3)
+    ├── Docker push → ghcr.io/lkfl/{server,proxy,frontend}:{sha}
+    └── deploy.yml:
+            ├── SSH → serverAi
+            ├── git fetch origin main; git reset --hard origin/main
+            ├── docker compose pull
+            ├── docker compose up -d
+            └── health check: /healthz
+```
+
+**serverAi specs:** Debian 13, 30GB RAM, 16 CPU, 221GB disk, Docker 29.4, Compose 5.1.
+
+#### Что делается на сервере вручную (то что нельзя через git/код):
+
+| Шаг | Команда | Когда |
+|-----|---------|-------|
+| Docker + Compose | уже установлены | — |
+| Создать volumes | `docker volume create lkfl_*` | provision-server.sh (1 раз) |
+| Создать .env | скопировать секреты | provision-server.sh (1 раз) |
+| Разрешить SSH key для GH Actions | `~/.ssh/authorized_keys` | вручную (1 раз) |
+
+#### Что делается автоматически через git:
+
+| Файл | Назначение |
+|------|-----------|
+| `.github/workflows/deploy.yml` | GH Actions workflow: build → push → SSH deploy |
+| `docker-compose.prod.yml` | production compose (ghcr.io images) |
+| `infra/deploy/provision-server.sh` | один раз: volumes, .env, repo clone |
+| `infra/deploy/deploy-on-server.sh` | deploy script на сервере |
+| `.env` на сервере | секреты (POSTGRES_PASSWORD, KEYCLOAK_*, JWT_SECRET) |
+
 ### Secrets
 
 | Этап | Хранение | Передача |
 |------|----------|----------|
 | **Dev (M17)** | `.env` + `docker-compose.yml` env vars | Direct env injection |
 | **CI (GitHub Actions)** | GitHub Actions secrets | `${{ secrets.X }}` в workflow |
-| **Staging** | GitHub Actions secrets | Runtime env injection |
+| **Staging (serverAi)** | `.env` на сервере + GH Actions secrets | SSH deploy injects from secrets |
 | **Production** | HashiCorp Vault (deferred) | Vault agent inject (ADR-030-v2) |
 
-**M17: `.env` file.** Vault отложен до production-фазы.
+**Staging: `.env` на сервере** — создаётся один раз через provision-server.sh. Секреты хранятся в GitHub Actions environment secrets, передаются через SSH-деплой.
 
 ### OpenAPI spec в коде
 
