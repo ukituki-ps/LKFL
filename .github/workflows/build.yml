@@ -179,7 +179,7 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Start Vite dev server
         working-directory: frontend
@@ -446,9 +446,9 @@ jobs:
 
       - name: Install Playwright browsers
         working-directory: frontend
-        run: npx playwright install chromium
+        run: npx playwright install --with-deps chromium
 
-  - name: Load E2E credentials from staging .env
+      - name: Load E2E credentials from staging .env
         run: |
           STAGING_ENV="/home/ukituki/LKFL-staging/.env.staging"
           if [[ -f "$STAGING_ENV" ]]; then
