@@ -106,4 +106,4 @@ checklist:
         done: true
       - id: 5.3
         desc: "CI build.yml — все job'ы PASS"
-        done: false
+        done: true
