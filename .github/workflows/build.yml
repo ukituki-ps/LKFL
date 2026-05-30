@@ -300,8 +300,17 @@ jobs:
           # Runner уже на serverAi, файлы в GITHUB_WORKSPACE
           STAGING_DIR="/home/ukituki/LKFL-staging"
           cp docker-compose.staging.yml "$STAGING_DIR/"
-          echo "IMAGE_TAG=${{ steps.tag.outputs.tag }}" >> "$STAGING_DIR/.env.staging"
-          echo "GHCR_REGISTRY=${{ env.GHCR_REGISTRY }}" >> "$STAGING_DIR/.env.staging"
+          # Replace IMAGE_TAG (не append!) — иначе дубликаты → docker compose берёт старое значение
+          if grep -q '^IMAGE_TAG=' "$STAGING_DIR/.env.staging"; then
+            sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=${{ steps.tag.outputs.tag }}|" "$STAGING_DIR/.env.staging"
+          else
+            echo "IMAGE_TAG=${{ steps.tag.outputs.tag }}" >> "$STAGING_DIR/.env.staging"
+          fi
+          if grep -q '^GHCR_REGISTRY=' "$STAGING_DIR/.env.staging"; then
+            sed -i "s|^GHCR_REGISTRY=.*|GHCR_REGISTRY=${{ env.GHCR_REGISTRY }}|" "$STAGING_DIR/.env.staging"
+          else
+            echo "GHCR_REGISTRY=${{ env.GHCR_REGISTRY }}" >> "$STAGING_DIR/.env.staging"
+          fi
 
       - name: Pull images
         working-directory: /home/ukituki/LKFL-staging
