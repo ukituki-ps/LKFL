@@ -148,67 +148,67 @@ jobs:
           done
           echo "OK: KC_HOSTNAME validation passed"
 
+ # =========================================================================
+  # Job 2: E2E LOCAL TESTS — mock-based Playwright tests (chromium)
   # =========================================================================
-   # Job 2: E2E LOCAL TESTS — mock-based Playwright tests (chromium)
-   # =========================================================================
-   e2e-local:
-     name: E2E Local Tests
-     needs: [lint-test]
-     runs-on: lkfl
-     steps:
-       - name: Checkout
-         uses: actions/checkout@v4
+  e2e-local:
+    name: E2E Local Tests
+    needs: [lint-test]
+    runs-on: lkfl
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-       - name: Setup Node.js
-         uses: actions/setup-node@v4
-         with:
-           node-version: ${{ env.NODE_VERSION }}
-           cache: npm
-           cache-dependency-path: frontend/package-lock.json
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-       - name: Configure npm registry for @ukituki-ps packages
-         working-directory: frontend
-         run: |
-           echo "@ukituki-ps:registry=https://npm.pkg.github.com" > .npmrc
-           echo "//npm.pkg.github.com/:_authToken=${{ github.token }}" >> .npmrc
+      - name: Configure npm registry for @ukituki-ps packages
+        working-directory: frontend
+        run: |
+          echo "@ukituki-ps:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ github.token }}" >> .npmrc
 
-       - name: Install frontend dependencies
-         working-directory: frontend
-         run: npm ci
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
 
-       - name: Install Playwright browsers
-         working-directory: frontend
-         run: npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
 
-       - name: Start Vite dev server
-         working-directory: frontend
-         run: |
-           # Запустить Vite в фоне для E2E тестов (baseURL: localhost:5173)
-           npx vite --host 127.0.0.1 &
-           # Ждём пока Vite начнёт отвечать
-           for i in $(seq 1 30); do
-             if curl -sf http://127.0.0.1:5173/ >/dev/null 2>&1; then
-               echo "Vite dev server ready"
-               break
-             fi
-             if [[ $i -eq 30 ]]; then
-               echo "Vite failed to start"
-               exit 1
-             fi
-             echo "Waiting for Vite... ($i/30)"
-             sleep 2
-           done
+      - name: Start Vite dev server
+        working-directory: frontend
+        run: |
+          # Запустить Vite в фоне для E2E тестов (baseURL: localhost:5173)
+          npx vite --host 127.0.0.1 &
+          # Ждём пока Vite начнёт отвечать
+          for i in $(seq 1 30); do
+            if curl -sf http://127.0.0.1:5173/ >/dev/null 2>&1; then
+              echo "Vite dev server ready"
+              break
+            fi
+            if [[ $i -eq 30 ]]; then
+              echo "Vite failed to start"
+              exit 1
+            fi
+            echo "Waiting for Vite... ($i/30)"
+            sleep 2
+          done
 
-       - name: E2E Local Tests (chromium)
-         working-directory: frontend
-         run: npx playwright test --config=playwright.config.ts --project=chromium
-         timeout-minutes: 10
+      - name: E2E Local Tests (chromium)
+        working-directory: frontend
+        run: npx playwright test --config=playwright.config.ts --project=chromium
+        timeout-minutes: 10
 
-       - name: Stop Vite dev server
-         if: always()
-         working-directory: frontend
-         run: |
-           pkill -f "vite" || true
+      - name: Stop Vite dev server
+        if: always()
+        working-directory: frontend
+        run: |
+          pkill -f "vite" || true
 
   # =========================================================================
   # Job 3: BUILD + PUSH — self-hosted runner (lkfl label on serverAi)
