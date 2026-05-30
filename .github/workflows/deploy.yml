@@ -1,105 +1,59 @@
-# deploy.yml — Staging deploy to serverAi
-# Trigger: push to main (after CI+CD green)
-# Flow: clone repo on server → docker compose pull → docker compose up -d
+# Deploy Staging — Pull images from GHCR + restart on serverAi
+# Self-hosted runners — runs directly on the target server
 
 name: Deploy Staging
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+      - 'Dockerfile.*'
+      - 'docker-compose.prod.yml'
+      - '.github/workflows/deploy.yml'
   workflow_dispatch:
-    inputs:
-      environment:
-        description: "Target environment"
-        required: true
-        default: "staging"
-        type: choice
-        options:
-          - staging
 
-permissions:
-  contents: read
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
 
 jobs:
-  deploy-staging:
-    name: Deploy → serverAi
-    runs-on: ubuntu-latest
+  deploy:
+    name: Deploy to Staging
+    runs-on: self-hosted
+    permissions:
+      contents: read
+      packages: read
     environment: staging
-    # Run after CD (docker push to ghcr.io) completes
-    needs: []  # Will be wired to cd.yml in T1704
-
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.SERVER_AI_HOST }}
-          username: ${{ secrets.SERVER_AI_USER }}
-          key: ${{ secrets.SERVER_AI_SSH_KEY }}
-          port: 22
-          script: |
-            set -euo pipefail
+      - uses: actions/checkout@v4
 
-            LKFL_HOME="$HOME/lkfl"
-            REPO="git@github.com:lkfl/lkfl.git"
-            IMAGE_TAG="${{ github.sha }}"
-            REGISTRY="${{ vars.GHCR_REGISTRY }}"
-            ORG="${{ vars.GHCR_ORG }}"
+      - name: Login to GHCR
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
 
-            echo "=== Clone/pull repo ==="
-            if [ -d "$LKFL_HOME/.git" ]; then
-              cd "$LKFL_HOME"
-              git fetch origin main
-              git reset --hard origin/main
-            else
-              mkdir -p "$LKFL_HOME"
-              git clone "$REPO" "$LKFL_HOME"
-            fi
-            cd "$LKFL_HOME"
+      - name: Sync deploy config to server
+        run: |
+          cp docker-compose.prod.yml ~/lkfl/docker-compose.prod.yml
 
-            echo "=== Pull Docker images ==="
-            # Export image tags for docker-compose
-            cat > .env.deploy <<EOF
-            IMAGE_TAG=$IMAGE_TAG
-            REGISTRY=$REGISTRY
-            ORG=$ORG
-            SERVER_AI=true
-            EOF
+      - name: Pull images
+        run: |
+          cd ~/lkfl
+          docker compose -f docker-compose.prod.yml pull
 
-            # Merge with existing .env if present
-            if [ -f .env ]; then
-              # Keep existing .env secrets, add deploy vars
-              grep -v '^IMAGE_TAG=' .env > .env.tmp 2>/dev/null || true
-              grep -v '^REGISTRY=' .env.tmp > .env.merge 2>/dev/null || true
-              grep -v '^ORG=' .env.merge > .env.clean 2>/dev/null || true
-              grep -v '^SERVER_AI=' .env.clean > .env.final 2>/dev/null || true
-              mv .env.final .env
-              cat .env.deploy >> .env
-            else
-              mv .env.deploy .env
-            fi
+      - name: Deploy
+        run: |
+          cd ~/lkfl
+          docker compose -f docker-compose.prod.yml up -d
 
-            echo "=== Docker compose up ==="
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d \
-              lkfl-server \
-              lkfl-integration-proxy \
-              lkfl-frontend \
-              nginx
+      - name: Clean old images
+        run: docker image prune -f
 
-            echo "=== Health check ==="
-            # Wait for server to be ready
-            for i in $(seq 1 30); do
-              if curl -sf http://localhost:8080/healthz >/dev/null 2>&1; then
-                echo "✅ lkfl-server healthy"
-                break
-              fi
-              echo "  Waiting... ($i/30)"
-              sleep 2
-            done
-
-            echo "=== Cleanup old images ==="
-            docker image prune -f --filter "until=24h"
-
-            echo "=== Deploy complete ==="
-            echo "  Tag: $IMAGE_TAG"
-            echo "  URL: http://${{ secrets.SERVER_AI_HOST }}"
+      - name: Verify health
+        run: |
+          echo "=== Health checks ==="
+          sleep 5
+          curl -sf http://127.0.0.1:80/healthz && echo " backend: OK" || echo " backend: FAIL"
+          curl -sf http://127.0.0.1:80/ > /dev/null && echo "  frontend: OK" || echo "  frontend: FAIL"
+          curl -sf http://127.0.0.1:9090/-/healthy > /dev/null && echo " prometheus: OK" || echo " prometheus: FAIL"
