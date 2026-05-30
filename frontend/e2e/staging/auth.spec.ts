@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 import {
 	loginThroughKeycloak,
 	expectOnDashboard,
-	getToken,
+	getSessionCookie,
 	getUser,
 	getRoles,
 	apiRequest,
@@ -97,12 +97,25 @@ test.describe('Staging: Full Login Flow Step by Step', () => {
 			expect(finalUrl).not.toMatch(/\/realms\//);
 		});
 
-		// Шаг 6: Проверка localStorage (token, user, roles)
-		await test.step('Шаг 6: проверка localStorage', async () => {
-			// Token сохранён и валидный (JWT формат: header.payload.signature)
-			const token = await getToken(page);
-			expect(token).toBeTruthy();
-			expect(token!.split('.').length).toBe(3); // JWT формат
+		// Шаг 6: Проверка cookie сессии + localStorage (user, roles)
+		// После D2 token хранится в httpOnly cookie, не в localStorage.
+		await test.step('Шаг 6: проверка cookie сессии + localStorage', async () => {
+			// Cookie сессии lkfl_session установлена
+			const cookies = await page.context().cookies();
+			const sessionCookie = cookies.find((c) => c.name === 'lkfl_session');
+			expect(sessionCookie).toBeTruthy();
+			expect(sessionCookie!.value).toBeTruthy();
+
+			// /api/v1/auth/me → 200 через page.request с cookie
+			// page.request НЕ наследует cookies из browser context — передаём явно
+			const baseUrl = (process.env.E2E_BASE_URL || 'https://dev.april.ukituki.tech').replace(/\/$/, '');
+			const meResponse = await page.request.get(`${baseUrl}/api/v1/auth/me`, {
+				headers: {
+					Accept: 'application/json',
+					Cookie: cookies.map((c) => `${c.name}=${c.value}`).join('; '),
+				},
+			});
+			expect(meResponse.status()).toBe(200);
 
 			// User сохранён в localStorage
 			const user = await getUser(page);
@@ -128,11 +141,16 @@ test.describe('Staging: Full Login Flow Step by Step', () => {
 
 test.describe('Staging: Full Login Flow', () => {
 	test('E2E-001: полный login flow через Keycloak → dashboard', async ({ page }) => {
-		const token = await loginThroughKeycloak(page);
+		// loginThroughKeycloak возвращает boolean (успех/неудача) после D2
+		const loginSuccess = await loginThroughKeycloak(page);
 
-		// Token сохранён и валидный (JWT формат)
-		expect(token).toBeTruthy();
-		expect(token!.length).toBeGreaterThan(100);
+		// Логин успешен (cookie lkfl_session установлена + мы на dashboard)
+		expect(loginSuccess).toBe(true);
+
+		// Cookie сессии существует
+		const sessionCookie = await getSessionCookie(page);
+		expect(sessionCookie).toBeTruthy();
+		expect(sessionCookie!.value).toBeTruthy();
 
 		// User сохранён в localStorage
 		const user = await getUser(page);
@@ -153,17 +171,18 @@ test.describe('Staging: Full Login Flow', () => {
 		// Логинимся
 		await loginThroughKeycloak(page);
 
-		// Проверяем token в localStorage
-		const tokenBefore = await getToken(page);
-		expect(tokenBefore).toBeTruthy();
+		// Проверяем cookie сессии до reload (cookie-based auth, D2)
+		const cookieBefore = await getSessionCookie(page);
+		expect(cookieBefore).toBeTruthy();
 
 		// Hard refresh (bypass cache)
 		await page.reload({ bypassCache: true });
 		await page.waitForLoadState('networkidle', { timeout: 30_000 });
 
-		// Token всё ещё в localStorage (persist)
-		const tokenAfter = await getToken(page);
-		expect(tokenAfter).toBe(tokenBefore);
+		// Cookie lkfl_session всё ещё существует (httpOnly cookie persist)
+		const cookieAfter = await getSessionCookie(page);
+		expect(cookieAfter).toBeTruthy();
+		expect(cookieAfter!.value).toBe(cookieBefore!.value);
 
 		// Мы всё ещё на dashboard (не выкинуло на login)
 		const url = page.url();
@@ -206,28 +225,40 @@ test.describe('Staging: Auth Error Handling', () => {
 	});
 
 	test('E2E-005: истёкший token → 401 → redirect на login', async ({ browser }) => {
-		// Создаём контекст с заранее установленным localStorage (через storageState)
-		// чтобы избежать SecurityError на HTTPS
+		// Создаём контекст с истёкшим cookie lkfl_session (cookie-based auth, D2).
+		// localStorage user+roles оставляем — они корректно остаются в LS,
+		// но без валидного cookie бэкенд ответит 401.
+		const baseOrigin = (process.env.E2E_BASE_URL || 'https://dev.april.ukituki.tech')
+			.replace('https://', '');
 		const context = await browser.newContext({
 			storageState: {
 				origins: [{
 					origin: process.env.E2E_BASE_URL || 'https://dev.april.ukituki.tech',
 					localStorage: [
-						{ name: 'lkfl_token', value: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.invalid' },
 						{ name: 'lkfl_user', value: JSON.stringify({ id: 'test', email: 'test@test.com' }) },
 						{ name: 'lkfl_roles', value: JSON.stringify(['employee']) },
 					],
 				}],
-				cookies: [],
+				cookies: [
+					{
+						name: 'lkfl_session',
+						value: 'expired-token-value-that-is-invalid',
+						domain: '.' + baseOrigin,
+						path: '/',
+						expires: -1, // истёкший
+						httpOnly: true,
+						secure: true,
+					},
+				],
 			},
 			ignoreHTTPSErrors: true,
 		});
 		const page = await context.newPage();
 
-		// Переходим на dashboard — истёкший токен должен вызвать redirect к Keycloak
+		// Переходим на dashboard — истёкший cookie должен вызвать redirect к Keycloak
 		await page.goto('/', { waitUntil: 'domcontentloaded' });
 
-		// Ждём что появится Keycloak login form (Expired token → backend → Keycloak)
+		// Ждём что появится Keycloak login form (Expired cookie → backend → Keycloak)
 		// URL должен содержать /realms/ (Keycloak auth endpoint)
 		await page.waitForURL(/\/realms\//, { timeout: 20_000 });
 		await expect(page.locator(KC_USERNAME_SELECTOR)).toBeVisible({ timeout: 20_000 });
@@ -254,16 +285,17 @@ test.describe('Staging: Tenant Resolution', () => {
 	});
 
 	test('E2E-007: /api/v1/auth/callback возвращает структуру после логина', async ({ page, request }) => {
-		// После логина callback уже обработан — проверяем что token в localStorage
-		// валиден и может использоваться для API запросов
+		// После логина callback уже обработан — проверяем что cookie сессии
+		// установлена и может использоваться для API запросов (cookie-based auth, D2)
 		await loginThroughKeycloak(page);
 
-		const token = await getToken(page);
-		expect(token).toBeTruthy();
+		const sessionCookie = await getSessionCookie(page);
+		expect(sessionCookie).toBeTruthy();
 
-		// Проверяем что токен используется для dashboard данных
-		// (users/me уже покрыт E2E-003) — здесь проверяем что token не пустой
-		expect(token!.length).toBeGreaterThan(100); // JWT формат
+		// Проверяем что cookie сессии используется для API запросов
+		// (users/me уже покрыт E2E-003) — здесь проверяем что cookie не пустой
+		expect(sessionCookie!.value).toBeTruthy();
+		expect(sessionCookie!.value.length).toBeGreaterThan(10); // cookie value present
 	});
 });
 

@@ -22,11 +22,12 @@
 | **T1707** | Исправление критических дефектов M17 | T1702, T1704 |
 | **T1708** | CI/CD Foundation: production-grade pipeline | T1707 |
 | **T1709** | Закрытие гэпов M17 (Gap Closure) | T1707, T1708 |
+| **T1710** | E2E браузерные тесты (Playwright CI) | T1709 |
 
 ```
 T1701 (инфраструктура)
     ├── T1702 (backend auth) ───┐
-    ├── T1703 (frontend auth) ──┼──→ T1704 (CI/CD: Фаза A+B) ───→ T1707 (fixes) ───→ T1708 (CI/CD Foundation) ───→ T1709 (gap closure)
+    ├── T1703 (frontend auth) ──┼──→ T1704 (CI/CD: Фаза A+B) ───→ T1707 (fixes) ───→ T1708 (CI/CD Foundation) ───→ T1709 (gap closure) ───→ T1710 (E2E Playwright)
     └── T1705 (Observability)   — можно отложить до M18
 ```
 

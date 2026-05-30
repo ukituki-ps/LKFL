@@ -1,14 +1,17 @@
 # T1708 — CI/CD Foundation: единый production-grade pipeline
 # Заменяет ci.yml, cd.yml, deploy.yml (удалены).
+# T1710 — добавлены E2E job'ы (e2e-local + e2e-staging).
 #
 # Все job'ы на self-hosted runner `lkfl` (serverAi: 192.168.1.27).
 #
 # Pipeline:
-#   1. lint-test    → Go + Frontend + OpenAPI + Config validation
-#   2. build-push   → Docker Buildx + GHCR (matrix: server, proxy, frontend, deploy-worker)
-#   3. deploy-staging → docker compose на serverAi (auto on main push)
-#   4. smoke-test-staging → infra/smoke-test.sh с retry polling
-#   5. deploy-production → docker compose prod (manual workflow_dispatch)
+#   1. lint-test       → Go + Frontend + OpenAPI + Config validation
+#   2. e2e-local       → Playwright local mock tests (chromium)
+#   3. build-push      → Docker Buildx + GHCR (matrix: server, proxy, frontend, deploy-worker)
+#   4. deploy-staging  → docker compose на serverAi (auto on main push)
+#   5. smoke-test-staging → infra/smoke-test.sh с retry polling
+#   6. e2e-staging     → Playwright staging tests (real browser, main push only)
+#   7. deploy-production → docker compose prod (manual workflow_dispatch)
 
 name: Build & Deploy
 
@@ -146,7 +149,69 @@ jobs:
           echo "OK: KC_HOSTNAME validation passed"
 
   # =========================================================================
-  # Job 2: BUILD + PUSH — self-hosted runner (lkfl label on serverAi)
+   # Job 2: E2E LOCAL TESTS — mock-based Playwright tests (chromium)
+   # =========================================================================
+   e2e-local:
+     name: E2E Local Tests
+     needs: [lint-test]
+     runs-on: lkfl
+     steps:
+       - name: Checkout
+         uses: actions/checkout@v4
+
+       - name: Setup Node.js
+         uses: actions/setup-node@v4
+         with:
+           node-version: ${{ env.NODE_VERSION }}
+           cache: npm
+           cache-dependency-path: frontend/package-lock.json
+
+       - name: Configure npm registry for @ukituki-ps packages
+         working-directory: frontend
+         run: |
+           echo "@ukituki-ps:registry=https://npm.pkg.github.com" > .npmrc
+           echo "//npm.pkg.github.com/:_authToken=${{ github.token }}" >> .npmrc
+
+       - name: Install frontend dependencies
+         working-directory: frontend
+         run: npm ci
+
+       - name: Install Playwright browsers
+         working-directory: frontend
+         run: npx playwright install --with-deps chromium
+
+       - name: Start Vite dev server
+         working-directory: frontend
+         run: |
+           # Запустить Vite в фоне для E2E тестов (baseURL: localhost:5173)
+           npx vite --host 127.0.0.1 &
+           # Ждём пока Vite начнёт отвечать
+           for i in $(seq 1 30); do
+             if curl -sf http://127.0.0.1:5173/ >/dev/null 2>&1; then
+               echo "Vite dev server ready"
+               break
+             fi
+             if [[ $i -eq 30 ]]; then
+               echo "Vite failed to start"
+               exit 1
+             fi
+             echo "Waiting for Vite... ($i/30)"
+             sleep 2
+           done
+
+       - name: E2E Local Tests (chromium)
+         working-directory: frontend
+         run: npx playwright test --config=playwright.config.ts --project=chromium
+         timeout-minutes: 10
+
+       - name: Stop Vite dev server
+         if: always()
+         working-directory: frontend
+         run: |
+           pkill -f "vite" || true
+
+  # =========================================================================
+  # Job 3: BUILD + PUSH — self-hosted runner (lkfl label on serverAi)
   # =========================================================================
   build-push:
     name: Build & Push Docker
@@ -201,7 +266,7 @@ jobs:
             ${{ (github.ref == 'refs/heads/main' && format('{0}/{1}:main-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
 
   # =========================================================================
-  # Job 3: DEPLOY STAGING — auto on main push
+  # Job 4: DEPLOY STAGING — auto on main push
   # =========================================================================
   deploy-staging:
     name: Deploy Staging
@@ -330,7 +395,7 @@ jobs:
         run: docker image prune -f
 
   # =========================================================================
-  # Job 4: SMOKE TEST STAGING — после deploy-staging
+  # Job 5: SMOKE TEST STAGING — после deploy-staging
   # =========================================================================
   smoke-test-staging:
     name: Smoke Test Staging
@@ -348,7 +413,49 @@ jobs:
           MAX_ATTEMPTS=5 infra/smoke-test.sh --retry 5 https://dev.april.ukituki.tech
 
   # =========================================================================
-  # Job 5: DEPLOY PRODUCTION — manual workflow_dispatch
+  # Job 6: E2E STAGING TESTS — real browser against staging (cookie-based auth)
+  # =========================================================================
+  e2e-staging:
+    name: E2E Staging Tests
+    needs: [smoke-test-staging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: lkfl
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Configure npm registry for @ukituki-ps packages
+        working-directory: frontend
+        run: |
+          echo "@ukituki-ps:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ github.token }}" >> .npmrc
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E Staging Tests
+        working-directory: frontend
+        env:
+          E2E_BASE_URL: https://dev.april.ukituki.tech
+          E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+          E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+        run: npx playwright test --config=playwright.staging.config.ts
+        timeout-minutes: 15
+
+  # =========================================================================
+  # Job 7: DEPLOY PRODUCTION — manual workflow_dispatch
   # =========================================================================
   deploy-production:
     name: Deploy Production

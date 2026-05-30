@@ -11,9 +11,14 @@ import { expect, type Page } from '@playwright/test';
 export const STAGING_USERNAME = process.env.E2E_USERNAME || 'admin';
 export const STAGING_PASSWORD = process.env.E2E_PASSWORD || 'admin-dev-password';
 
-// ─── localStorage ключи (соответствуют authStore.ts) ───
+// ─── Cookie ключи (cookie-based auth, D2) ───
 
-export const LS_TOKEN = 'lkfl_token';
+/** Имя httpOnly cookie сессии (устанавливается backend после D2) */
+export const SESSION_COOKIE_NAME = 'lkfl_session';
+
+// ─── localStorage ключи (соответствуют authStore.ts) ───
+// Token ушёл в httpOnly cookie, но user + roles остались в localStorage.
+
 export const LS_USER = 'lkfl_user';
 export const LS_ROLES = 'lkfl_roles';
 
@@ -110,9 +115,9 @@ export async function submitKeycloakLoginForm(
 /**
  * Полный login flow: переход на /login → Keycloak → callback → dashboard.
  * Обрабатывает VERIFY_PROFILE required action если он появляется.
- * @returns token из localStorage после логина
+ * @returns true если логин успешен (cookie lkfl_session установлена и URL — dashboard)
  */
-export async function loginThroughKeycloak(page: Page): Promise<string> {
+export async function loginThroughKeycloak(page: Page): Promise<boolean> {
 	// Шаг 1: Переход на /login → редирект на backend → редирект на Keycloak
 	await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
@@ -129,9 +134,17 @@ export async function loginThroughKeycloak(page: Page): Promise<string> {
 	// Шаг 5: Ждём полного рендера dashboard (появление контента)
 	await page.waitForLoadState('networkidle', { timeout: 15_000 });
 
-	// Шаг 6: Проверяем что token сохранён в localStorage
-	const token = await page.evaluate((key) => localStorage.getItem(key), LS_TOKEN);
-	return token || '';
+	// Шаг 6: Проверяем что cookie сессии установлена (cookie-based auth, D2)
+	const hasSession = await getSessionCookie(page);
+
+	// Шаг 7: Проверяем что мы на dashboard
+	try {
+		await expectOnDashboard(page);
+	} catch {
+		return false;
+	}
+
+	return !!hasSession;
 }
 
 /**
@@ -145,10 +158,24 @@ export async function expectOnDashboard(page: Page) {
 }
 
 /**
- * Получить token из localStorage.
+ * Получить значение cookie сессии (lkfl_session).
+ * После D2 token хранится в httpOnly cookie, не в localStorage.
+ * @returns значение cookie или null если отсутствует
  */
 export async function getToken(page: Page): Promise<string | null> {
-	return page.evaluate((key) => localStorage.getItem(key), LS_TOKEN);
+	const cookie = await getSessionCookie(page);
+	return cookie ? cookie.value : null;
+}
+
+/**
+ * Проверить наличие cookie сессии lkfl_session.
+ * @returns объект cookie или null если отсутствует
+ */
+export async function getSessionCookie(page: Page): Promise<
+	import('@playwright/test').Cookie | null
+> {
+	const cookies = await page.context().cookies();
+	return cookies.find((c) => c.name === SESSION_COOKIE_NAME) ?? null;
 }
 
 /**
@@ -172,22 +199,36 @@ export async function getRoles(page: Page): Promise<string[] | null> {
 }
 
 /**
- * Сделать API запрос с токеном из localStorage.
+ * Сделать API запрос через page.request с cookies из браузера.
+ *
+ * ВАЖНО: page.request НЕ наследует cookies из browser context автоматически.
+ * httpOnly cookie lkfl_session нужно извлечь и передать вручную.
+ *
+ * @param page — Playwright Page с активной сессией
+ * @param _request — APIRequestContext из fixture (не используется, оставлен для совместимости сигнатуры)
+ * @param path — относительный путь API (например '/api/v1/users/me')
  */
 export async function apiRequest(
 	page: Page,
-	request: import('@playwright/test').APIRequestContext,
+	_request: import('@playwright/test').APIRequestContext,
 	path: string,
 ): Promise<import('@playwright/test').APIResponse> {
-	const token = await getToken(page);
-	expect(token).toBeTruthy();
+	// Проверяем что сессия активна (cookie lkfl_session существует)
+	const cookie = await getSessionCookie(page);
+	expect(cookie).toBeTruthy();
 
-	return request.get(path, {
+	// Извлекаем все cookies из browser context для передачи в API запрос.
+	// page.request.get() НЕ наследует cookies автоматически — нужно передавать явно.
+	const baseUrl = (process.env.E2E_BASE_URL || 'https://dev.april.ukituki.tech').replace(/\/$/, '');
+	const allCookies = await page.context().cookies();
+
+	const response = await page.request.get(`${baseUrl}${path}`, {
 		headers: {
-			Authorization: `Bearer ${token}`,
 			Accept: 'application/json',
+			Cookie: allCookies.map((c) => `${c.name}=${c.value}`).join('; '),
 		},
 	});
+	return response;
 }
 
 /**
