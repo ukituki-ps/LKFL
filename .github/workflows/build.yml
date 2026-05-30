@@ -295,7 +295,7 @@ jobs:
           SHORT_SHA=${GITHUB_SHA::7}
           echo "tag=main-${SHORT_SHA}" >> $GITHUB_OUTPUT
 
-      - name: Sync compose + env to serverAi
+      - name: Sync compose + env + nginx to serverAi
         run: |
           # Runner уже на serverAi, файлы в GITHUB_WORKSPACE
           STAGING_DIR="/home/ukituki/LKFL-staging"
@@ -311,6 +311,11 @@ jobs:
           else
             echo "GHCR_REGISTRY=${{ env.GHCR_REGISTRY }}" >> "$STAGING_DIR/.env.staging"
           fi
+
+       - name: Sync nginx config & reload
+        run: |
+          cp infra/nginx/serverAi.conf /etc/nginx/sites-available/lkfl-staging.conf
+          nginx -t && nginx -s reload || echo "Warning: nginx reload failed"
 
       - name: Pull images
         working-directory: /home/ukituki/LKFL-staging
