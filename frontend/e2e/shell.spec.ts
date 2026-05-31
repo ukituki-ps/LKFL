@@ -9,8 +9,8 @@ test.describe('Shell', () => {
 	test('shell navigation items are visible and navigable', async ({ page }) => {
 		await gotoWithAuth(page, '/', mockUserEmployee);
 		await page.waitForTimeout(2000);
-		// Shell header should render
-		await expect(page.getByText('ЛКФЛ')).toBeVisible({ timeout: 10000 });
+		// Shell header should render — use data-testid, not branded text
+		await expect(page.getByTestId('app-header')).toBeVisible({ timeout: 10000 });
 		// Check nav items exist in DOM (might be hidden by CSS)
 		const navTexts = ['Главная', 'Каталог льгот', 'Баллы'];
 		for (const text of navTexts) {
@@ -23,25 +23,25 @@ test.describe('Shell', () => {
 	test('shell navigation highlights active route', async ({ page }) => {
 		await gotoWithAuth(page, '/', mockUserEmployee);
 		await page.waitForTimeout(2000);
-		await expect(page.getByText('ЛКФЛ')).toBeVisible({ timeout: 10000 });
+		await expect(page.getByTestId('app-header')).toBeVisible({ timeout: 10000 });
 	});
 
 	test('mobile navigation burger menu toggles sidebar', async ({ page }) => {
 		await page.setViewportSize({ width: 375, height: 812 });
 		await gotoWithAuth(page, '/', mockUserEmployee);
 		await page.waitForTimeout(2000);
-		await expect(page.getByText('ЛКФЛ')).toBeVisible({ timeout: 10000 });
+		await expect(page.getByTestId('app-header')).toBeVisible({ timeout: 10000 });
 	});
 
 	test('user menu shows user name and role', async ({ page }) => {
 		await gotoWithAuth(page, '/', mockUserEmployee);
 		await page.waitForTimeout(2000);
-		await expect(page.getByText('ЛКФЛ')).toBeVisible({ timeout: 10000 });
+		await expect(page.getByTestId('app-header')).toBeVisible({ timeout: 10000 });
 	});
 
 	test('user menu logout button triggers logout', async ({ page }) => {
 		await gotoWithAuth(page, '/', mockUserEmployee);
 		await page.waitForTimeout(2000);
-		await expect(page.getByText('ЛКФЛ')).toBeVisible({ timeout: 10000 });
+		await expect(page.getByTestId('app-header')).toBeVisible({ timeout: 10000 });
 	});
 });

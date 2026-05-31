@@ -107,7 +107,12 @@ jobs:
 
       # ── OpenAPI ──
       - name: OpenAPI lint
-        run: npx @redocly/cli@latest lint doc/спецификация/api/openapi.yaml
+        run: |
+          if [[ -f doc/спецификация/api/openapi.yaml ]]; then
+            npx @redocly/cli@latest lint doc/спецификация/api/openapi.yaml
+          else
+            echo "SKIP: openapi.yaml not found — create to enable lint"
+          fi
         continue-on-error: true
 
       # ── Config validation ──
@@ -184,8 +189,9 @@ jobs:
       - name: Start Vite dev server
         working-directory: frontend
         run: |
-          # Запустить Vite в фоне для E2E тестов (baseURL: localhost:5173)
-          npx vite --host 127.0.0.1 &
+          # VITE_TEST_MODE=true — Login.tsx пропускает hard redirect на backend
+          # (backend не запущен в local E2E — используется mock auth через Zustand)
+          VITE_TEST_MODE=true npx vite --host 127.0.0.1 &
           # Ждём пока Vite начнёт отвечать
           for i in $(seq 1 30); do
             if curl -sf http://127.0.0.1:5173/ >/dev/null 2>&1; then
@@ -465,6 +471,21 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Wait for Keycloak full readiness
+        run: |
+          echo "Waiting for Keycloak realm to be fully initialized after deploy..."
+          sleep 30
+
+      - name: Verify OIDC discovery
+        continue-on-error: true
+        run: |
+          echo "Checking Keycloak OIDC discovery..."
+          if curl -sf https://dev.april.ukituki.tech/realms/lkfl-sdek/.well-known/openid-configuration > /tmp/kc-discovery.json 2>/dev/null; then
+            cat /tmp/kc-discovery.json | python3 -c "import sys,json; d=json.load(sys.stdin); print(f'  issuer: {d.get(\"issuer\",\"?\")}')" 2>/dev/null || cat /tmp/kc-discovery.json
+          else
+            echo "WARN: OIDC discovery endpoint not reachable"
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

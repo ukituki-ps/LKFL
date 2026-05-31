@@ -47,9 +47,14 @@ export const KC_EMAIL_SELECTOR = 'input[name="email"]';
  * Это предотвращает таймаут когда навигация ещё не завершилась.
  */
 export async function expectKeycloakLoginForm(page: Page, timeout = 20_000) {
-	// Сначала ждём что URL перешёл на Keycloak
+	// Ждём что URL перешёл на Keycloak
 	await page.waitForURL(/\/realms\//, { timeout });
-	// Потом ищем форму уже на правильной странице
+	// Проверяем что мы действительно на Keycloak (не на ошибке сети)
+	const url = page.url();
+	if (url.includes('DNS_PROBE') || url.includes('ERR_')) {
+		throw new Error(`Keycloak redirect failed: ${url}`);
+	}
+	// Ищем форму уже на правильной странице
 	await page.waitForSelector(KC_USERNAME_SELECTOR, { timeout: 10_000 });
 }
 

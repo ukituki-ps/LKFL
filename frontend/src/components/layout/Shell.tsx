@@ -41,6 +41,7 @@ export function Shell() {
 						style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
 					>
 						<Text
+							data-testid="app-header"
 							style={{
 								fontWeight: 700,
 								fontSize: 18,
