@@ -144,11 +144,24 @@ func NewServer(
 	// ─── Auth routes (public, no JWT) ───
 	// Defined as a MOUNTED sub-router so chi does NOT apply middleware
 	// from the /api/v1/ group to these paths.
+	//
+	// IMPORTANT: authRouter.Mount at /api/v1/auth shadows any /api/v1/auth/*
+	// routes in the /api/v1/ group. Therefore /auth/me MUST be here,
+	// not in the employee group below.
 	authRouter := chi.NewRouter()
 	authRouter.Use(authLimiter)
 	authRouter.Get("/login", authHandler.LoginRedirect)
 	authRouter.Get("/callback", authHandler.LoginCallback)
 	authRouter.Post("/logout", authHandler.Logout)
+	// /me — provisioning endpoint: requires JWT + tenant middleware.
+	// Added to authRouter so chi mount doesn't shadow it.
+	authRouter.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+		sharedauth.JWTMiddleware(verifier)(
+			tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics)(
+				authHandler.Me,
+			),
+		).ServeHTTP(w, r)
+	})
 	r.Mount("/api/v1/auth", authRouter)
 
 	// ─── Employee routes (JWT + tenant middleware) ───
@@ -159,9 +172,6 @@ func NewServer(
 		// User profile
 		r.Get("/users/me", userHandler.Me)
 		r.Put("/users/me", userHandler.UpdateMe)
-
-		// Auth me (профиль через auth endpoint)
-		r.Get("/auth/me", authHandler.Me)
 
 		// Catalog (M20) — каталог льгот/активностей
 		catalogCache := catalog.NewCache(redis, appMetrics)
