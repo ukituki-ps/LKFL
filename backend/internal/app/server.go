@@ -153,15 +153,14 @@ func NewServer(
 	authRouter.Get("/login", authHandler.LoginRedirect)
 	authRouter.Get("/callback", authHandler.LoginCallback)
 	authRouter.Post("/logout", authHandler.Logout)
-	// /me — provisioning endpoint: requires JWT + tenant middleware.
-	// Added to authRouter so chi mount doesn't shadow it.
-	authRouter.Get("/me", func(w http.ResponseWriter, r *http.Request) {
-		sharedauth.JWTMiddleware(verifier)(
-			tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics)(
-				authHandler.Me,
-			),
-		).ServeHTTP(w, r)
-	})
+// /me — provisioning endpoint: requires JWT + tenant middleware.
+		// Added to authRouter so chi mount doesn't shadow it.
+		authRouter.With(
+			sharedauth.JWTMiddleware(verifier),
+			func(next http.Handler) http.Handler {
+				return tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics)(next)
+			},
+		).Get("/me", authHandler.Me)
 	r.Mount("/api/v1/auth", authRouter)
 
 	// ─── Employee routes (JWT + tenant middleware) ───
