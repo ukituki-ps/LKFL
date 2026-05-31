@@ -86,6 +86,7 @@ services:
     volumes:
       - lkfl_keycloak_data:/opt/keycloak/data
       - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
+      - ./infra/keycloak/theme:/opt/keycloak/themes/lkfl:ro
     healthcheck:
       # Keycloak 25.x management interface on port 9000 has /health endpoint
       # TCP check as fallback since keycloak image has no curl/wget

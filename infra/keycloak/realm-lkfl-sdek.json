@@ -3,8 +3,8 @@
   "realm": "lkfl-sdek",
   "enabled": true,
   "sslRequired": "external",
-  "loginTheme": "keycloak",
-  "accountTheme": "keycloak",
+  "loginTheme": "lkfl",
+  "accountTheme": "lkfl",
 
   "clients": [
     {

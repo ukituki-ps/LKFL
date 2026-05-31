@@ -126,6 +126,7 @@ services:
     command: start-dev --import-realm
     volumes:
       - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
+      - ./infra/keycloak/theme:/opt/keycloak/themes/lkfl:ro
     depends_on:
       postgres:
         condition: service_healthy

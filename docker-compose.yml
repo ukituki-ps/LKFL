@@ -53,7 +53,10 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-changeme_dev_password}
       KC_HTTP_PORT: 8080
       TZ: Europe/Moscow
-    command: start-dev
+    command: start-dev --import-realm
+    volumes:
+      - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
+      - ./infra/keycloak/theme:/opt/keycloak/themes/lkfl:ro
     ports:
       - "8081:8080"
     depends_on:
