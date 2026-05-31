@@ -1,0 +1,51 @@
+# T1713 — Keycloak white-label: лого + CSS variables + dark mode + brand sync
+
+## Прогресс
+
+0%
+
+## Checklist
+
+### Фаза A: Синхронизация CSS переменных
+
+- [ ] `login.css` — `--lkfl-*` → `var(--brand-*, <default>)`
+- [ ] `brand-default.css` — April teal (18 токенов)
+- [ ] `brand-sdek.css` — СДЭК из прототипа
+- [ ] `theme.properties` — `styles=css/brand-default.css, css/login.css`
+- [ ] `switch-tenant-theme.sh` — переключение по имени tenant'а
+
+### Фаза B: Лого
+
+- [ ] Лого Keycloak — SVG path из прототипа, `fill="currentColor"`
+- [ ] Favicon Keycloak — `favicon.svg`, `theme.properties`
+- [ ] `Logo.tsx` — компонент с size variants (sm/md/lg)
+- [ ] Shell.tsx — `<Logo size="sm" />` вместо текста "ЛКФЛ"
+- [ ] `brand-default.css` фронтенд — в `main.tsx`
+
+### Фаза C: Dark mode + переключатель
+
+- [ ] `@media (prefers-color-scheme: dark)` — dark токены в `login.css`
+- [ ] `header-content.ftl` — mustache override, inject `<script>`
+- [ ] `theme-toggle.css` — стили кнопки (правый верхний угол)
+- [ ] `theme-toggle.js` — cookie read/write, toggle, system listener
+- [ ] Account console — `@media` dark mode
+
+### Фаза D: Brand sync (DB → Keycloak)
+
+- [ ] Seed `css_variables` — полная карта 18 токенов
+- [ ] `cmd/brand-sync/main.go` — генерация CSS из БД
+- [ ] Тест: генерация CSS из mock данных
+
+### Валидация
+
+- [ ] `go build ./...` без ошибок
+- [ ] `npm run build` без ошибок
+- [ ] Keycloak login — logo + dark mode + toggle
+- [ ] Frontend — Logo.tsx в Shell, brand-default.css подключён
+- [ ] `cmd/brand-sync/main.go` — генерирует brand-{slug}.css
+
+- [ ] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1712]
