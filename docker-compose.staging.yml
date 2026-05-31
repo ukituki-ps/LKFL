@@ -101,12 +101,19 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
-  # ADR-037: hostname:v2 — публичный hostname для OIDC discovery и redirect URIs.
-      # KC_HOSTNAME_STRICT_HTTPS=true — форсировать HTTPS в issuer URL.
-      # KC_HOSTNAME — issuer URL hostname (видимый из браузера через Nginx proxy).
-      # KC_FRONTEND_URL — browser-visible URL (HTTPS через Nginx).
-      # KC_HOSTNAME_ADMIN — admin console URL (HTTPS через Nginx).
+  # ADR-037: hostname:v1 — форсировать HTTPS в issuer URL.
+      #
+      # Почему v1: Keycloak 25.0 по умолчанию hostname:v2, но v2 НЕ читает
+      # X-Forwarded-Proto без отдельного proxy config. v1 + KC_PROXY_HEADERS
+      # + nginx X-Forwarded-Proto: https → issuer: https://dev.april.ukituki.tech/...
+      #
+      # Цепочка (обязательно ВСЕ три условия):
+      # 1. serverPr01: listen 443 ssl → proxy_set_header X-Forwarded-Proto $scheme (https)
+      # 2. serverAi nginx: proxy_set_header X-Forwarded-Proto https (форсировано)
+      # 3. Keycloak: KC_PROXY_HEADERS=xforwarded + KC_HOSTNAME_STRICT_HTTPS=true
+      #
       # Issuer: https://dev.april.ukituki.tech/realms/lkfl-sdek
+      KC_PROXY_HEADERS: xforwarded
       KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "true"
