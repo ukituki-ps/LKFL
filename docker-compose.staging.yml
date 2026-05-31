@@ -160,7 +160,7 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
       # Нет SSL_CERT_FILE / TLS_INSECURE — TLS termination только на external nginx.
-      KEYCLOAK_ISSUER: https://dev.april.ukituki.tech/realms/lkfl-sdek
+      KEYCLOAK_ISSUER: http://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
