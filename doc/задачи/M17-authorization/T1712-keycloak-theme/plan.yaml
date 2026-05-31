@@ -1,0 +1,52 @@
+# T1712 — Keycloak тема lkfl: April DS v0.1.16
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Фаза 1: Структура темы
+
+- [x] `infra/keycloak/theme/lkfl/login/theme.properties` — parent=keycloak, import=keycloak.v2
+- [x] `infra/keycloak/theme/lkfl/login/resources/lkfl-theme/logo.svg` — placeholder teal logo
+- [x] `infra/keycloak/theme/lkfl/account/theme.properties` — parent=keycloak
+
+### Фаза 2: CSS стили (April tokens)
+
+- [x] `infra/keycloak/theme/lkfl/login/resources/css/login.css` — ~478 строк
+- [x] CSS custom properties (April tokens): primary teal, bg, border, text, radius, shadow
+- [x] `.login-pf` — фон страницы
+- [x] `.login-card` — карточка (border, border-radius, box-shadow)
+- [x] `input[type=text/password/email]` — инпуты с фокусом
+- [x] `.button.primary` — primary кнопка 100% width
+- [x] `.button.default` — secondary кнопка
+- [x] `.alert-error` / `.alert-success` / `.info-area` — алерты
+- [x] `.user-list` — список пользователей
+- [x] `.auth-selector` — 2FA/WebAuthn
+- [x] `.social-link` — social providers
+- [x] `.selector` — user profile selector
+- [x] `.login-header` / `.login-footer` — header/footer
+- [x] `.spinner` — загрузка
+- [x] Responsive (`< 480px`) — карточка full-width
+- [x] `infra/keycloak/theme/lkfl/account/resources/css/login.css` — account overrides
+
+### Фаза 3: Realm config
+
+- [x] `infra/keycloak/realm-lkfl-sdek.json` — `loginTheme: lkfl`, `accountTheme: lkfl`
+
+### Фаза 4: Docker Compose
+
+- [x] `docker-compose.yml` — volume mount темы
+- [x] `docker-compose.dev.yml` — volume mount темы
+- [x] `docker-compose.staging.yml` — volume mount темы
+- [x] `docker-compose.prod.yml` — volume mount темы
+
+### Фаза 5: Коммит и PR
+
+- [x] Коммит: `feat: Keycloak тема lkfl — April DS v0.1.16`
+- [x] PR #5 — squash merge в main
+
+## Зависимости
+
+depends_on: [T1701, T1906]
