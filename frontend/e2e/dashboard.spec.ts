@@ -8,13 +8,13 @@ test.describe('Dashboard', () => {
 
 	test('dashboard loads with greeting and stat cards', async ({ page }) => {
 		await gotoWithAuth(page, '/', mockUserEmployee);
-		await expect(page.getByText('ЛКФЛ')).toBeVisible({ timeout: 5000 });
+		await expect(page.getByTestId('app-header')).toBeVisible({ timeout: 5000 });
 	});
 
 	test('dashboard shows stat cards placeholders', async ({ page }) => {
 		await gotoWithAuth(page, '/', mockUserEmployee);
 		// Stat cards rendered by Dashboard component inside Shell
-		await expect(page.getByText('ЛКФЛ')).toBeVisible({ timeout: 5000 });
+		await expect(page.getByTestId('app-header')).toBeVisible({ timeout: 5000 });
 	});
 
 	test('dashboard quick actions navigate to correct pages', async ({ page }) => {
