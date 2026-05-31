@@ -360,6 +360,14 @@ jobs:
         run: |
           docker compose -f docker-compose.staging.yml --env-file /home/ukituki/LKFL-staging/.env.staging -p lkfl-staging down || \
             echo "No old staging services to stop"
+          # Kill any orphan container on ports we use (8086 frontend may have different project name)
+          for port in 8083 8084 8085 8086 8090 8091 8092 9092; do
+            CID=$(docker ps -q --filter "publish=$port" 2>/dev/null)
+            if [ -n "$CID" ]; then
+              echo "Stopping orphan container on port $port: $CID"
+              docker stop "$CID" 2>/dev/null
+            fi
+          done
 
       - name: Start services
         working-directory: /home/ukituki/LKFL-staging
@@ -383,7 +391,7 @@ jobs:
             fi
 
             # Frontend health check
-            if curl -sf http://127.0.0.1:8084/ >/dev/null 2>&1; then
+            if curl -sf http://127.0.0.1:8086/ >/dev/null 2>&1; then
               echo "  ✅ lkfl-frontend healthy"
             else
               echo "  ❌ lkfl-frontend not ready"
