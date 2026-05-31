@@ -369,6 +369,17 @@ jobs:
             fi
           done
 
+      - name: Cleanup orphan containers
+        run: |
+          # Удаляем старые lkfl_* контейнеры от ручного docker compose (без project name)
+          # Сохраняем мониторинг: lkfl_grafana, lkfl_prometheus, lkfl_loki
+          for name in $(docker ps -a --format '{{.Names}}' | grep '^lkfl_' | grep -v '^lkfl-staging-'); do
+            case "$name" in
+              lkfl_grafana|lkfl_prometheus|lkfl_loki) continue ;;
+              *) echo "Removing orphan: $name"; docker rm -f "$name" 2>/dev/null || true ;;
+            esac
+          done
+
       - name: Start services
         working-directory: /home/ukituki/LKFL-staging
         run: |
