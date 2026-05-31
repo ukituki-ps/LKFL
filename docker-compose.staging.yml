@@ -102,10 +102,13 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
    # ADR-037: hostname:v2 — публичный hostname для OIDC discovery и redirect URIs.
+      # KC_HTTP_PORT=443 + KC_HTTPS_PORT=443 — чтобы issuer не содержал :8080.
       # KC_HOSTNAME — issuer URL hostname (видимый из браузера через Nginx proxy).
       # KC_FRONTEND_URL — browser-visible URL (HTTPS через Nginx).
       # KC_HOSTNAME_ADMIN — admin console URL (HTTPS через Nginx).
       # Issuer: https://dev.april.ukituki.tech/realms/lkfl-sdek
+      KC_HTTP_PORT: "443"
+      KC_HTTPS_PORT: "443"
       KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
@@ -157,7 +160,7 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
       # Нет SSL_CERT_FILE / TLS_INSECURE — TLS termination только на external nginx.
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
+      KEYCLOAK_ISSUER: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
