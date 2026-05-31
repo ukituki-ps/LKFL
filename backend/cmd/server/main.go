@@ -160,10 +160,9 @@ func runSeed() {
 	}
 
 	// ─── Пользователи ───
-	if err := seedUsersDB(ctx, conn, sdekID); err != nil {
-		fmt.Fprintf(os.Stderr, "seed users error: %v\n", err)
-		os.Exit(1)
-	}
+	// T1711: seed-пользователи удалены. Пользователи создаются автоматически
+	// при первом входе через Keycloak (provisioning в auth.Me / auth.LoginCallback).
+	// Keycloak realm config — единственный источник правды для dev-пользователей.
 
 	// ─── Типы энгейджментов ───
 	if err := seedEngagementTypesDB(ctx, conn, sdekID); err != nil {
@@ -263,120 +262,6 @@ func seedCategoriesDB(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID) e
 
 	fmt.Printf("  Categories: %d inserted/updated\n", count)
 	return nil
-}
-
-// ─── Пользователи ───
-
-type seedUser struct {
-	email       string
-	firstName   string
-	lastName    string
-	phone       string
-	keycloakSub string
-	roles       []string
-}
-
-func seedUsersDB(ctx context.Context, conn *pgx.Conn, tenantID uuid.UUID) error {
-	users := []seedUser{
-		{
-			email: "admin@sdek.local", firstName: "Александр", lastName: "Петров",
-			phone: "+79001000001", keycloakSub: "kc-admin-001", roles: []string{"admin"},
-		},
-		{
-			email: "hr@sdek.local", firstName: "Елена", lastName: "Иванова",
-			phone: "+79001000002", keycloakSub: "kc-hr-001", roles: []string{"hr"},
-		},
-		{
-			email: "catalog@sdek.local", firstName: "Дмитрий", lastName: "Сидоров",
-			phone: "+79001000003", keycloakSub: "kc-catalog-001", roles: []string{"catalog_manager"},
-		},
-		{
-			email: "ivanov@sdek.local", firstName: "Иван", lastName: "Петров",
-			phone: "+79001000010", keycloakSub: "kc-emp-001", roles: []string{"employee"},
-		},
-		{
-			email: "petrova@sdek.local", firstName: "Мария", lastName: "Петрова",
-			phone: "+79001000011", keycloakSub: "kc-emp-002", roles: []string{"employee"},
-		},
-		{
-			email: "sidorov@sdek.local", firstName: "Сергей", lastName: "Сидоров",
-			phone: "+79001000012", keycloakSub: "kc-emp-003", roles: []string{"employee"},
-		},
-		{
-			email: "kozlova@sdek.local", firstName: "Анна", lastName: "Козлова",
-			phone: "+79001000013", keycloakSub: "kc-emp-004", roles: []string{"employee"},
-		},
-		{
-			email: "novikov@sdek.local", firstName: "Артём", lastName: "Новиков",
-			phone: "+79001000014", keycloakSub: "kc-emp-005", roles: []string{"employee"},
-		},
-	}
-
-	userIDs := make([]uuid.UUID, len(users))
-	baseUUID := [16]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10}
-	for i := range users {
-		baseUUID[15] = byte(100 + i)
-		userIDs[i] = uuid.UUID(baseUUID)
-	}
-
-	for i, u := range users {
-		var userID uuid.UUID
-		err := conn.QueryRow(ctx, `
-			INSERT INTO lkfl_platform.users (id, tenant_id, email, first_name, last_name, phone, keycloak_user_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7)
-			ON CONFLICT (tenant_id, keycloak_user_id) DO UPDATE SET updated_at = NOW()
-			RETURNING id
-		`, userIDs[i], tenantID, u.email, u.firstName, u.lastName, u.phone, u.keycloakSub).Scan(&userID)
-		if err != nil {
-			return fmt.Errorf("seed user %s: %w", u.email, err)
-		}
-		userIDs[i] = userID
-
-		_, err = conn.Exec(ctx, `
-			INSERT INTO lkfl_platform.accounts (user_id, total_balance)
-			VALUES ($1, $2)
-			ON CONFLICT (user_id) DO UPDATE SET updated_at = NOW()
-		`, userID, seedBalanceForUser(u))
-		if err != nil {
-			return fmt.Errorf("seed account for %s: %w", u.email, err)
-		}
-
-		for _, role := range u.roles {
-			_, err = conn.Exec(ctx, `
-				INSERT INTO lkfl_platform.user_roles (user_id, role)
-				VALUES ($1, $2)
-				ON CONFLICT (user_id, role) DO NOTHING
-			`, userID, role)
-			if err != nil {
-				return fmt.Errorf("seed role %s for %s: %w", role, u.email, err)
-			}
-		}
-	}
-
-	fmt.Printf("  Users: %d inserted (with accounts + roles)\n", len(users))
-	return nil
-}
-
-func seedBalanceForUser(u seedUser) int64 {
-	switch {
-	case seedContains(u.roles, "admin"):
-		return 100000
-	case seedContains(u.roles, "hr"):
-		return 100000
-	case seedContains(u.roles, "catalog_manager"):
-		return 100000
-	default:
-		return 50000
-	}
-}
-
-func seedContains(slice []string, val string) bool {
-	for _, s := range slice {
-		if s == val {
-			return true
-		}
-	}
-	return false
 }
 
 // ─── Типы энгейджментов ───

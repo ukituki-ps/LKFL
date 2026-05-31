@@ -95,6 +95,13 @@ func (m *mockUserRepository) RemoveRole(_ context.Context, _ uuid.UUID, _ string
 	return nil
 }
 
+func (m *mockUserRepository) EnsureAccount(_ context.Context, _ uuid.UUID) error {
+	if m.errOn["EnsureAccount"] != nil {
+		return m.errOn["EnsureAccount"]
+	}
+	return nil
+}
+
 // TestService_CreateOrUpdateUser_Create — тест создания нового пользователя.
 func TestService_CreateOrUpdateUser_Create(t *testing.T) {
 	repo := newMockUserRepo()

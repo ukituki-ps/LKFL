@@ -1,0 +1,478 @@
+/* ============================================================
+   LKFL Keycloak Theme — April Design System v0.1.16
+   ============================================================
+   Tokens из @ukituki-ps/april-tokens:
+   - accent teal: #12b886 / #0ca678 / #099268
+   - neutral bg: #ffffff / #f8f9fa
+   - border: #dee2e6 / #EBEBEB
+   - text: #212529 / #868e96
+   - radius: 14px (card), 6px (btn)
+   - shadow: 0 1px 4px rgba(0,0,0,0.06)
+   ============================================================ */
+
+/* ---- CSS Custom Properties (April tokens) ---- */
+:root {
+  /* Accent */
+  --lkfl-primary: #12b886;
+  --lkfl-primary-hover: #0ca678;
+  --lkfl-primary-active: #099268;
+  --lkfl-primary-light: #c3fae8;
+
+  /* Semantic */
+  --lkfl-danger: #fa5252;
+  --lkfl-warning: #fd7e14;
+  --lkfl-success: #40c057;
+
+  /* Neutral */
+  --lkfl-bg: #ffffff;
+  --lkfl-bg-alt: #f8f9fa;
+  --lkfl-border: #EBEBEB;
+  --lkfl-border-input: #dee2e6;
+  --lkfl-text: #212529;
+  --lkfl-text-muted: #868e96;
+  --lkfl-text-subtle: #9CA3AF;
+
+  /* Shape */
+  --lkfl-radius-card: 14px;
+  --lkfl-radius-btn: 6px;
+  --lkfl-radius-input: 6px;
+  --lkfl-shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  /* Typography */
+  --lkfl-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ---- Page background ---- */
+.login-pf {
+  background: var(--lkfl-bg-alt);
+  font-family: var(--lkfl-font);
+  color: var(--lkfl-text);
+}
+
+.login-pf body {
+  background: var(--lkfl-bg-alt);
+  margin: 0;
+  padding: 0;
+}
+
+/* ---- Header area (logo region) ---- */
+.login-pf .login-header {
+  padding: 32px 32px 0 32px;
+  background: transparent;
+  border: none;
+}
+
+.login-pf .login-header-list {
+  margin: 0;
+  padding: 0;
+}
+
+/* Hide the default Keycloak header branding */
+.login-pf .login-header a {
+  display: none;
+}
+
+/* ---- Logo ---- */
+#kc-logo {
+  width: 180px;
+  height: auto;
+  margin: 0 auto 16px auto;
+  display: block;
+}
+
+/* ---- Main card ---- */
+.login-pf .login-card {
+  background: var(--lkfl-bg);
+  border: 1px solid var(--lkfl-border);
+  border-radius: var(--lkfl-radius-card);
+  box-shadow: var(--lkfl-shadow-card);
+  max-width: 420px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+/* ---- Card header (title area) ---- */
+.login-pf .login-card .login-header {
+  background: transparent;
+  border-bottom: none;
+  padding: 32px 32px 0;
+  text-align: center;
+}
+
+.login-pf .login-card .login-header h1 {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--lkfl-text);
+  margin: 0 0 4px 0;
+  line-height: 1.3;
+}
+
+/* ---- Card body (form area) ---- */
+.login-pf .login-card .login-actions {
+  padding: 24px 32px 32px;
+}
+
+/* ---- Form fields ---- */
+.login-pf .form-group {
+  margin-bottom: 16px;
+}
+
+.login-pf .form-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--lkfl-text);
+  margin-bottom: 4px;
+}
+
+.login-pf input[type="text"],
+.login-pf input[type="password"],
+.login-pf input[type="email"],
+.login-pf select {
+  width: 100%;
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 15px;
+  font-family: var(--lkfl-font);
+  color: var(--lkfl-text);
+  background: var(--lkfl-bg);
+  border: 1px solid var(--lkfl-border-input);
+  border-radius: var(--lkfl-radius-input);
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  box-sizing: border-box;
+}
+
+.login-pf input[type="text"]:focus,
+.login-pf input[type="password"]:focus,
+.login-pf input[type="email"]:focus,
+.login-pf select:focus {
+  border-color: var(--lkfl-primary);
+  box-shadow: 0 0 0 3px rgba(18, 184, 134, 0.15);
+}
+
+.login-pf input[type="text"]::placeholder,
+.login-pf input[type="password"]::placeholder {
+  color: var(--lkfl-text-subtle);
+}
+
+/* ---- Input with icon (username with @ icon) ---- */
+.login-pf .input-icon {
+  position: relative;
+}
+
+.login-pf .input-icon input {
+  padding-right: 40px;
+}
+
+/* ---- Primary button ---- */
+.login-pf .button.primary,
+.login-pf button.primary {
+  background: var(--lkfl-primary);
+  border: 1px solid var(--lkfl-primary);
+  border-radius: var(--lkfl-radius-btn);
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 600;
+  padding: 10px 20px;
+  width: 100%;
+  height: 40px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.login-pf .button.primary:hover,
+.login-pf button.primary:hover {
+  background: var(--lkfl-primary-hover);
+  border-color: var(--lkfl-primary-hover);
+}
+
+.login-pf .button.primary:active,
+.login-pf button.primary:active {
+  background: var(--lkfl-primary-active);
+  border-color: var(--lkfl-primary-active);
+}
+
+.login-pf .button.primary:disabled {
+  background: var(--lkfl-primary-light);
+  border-color: var(--lkfl-primary-light);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* ---- Secondary / default button ---- */
+.login-pf .button.default,
+.login-pf button.default {
+  background: transparent;
+  border: 1px solid var(--lkfl-border-input);
+  border-radius: var(--lkfl-radius-btn);
+  color: var(--lkfl-text);
+  font-size: 14px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.login-pf .button.default:hover,
+.login-pf button.default:hover {
+  border-color: var(--lkfl-primary);
+  color: var(--lkfl-primary);
+}
+
+/* ---- Link-style actions (Forgot password, Register) ---- */
+.login-pf .login-actions .login-link {
+  display: block;
+  text-align: center;
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--lkfl-text-muted);
+}
+
+.login-pf .login-actions a {
+  color: var(--lkfl-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.login-pf .login-actions a:hover {
+  color: var(--lkfl-primary-hover);
+  text-decoration: underline;
+}
+
+/* ---- Checkbox ---- */
+.login-pf input[type="checkbox"] {
+  margin-right: 8px;
+  accent-color: var(--lkfl-primary);
+  width: 16px;
+  height: 16px;
+}
+
+.login-pf .checkbox {
+  display: flex;
+  align-items: center;
+  font-size: 14px;
+  color: var(--lkfl-text);
+  margin-bottom: 16px;
+}
+
+/* ---- Alert messages (errors, info) ---- */
+.login-pf .alert-error,
+.login-pf .alert-error-alert {
+  background: #fff5f5;
+  border: 1px solid #fa5252;
+  border-left: 4px solid #fa5252;
+  border-radius: var(--lkfl-radius-btn);
+  color: #c92a2a;
+  font-size: 14px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.login-pf .alert-success,
+.login-pf .alert-success-info {
+  background: #ebfbee;
+  border: 1px solid #40c057;
+  border-left: 4px solid #40c057;
+  border-radius: var(--lkfl-radius-btn);
+  color: #2b8a3e;
+  font-size: 14px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.login-pf .info-area {
+  background: #f0f9ff;
+  border: 1px solid #a5d8ff;
+  border-left: 4px solid #339af0;
+  border-radius: var(--lkfl-radius-btn);
+  color: #1864ab;
+  font-size: 14px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+/* ---- User list selector ---- */
+.login-pf .user-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.login-pf .user-list li {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--lkfl-border);
+  cursor: pointer;
+  transition: background 0.1s ease;
+}
+
+.login-pf .user-list li:hover {
+  background: var(--lkfl-bg-alt);
+}
+
+.login-pf .user-list li.selected {
+  background: var(--lkfl-primary-light);
+  font-weight: 600;
+}
+
+.login-pf .user-list li a {
+  color: var(--lkfl-text);
+  text-decoration: none;
+}
+
+/* ---- Realm info / social section ---- */
+.login-pf .login-info {
+  padding: 24px 32px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--lkfl-text-muted);
+  border-top: 1px solid var(--lkfl-border);
+}
+
+.login-pf .login-info p {
+  margin: 0 0 8px 0;
+}
+
+.login-pf .login-info p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---- Footer ---- */
+.login-pf .login-footer {
+  background: transparent;
+  padding: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--lkfl-text-subtle);
+}
+
+.login-pf .login-footer a {
+  color: var(--lkfl-text-muted);
+  text-decoration: none;
+}
+
+.login-pf .login-footer a:hover {
+  color: var(--lkfl-primary);
+}
+
+/* ---- Social providers ---- */
+.login-pf .social-link {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.login-pf .social-link p {
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--lkfl-border);
+  text-align: center;
+  font-size: 13px;
+  color: var(--lkfl-text-muted);
+}
+
+.login-pf .social-link a {
+  display: block;
+  padding: 10px 16px;
+  border: 1px solid var(--lkfl-border-input);
+  border-radius: var(--lkfl-radius-btn);
+  text-align: center;
+  color: var(--lkfl-text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.login-pf .social-link a:hover {
+  border-color: var(--lkfl-primary);
+  background: var(--lkfl-bg-alt);
+}
+
+/* ---- Selectors / user profile ---- */
+.login-pf .selectors {
+  margin: 16px 0;
+}
+
+.login-pf .selector {
+  display: inline-block;
+  padding: 8px 16px;
+  border: 1px solid var(--lkfl-border-input);
+  border-radius: var(--lkfl-radius-btn);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--lkfl-text);
+  text-decoration: none;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.login-pf .selector:hover {
+  border-color: var(--lkfl-primary);
+}
+
+.login-pf .selector.selected {
+  background: var(--lkfl-primary);
+  border-color: var(--lkfl-primary);
+  color: #ffffff;
+}
+
+/* ---- Authentication selections (OTP, WebAuthn, etc.) ---- */
+.login-pf .auth-selector {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.login-pf .auth-selector li {
+  padding: 12px 16px;
+  border: 1px solid var(--lkfl-border);
+  border-radius: var(--lkfl-radius-btn);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.login-pf .auth-selector li:hover {
+  border-color: var(--lkfl-primary);
+  background: var(--lkfl-bg-alt);
+}
+
+/* ---- Spinner ---- */
+.login-pf .spinner {
+  display: flex;
+  justify-content: center;
+  padding: 32px 0;
+}
+
+.login-pf .spinner a {
+  animation: pulse 1s infinite;
+  color: var(--lkfl-primary);
+  font-size: 24px;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 480px) {
+  .login-pf .login-card {
+    margin: 0;
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  .login-pf .login-card .login-header {
+    padding: 24px 20px 0;
+  }
+
+  .login-pf .login-card .login-actions {
+    padding: 20px;
+  }
+}

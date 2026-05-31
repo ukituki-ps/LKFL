@@ -1,0 +1,13 @@
+/* Account console inherits login.css styles */
+@import url("../login/resources/css/login.css");
+
+/* Account-specific overrides */
+.account-overlay {
+  background: var(--lkfl-bg-alt, #f8f9fa);
+}
+
+.account-content {
+  background: var(--lkfl-bg, #ffffff);
+  border-radius: var(--lkfl-radius-card, 14px);
+  box-shadow: var(--lkfl-shadow-card, 0 1px 4px rgba(0, 0, 0, 0.06));
+}

@@ -3,8 +3,8 @@
   "realm": "lkfl-sdek",
   "enabled": true,
   "sslRequired": "external",
-  "loginTheme": "keycloak",
-  "accountTheme": "keycloak",
+  "loginTheme": "lkfl",
+  "accountTheme": "lkfl",
 
   "clients": [
     {
@@ -35,7 +35,23 @@
       "serviceAccountsEnabled": false,
       "attributes": {
         "pkce.code.challenge.method": "S256"
-      }
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles (ID token)",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "multivalued": "true",
+            "user.attribute": "foo",
+            "claim.name": "realm_access.roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
     },
     {
       "clientId": "lkfl-service",
@@ -78,18 +94,132 @@
 
   "users": [
     {
-      "id": "admin-user",
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "username": "admin",
       "enabled": true,
-      "email": "admin@lkfl.dev",
+      "email": "admin@sdek.local",
+      "firstName": "Александр",
+      "lastName": "Петров",
       "credentials": [
         {
           "type": "password",
-          "value": "admin-dev-password",
+          "value": "dev-password",
           "temporary": false
         }
       ],
       "realmRoles": ["admin"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaabb",
+      "username": "hr",
+      "enabled": true,
+      "email": "hr@sdek.local",
+      "firstName": "Елена",
+      "lastName": "Иванова",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["hr"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaacc",
+      "username": "catalog",
+      "enabled": true,
+      "email": "catalog@sdek.local",
+      "firstName": "Дмитрий",
+      "lastName": "Сидоров",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["catalog_manager"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaadd",
+      "username": "ivanov",
+      "enabled": true,
+      "email": "ivanov@sdek.local",
+      "firstName": "Иван",
+      "lastName": "Петров",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["employee"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaee",
+      "username": "petrova",
+      "enabled": true,
+      "email": "petrova@sdek.local",
+      "firstName": "Мария",
+      "lastName": "Петрова",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["employee"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaff",
+      "username": "sidorov",
+      "enabled": true,
+      "email": "sidorov@sdek.local",
+      "firstName": "Сергей",
+      "lastName": "Сидоров",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["employee"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaag0",
+      "username": "kozlova",
+      "enabled": true,
+      "email": "kozlova@sdek.local",
+      "firstName": "Анна",
+      "lastName": "Козлова",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["employee"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaag1",
+      "username": "novikov",
+      "enabled": true,
+      "email": "novikov@sdek.local",
+      "firstName": "Артём",
+      "lastName": "Новиков",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["employee"]
     }
   ]
 }
