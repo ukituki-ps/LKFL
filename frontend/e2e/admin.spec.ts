@@ -8,8 +8,7 @@ test.describe('Admin CRUD', () => {
 
 	test('admin can create a new category', async ({ page }) => {
 		await gotoWithAuth(page, '/admin/catalog', mockUserAdmin);
-		await page.waitForTimeout(1000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 
 	test('admin can update category', async ({ page }) => {
@@ -123,11 +122,9 @@ test.describe('Admin CRUD', () => {
 
 	test('admin pages are accessible', async ({ page }) => {
 		await gotoWithAuth(page, '/admin/hr', mockUserAdmin);
-		await page.waitForTimeout(1000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 
 		await gotoWithAuth(page, '/admin/content', mockUserAdmin);
-		await page.waitForTimeout(1000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 });

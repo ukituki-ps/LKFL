@@ -16,7 +16,7 @@ export default defineConfig({
 	fullyParallel: true,
 	forbidOnly: !!process.env.CI,
 	retries: process.env.CI ? 2 : 0,
-	workers: process.env.CI ? 1 : undefined,
+	workers: process.env.CI ? 2 : undefined,
 	reporter: process.env.CI ? 'blob' : 'html',
 	use: {
 		baseURL: 'http://localhost:5173',
@@ -33,16 +33,21 @@ export default defineConfig({
 			use: { ...devices['Desktop Chrome'] },
 			testIgnore: ['**/chaos/**/*.spec.ts', '**/staging/**/*.spec.ts'],
 		},
-		{
-			name: 'firefox',
-			use: { ...devices['Desktop Firefox'] },
-			testIgnore: ['**/chaos/**/*.spec.ts', '**/staging/**/*.spec.ts'],
-		},
-		{
-			name: 'webkit',
-			use: { ...devices['Desktop Safari'] },
-			testIgnore: ['**/chaos/**/*.spec.ts', '**/staging/**/*.spec.ts'],
-		},
+		// firefox + webkit только локально (не в CI) — экономия ~5 мин
+		...(process.env.CI
+			? []
+			: [
+				{
+					name: 'firefox',
+					use: { ...devices['Desktop Firefox'] },
+					testIgnore: ['**/chaos/**/*.spec.ts', '**/staging/**/*.spec.ts'],
+				},
+				{
+					name: 'webkit',
+					use: { ...devices['Desktop Safari'] },
+					testIgnore: ['**/chaos/**/*.spec.ts', '**/staging/**/*.spec.ts'],
+				},
+			]),
 		{
 			name: 'chaos',
 			testMatch: '**/chaos/**/*.spec.ts',

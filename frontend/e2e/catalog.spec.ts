@@ -8,26 +8,22 @@ test.describe('Catalog', () => {
 
 	test('catalog loads and displays engagement cards', async ({ page }) => {
 		await gotoWithAuth(page, '/catalog', mockUserEmployee);
-		await page.waitForTimeout(2000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 
 	test('filter by category shows filtered results', async ({ page }) => {
 		await gotoWithAuth(page, '/catalog', mockUserEmployee);
-		await page.waitForTimeout(2000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 
 	test('search input triggers search with debounce', async ({ page }) => {
 		await gotoWithAuth(page, '/catalog', mockUserEmployee);
-		await page.waitForTimeout(2000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 
 	test('pagination navigates between pages', async ({ page }) => {
 		await gotoWithAuth(page, '/catalog', mockUserEmployee);
-		await page.waitForTimeout(2000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 
 	test('empty state shows message when no engagements', async ({ page }) => {
@@ -42,8 +38,7 @@ test.describe('Catalog', () => {
 			});
 		});
 		await gotoWithAuth(page, '/catalog', mockUserEmployee);
-		await page.waitForTimeout(2000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 
 	test('error state shows error message and retry button', async ({ page }) => {
@@ -55,13 +50,11 @@ test.describe('Catalog', () => {
 			});
 		});
 		await gotoWithAuth(page, '/catalog', mockUserEmployee);
-		await page.waitForTimeout(2000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 
 	test('catalog cards display correct information', async ({ page }) => {
 		await gotoWithAuth(page, '/catalog', mockUserEmployee);
-		await page.waitForTimeout(2000);
-		await expect(page.locator('body')).toBeVisible();
+		await expect(page.locator('body')).not.toBeEmpty();
 	});
 });

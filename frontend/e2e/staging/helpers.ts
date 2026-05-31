@@ -43,10 +43,14 @@ export const KC_EMAIL_SELECTOR = 'input[name="email"]';
 
 /**
  * Ожидать появления Keycloak login формы.
- * Keycloak может загрузиться с задержкой (DNS, TLS, rendering).
+ * Сначала ждём /realms/ в URL (Keycloak redirect), потом ищем форму.
+ * Это предотвращает таймаут когда навигация ещё не завершилась.
  */
 export async function expectKeycloakLoginForm(page: Page, timeout = 20_000) {
-	await page.waitForSelector(KC_USERNAME_SELECTOR, { timeout });
+	// Сначала ждём что URL перешёл на Keycloak
+	await page.waitForURL(/\/realms\//, { timeout });
+	// Потом ищем форму уже на правильной странице
+	await page.waitForSelector(KC_USERNAME_SELECTOR, { timeout: 10_000 });
 }
 
 /**
@@ -101,14 +105,14 @@ export async function submitKeycloakLoginForm(
 	// Клик по кнопке "Sign In" — стандартный Keycloak default theme
 	await page.getByRole('button', { name: 'Sign In' }).click();
 
-	// Ждём редиректа Keycloak (после submit формы логина)
-	await page.waitForTimeout(2000);
+	// Ждём редиректа Keycloak после submit (URL должен измениться)
+	await page.waitForURL(/(callback|\/$|\/realms\/)/, { timeout: 5000 });
 
 	// Проверяем не появился ли VERIFY_PROFILE required action
 	if (await isVerifyProfilePage(page)) {
 		await submitVerifyProfile(page);
-		// Ждём редиректа после VERIFY_PROFILE
-		await page.waitForTimeout(2000);
+		// Ждём редиректа после VERIFY_PROFILE (URL должен измениться)
+		await page.waitForURL(/(callback|\/$)/, { timeout: 5000 });
 	}
 }
 
@@ -128,11 +132,10 @@ export async function loginThroughKeycloak(page: Page): Promise<boolean> {
 	await submitKeycloakLoginForm(page);
 
 	// Шаг 4: Ожидаем редирект на callback → backend → dashboard
-	// Callback может быть коротким, поэтому ждём стабилизации URL
-	await page.waitForURL(/\/(callback|$)/, { timeout: 30_000 });
+	await page.waitForURL(/\/(callback|$)/, { timeout: 15_000 });
 
-	// Шаг 5: Ждём полного рендера dashboard (появление контента)
-	await page.waitForLoadState('networkidle', { timeout: 15_000 });
+	// Шаг 5: Ждём стабилизации страницы (dashboard рендерится)
+	await page.waitForLoadState('networkidle', { timeout: 10_000 });
 
 	// Шаг 6: Проверяем что cookie сессии установлена (cookie-based auth, D2)
 	const hasSession = await getSessionCookie(page);

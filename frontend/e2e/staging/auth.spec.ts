@@ -67,14 +67,14 @@ test.describe('Staging: Full Login Flow Step by Step', () => {
 
 		// Шаг 4: Обработка VERIFY_PROFILE если появился
 		await test.step('Шаг 4: проверка VERIFY_PROFILE required action', async () => {
-			// Ждём редиректа Keycloak после submit
-			await page.waitForTimeout(3000);
+			// Ждём редиректа Keycloak после submit (URL должен измениться)
+			await page.waitForURL(/(callback|\/$|\/realms\/)/, { timeout: 5000 });
 
 			if (await isVerifyProfilePage(page)) {
 				await test.step('VERIFY_PROFILE — заполняем профиль', async () => {
 					await submitVerifyProfile(page);
 					// Ждём редиректа после VERIFY_PROFILE
-					await page.waitForTimeout(3000);
+					await page.waitForURL(/(callback|\/$)/, { timeout: 5000 });
 				});
 			} else {
 				// VERIFY_PROFILE не появился — нормально для уже настроенных пользователей
@@ -84,10 +84,10 @@ test.describe('Staging: Full Login Flow Step by Step', () => {
 		// Шаг 5: Callback → backend → dashboard
 		await test.step('Шаг 5: callback и перенаправление на dashboard', async () => {
 			// Ожидаем редирект на callback → frontend → dashboard
-			await page.waitForURL(/\/(callback|$)/, { timeout: 30_000 });
+			await page.waitForURL(/\/(callback|$)/, { timeout: 15_000 });
 
-			// Ждём полного рендера dashboard
-			await page.waitForLoadState('networkidle', { timeout: 15_000 });
+			// Ждём стабилизации страницы
+			await page.waitForLoadState('networkidle', { timeout: 10_000 });
 
 			// Проверяем что мы на dashboard
 			const finalUrl = page.url();

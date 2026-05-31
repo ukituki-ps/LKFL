@@ -25,7 +25,7 @@ export default defineConfig({
 	},
 	fullyParallel: false, // login flow не параллелен — одна сессия Keycloak
 	forbidOnly: !!process.env.CI,
-	retries: process.env.CI ? 3 : 1,
+	retries: process.env.CI ? 1 : 1,
 	workers: 1,
 	reporter: process.env.CI ? [['blob'], ['html']] : 'html',
 	use: {
