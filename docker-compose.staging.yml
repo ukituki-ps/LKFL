@@ -102,15 +102,16 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
   # ADR-037: hostname:v2 — публичный hostname для OIDC discovery и redirect URIs.
-      # KC_HTTPS_CERTIFICATE_FILE + KC_HTTPS_CERTIFICATE_KEY_FILE — HTTPS на уровне Keycloak.
+      # KC_PROXY_HEADERS=xforwarded — доверять X-Forwarded-* от Nginx.
+      # KC_HOSTNAME_STRICT_HTTPS=true — форсировать HTTPS в issuer URL.
       # KC_HOSTNAME — issuer URL hostname (видимый из браузера через Nginx proxy).
-      # KC_HTTPS_PORT=443 — issuer без :8080.
       # KC_FRONTEND_URL — browser-visible URL (HTTPS через Nginx).
       # KC_HOSTNAME_ADMIN — admin console URL (HTTPS через Nginx).
       # Issuer: https://dev.april.ukituki.tech/realms/lkfl-sdek
-      KC_HTTPS_PORT: "443"
+      KC_PROXY_HEADERS: xforwarded
       KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "true"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
       KC_HOSTNAME_ADMIN: https://dev.april.ukituki.tech
       TZ: Europe/Moscow
