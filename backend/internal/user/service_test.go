@@ -200,6 +200,13 @@ func (m *mockRepository) RemoveRole(ctx context.Context, userID uuid.UUID, role 
 	return nil
 }
 
+func (m *mockRepository) EnsureAccount(ctx context.Context, userID uuid.UUID) error {
+	if m.errKeys["EnsureAccount"] {
+		return m.errOn["EnsureAccount"]
+	}
+	return nil
+}
+
 // TestService_Deactivate — тест деактивации пользователя.
 func TestService_Deactivate(t *testing.T) {
 	t.Run("успешная деактивация", func(t *testing.T) {

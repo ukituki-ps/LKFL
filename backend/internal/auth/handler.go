@@ -391,19 +391,28 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, logoutURL, http.StatusFound)
 }
 
-// Me — текущий пользователь.
+// Me — текущий пользователь с provisioning.
 // GET /api/v1/auth/me
-// Требует JWT middleware (токен в Authorization: Bearer <token>)
+// Требует JWT middleware (токен в Authorization: Bearer <token> или cookie lkfl_session).
+//
+// При первом входе создаёт запись в БД из OIDC claims + назначает роли.
+// При повторных входах обновляет email/имя/фамилию из Keycloak.
+// Гарантирует существование аккаунта (баланс 0).
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
-	keycloakSub := sharedauth.UserIDFromContext(r.Context())
-	if keycloakSub == "" {
+	// Извлекаем claims из context (установлен JWTMiddleware).
+	claims, ok := r.Context().Value(sharedauth.ClaimsKey).(sharedauth.Claims)
+	if !ok || claims.Subject == "" {
 		shhttp.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	user, err := h.service.GetUserByKeycloakSub(r.Context(), keycloakSub)
+	// Извлекаем роли из context (установлен JWTMiddleware).
+	roles := sharedauth.RolesFromContext(r.Context())
+
+	// Provisioning: create или update + ensure account + sync roles.
+	user, err := h.service.CreateOrUpdateUser(r.Context(), &claims, roles)
 	if err != nil {
-		shhttp.WriteJSONError(w, http.StatusNotFound, "user not found")
+		shhttp.WriteJSONError(w, http.StatusInternalServerError, "failed to resolve user: "+err.Error())
 		return
 	}
 

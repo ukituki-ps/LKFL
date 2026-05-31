@@ -1,0 +1,51 @@
+# T1711 — User Provisioning: синхронизация Keycloak ↔ БД
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Фаза 1: Backend (repository + service + handler)
+
+- [x] `user/repository.go` — добавить `EnsureAccount` в интерфейс `Repository`
+- [x] `user/repository.go` — реализовать `EnsureAccount` (idempotent INSERT)
+- [x] `auth/service.go` — вызвать `EnsureAccount` в `CreateOrUpdateUser` (create-ветка)
+- [x] `auth/handler.go` — заменить `Me` на provisioning через `CreateOrUpdateUser`
+- [x] `auth/handler.go` — извлечь `Claims` + `Roles` из context (middleware уже ставит)
+- [x] `user/repository.go` — исправить `keycloak_user_id` → `keycloak_sub` (DB column mismatch)
+
+### Фаза 2: Убрать seed
+
+- [x] `cmd/server/main.go` — удалить `seedUsersDB`
+- [x] `cmd/server/main.go` — удалить `seedBalanceForUser`, `seedContains`
+- [x] `cmd/server/main.go` — удалить вызов `seedUsersDB` из seed-поточка
+- [x] `go build ./...` — сборка OK
+
+### Фаза 3: Keycloak realm config
+
+- [x] `infra/keycloak/realm-lkfl-sdek.json` — 8 пользователей с email `@sdek.local`
+- [x] `infra/keycloak/realm-lkfl-sdek.json` — protocol mapper (realm roles → ID token)
+
+### Фаза 4: Очистка
+
+- [x] SQL: удалено 8 stale users, 8 accounts, 8 roles (keycloak_sub LIKE 'kc-%')
+
+### Фаза 5: Тесты
+
+- [x] `mockUserRepository` — +EnsureAccount
+- [x] `mockRepository` — +EnsureAccount
+- [x] `go test ./...` — все тесты зелёные
+
+### Фаза 6: Валидация
+
+- [ ] Rerun Keycloak с новым realm config — требует ручного перезапуска
+- [ ] E2E: login как `admin` → `/me` → 200 — требует ручного теста
+- [ ] E2E: login как `ivanov` → `/me` → 200, role = employee — требует ручного теста
+- [ ] Проверить, что аккаунт создан (баланс 0) — требует ручного теста
+
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1901, T1902, T1903]

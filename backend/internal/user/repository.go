@@ -66,6 +66,11 @@ type Repository interface {
 
 	// RemoveRole удаляет роль у пользователя.
 	RemoveRole(ctx context.Context, userID uuid.UUID, role string) error
+
+	// EnsureAccount гарантирует существование аккаунта для пользователя.
+	// Idempotent: повторные вызовы без эффекта (INSERT ... ON CONFLICT DO NOTHING).
+	// Используется при provisioning — создание пользователя из OIDC claims.
+	EnsureAccount(ctx context.Context, userID uuid.UUID) error
 }
 
 // pgRepository — pgx реализация Repository.
@@ -81,9 +86,9 @@ func NewRepository(pool *pgxpool.Pool) Repository {
 // Create создаёт нового пользователя.
 func (r *pgRepository) Create(ctx context.Context, u User) (User, error) {
 	query := `
-		INSERT INTO lkfl_platform.users (tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata)
+		INSERT INTO lkfl_platform.users (tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id, tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata, created_at, updated_at
+		RETURNING id, tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata, created_at, updated_at
 	`
 
 	var user User
@@ -108,7 +113,7 @@ func (r *pgRepository) Create(ctx context.Context, u User) (User, error) {
 // GetByID возвращает пользователя по ID.
 func (r *pgRepository) GetByID(ctx context.Context, id uuid.UUID) (User, error) {
 	query := `
-		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata, created_at, updated_at
+		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata, created_at, updated_at
 		FROM lkfl_platform.users
 		WHERE id = $1
 	`
@@ -136,9 +141,9 @@ func (r *pgRepository) GetByID(ctx context.Context, id uuid.UUID) (User, error) 
 // GetByKeycloakSub возвращает пользователя по Keycloak subject.
 func (r *pgRepository) GetByKeycloakSub(ctx context.Context, keycloakSub string) (User, error) {
 	query := `
-		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata, created_at, updated_at
+		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata, created_at, updated_at
 		FROM lkfl_platform.users
-		WHERE keycloak_user_id = $1
+		WHERE keycloak_sub = $1
 	`
 
 	var u User
@@ -164,7 +169,7 @@ func (r *pgRepository) GetByKeycloakSub(ctx context.Context, keycloakSub string)
 // GetByEmail возвращает пользователя по email внутри tenant'а.
 func (r *pgRepository) GetByEmail(ctx context.Context, tenantID uuid.UUID, email string) (User, error) {
 	query := `
-		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata, created_at, updated_at
+		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata, created_at, updated_at
 		FROM lkfl_platform.users
 		WHERE tenant_id = $1 AND email = $2
 	`
@@ -195,7 +200,7 @@ func (r *pgRepository) Update(ctx context.Context, u User) (User, error) {
 		UPDATE lkfl_platform.users
 		SET email = $1, first_name = $2, last_name = $3, phone = $4, metadata = $5, updated_at = NOW()
 		WHERE id = $6
-		RETURNING id, tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata, created_at, updated_at
+		RETURNING id, tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata, created_at, updated_at
 	`
 
 	var user User
@@ -226,7 +231,7 @@ func (r *pgRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status st
 		UPDATE lkfl_platform.users
 		SET status = $1, updated_at = NOW()
 		WHERE id = $2
-		RETURNING id, tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata, created_at, updated_at
+		RETURNING id, tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata, created_at, updated_at
 	`
 
 	var user User
@@ -251,7 +256,7 @@ func (r *pgRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status st
 func (r *pgRepository) List(ctx context.Context, filter UserFilter) ([]User, int64, error) {
 	// Базовый query
 	baseQuery := `
-		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_user_id, metadata, created_at, updated_at
+		SELECT id, tenant_id, email, first_name, last_name, phone, status, keycloak_sub, metadata, created_at, updated_at
 		FROM lkfl_platform.users
 	`
 
@@ -466,6 +471,23 @@ func (r *pgRepository) RemoveRole(ctx context.Context, userID uuid.UUID, role st
 
 	if res.RowsAffected() == 0 {
 		return ErrRoleNotFound
+	}
+
+	return nil
+}
+
+// EnsureAccount гарантирует существование аккаунта для пользователя.
+// Idempotent: INSERT ... ON CONFLICT DO NOTHING.
+func (r *pgRepository) EnsureAccount(ctx context.Context, userID uuid.UUID) error {
+	query := `
+		INSERT INTO lkfl_platform.accounts (user_id, total_balance, settings)
+		VALUES ($1, 0, '{}')
+		ON CONFLICT (user_id) DO NOTHING
+	`
+
+	_, err := r.pool.Exec(ctx, query, userID)
+	if err != nil {
+		return fmt.Errorf("user repository: ensure account: %w", err)
 	}
 
 	return nil

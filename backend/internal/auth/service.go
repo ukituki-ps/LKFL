@@ -107,6 +107,12 @@ func (s *Service) CreateOrUpdateUser(ctx context.Context, claims *sharedauth.Cla
 		return user.User{}, fmt.Errorf("create user: %w", err)
 	}
 
+	// Гарантируем существование аккаунта (баланс 0; начислит CEL/billing).
+	// Idempotent — повторные вызовы через Me безопасны.
+	if err := s.userRepo.EnsureAccount(ctx, created.ID); err != nil {
+		slog.Warn("failed to ensure account (non-blocking)", "user_id", created.ID, "error", err)
+	}
+
 	// Назначаем роли из Keycloak.
 	// Для новых пользователей назначаем базовую роль "employee" + роли из Keycloak.
 	// Для существующих — синхронизируем роли из Keycloak (добавляем новые).
