@@ -101,12 +101,12 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
-   # ADR-037: hostname:v2 без KC_PROXY_HEADERS + KC_HOSTNAME_STRICT_HTTPS.
-      # KC_HOSTNAME — browser redirect URI hostname.
-      # KC_FRONTEND_URL — browser-visible URL (HTTPS).
-      # KC_HOSTNAME_ADMIN — admin console URL (HTTPS).
-      # Issuer внутри Docker-сети: http://keycloak:8080/realms/lkfl-sdek.
-      KC_HOSTNAME: keycloak
+   # ADR-037: hostname:v2 — публичный hostname для OIDC discovery и redirect URIs.
+      # KC_HOSTNAME — issuer URL hostname (видимый из браузера через Nginx proxy).
+      # KC_FRONTEND_URL — browser-visible URL (HTTPS через Nginx).
+      # KC_HOSTNAME_ADMIN — admin console URL (HTTPS через Nginx).
+      # Issuer: https://dev.april.ukituki.tech/realms/lkfl-sdek
+      KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTP: "false"
       KC_FRONTEND_URL: https://dev.april.ukituki.tech
