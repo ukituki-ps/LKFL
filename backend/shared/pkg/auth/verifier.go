@@ -64,8 +64,10 @@ func WithRetryDelay(d time.Duration) VerifierOption {
 // При ошибке подключения к Keycloak пытается повторно (по умолчанию 30 раз,
 // каждые 2 сек). Конфигурируется через WithMaxRetries и WithRetryDelay.
 //
-// ADR-037: issuer всегда = внутренний URL Keycloak. Никаких хак-обёрток
-// для TLS — внутри Docker-сети HTTP, TLS termination только на границе сети.
+// ADR-037: issuer = публичный URL Keycloak (через nginx).
+// Discovery по публичному URL → Keycloak возвращает https:// issuer → match в JWT iss claim.
+// В staging: https://dev.april.ukituki.tech/... (nginx → Keycloak).
+// В production: аналогично, через внешний nginx.
 func NewVerifier(ctx context.Context, issuerURL, clientID string, opts ...VerifierOption) (*oidc.IDTokenVerifier, error) {
 	cfg := defaultConfig()
 	for _, opt := range opts {

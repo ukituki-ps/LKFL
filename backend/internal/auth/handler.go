@@ -33,7 +33,7 @@ type Handler struct {
 	verifier     *oidc.IDTokenVerifier
 	redis        *redis.Client
 	service      *Service
-	issuer       string // OIDC issuer (host.docker.internal) — для token verification
+	issuer       string // OIDC issuer (публичный URL) — для discovery, token exchange, verification
 	publicIssuer string // Public issuer — для browser-редиректов
 	clientID     string
 	clientSecret string

@@ -164,11 +164,11 @@ services:
       DB_DSN: ${DB_DSN}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       # ADR-037: issuer = публичный URL (Keycloak v2 hostname возвращает https:// всегда).
-      # Бэкенд делает discovery к https://dev.april.ukituki.tech/... через nginx.
-      # Nginx передаёт X-Forwarded-Proto: https → Keycloak возвращает https:// → match.
-      # Token exchange: бэкенд идёт к http://keycloak:8080 напрямую (внутри Docker-сети).
-      KEYCLOAK_ISSUER: https://dev.april.ukituki.tech/realms/lkfl-sdek
-      KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
+      # Бэкенд делает OIDC discovery через публичный URL (nginx → Keycloak).
+      # Nginx ставит X-Forwarded-Proto: https → Keycloak issuer: https:// → match в JWT.
+      # Token exchange тоже через публичный URL (чуть медленнее, но консистентно).
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_PUBLIC_URL: ${KEYCLOAK_PUBLIC_URL}
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
       SERVER_PORT: "8080"
