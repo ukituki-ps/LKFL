@@ -102,13 +102,11 @@ services:
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
   # ADR-037: hostname:v2 — публичный hostname для OIDC discovery и redirect URIs.
-      # KC_PROXY_HEADERS=xforwarded — доверять X-Forwarded-* от Nginx.
       # KC_HOSTNAME_STRICT_HTTPS=true — форсировать HTTPS в issuer URL.
       # KC_HOSTNAME — issuer URL hostname (видимый из браузера через Nginx proxy).
       # KC_FRONTEND_URL — browser-visible URL (HTTPS через Nginx).
       # KC_HOSTNAME_ADMIN — admin console URL (HTTPS через Nginx).
       # Issuer: https://dev.april.ukituki.tech/realms/lkfl-sdek
-      KC_PROXY_HEADERS: xforwarded
       KC_HOSTNAME: dev.april.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "true"
@@ -158,10 +156,11 @@ services:
     environment:
       DB_DSN: ${DB_DSN}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      # ADR-037: issuer = внутренний URL Keycloak (HTTP внутри Docker-сети).
-      # Бэкенд обращается к Keycloak напрямую, минуя nginx (POST token exchange).
-      # Discovery: http://keycloak:8080/... → issuer: http://keycloak:8080/... → match.
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
+      # ADR-037: issuer = публичный URL (Keycloak v2 hostname возвращает https:// всегда).
+      # Бэкенд делает discovery к https://dev.april.ukituki.tech/... через nginx.
+      # Nginx передаёт X-Forwarded-Proto: https → Keycloak возвращает https:// → match.
+      # Token exchange: бэкенд идёт к http://keycloak:8080 напрямую (внутри Docker-сети).
+      KEYCLOAK_ISSUER: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_PUBLIC_URL: https://dev.april.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-staging}
