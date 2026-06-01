@@ -14,7 +14,7 @@ func TestNewCache_NilClient(t *testing.T) {
 	if c == nil {
 		t.Fatal("expected non-nil Cache")
 	}
-	if c.client != nil {
+	if c.client != nil && c.client != nil {
 		t.Error("expected nil client")
 	}
 }
