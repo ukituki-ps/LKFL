@@ -1,0 +1,54 @@
+# T2308 — Browser-based logout
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Шаг 1: Backend — Logout() → 302 Keycloak logout
+
+- [x] GET → 302 redirect на Keycloak logout URL (был POST, стал GET для window.location.href)
+- [x] post_logout_redirect_uri из Origin/Referer заголовков (не из publicIssuer!)
+- [x] realmPath из issuer → `h.publicIssuer + realmPath + "/protocol/openid-connect/logout"`
+- [x] Session + Token cleanup перед redirect
+- [x] Cookie cleanup перед redirect
+
+### Шаг 2: Frontend — authStore.logout() → window.location.href
+
+- [x] Заменить fetch() на window.location.href
+- [x] Убрать try/catch
+- [x] localStorage/sessionStorage очистка ДО redirect (на случай сбоев)
+- [x] Убрать navigateOutside('/login') + импорт @/lib/router
+
+### Шаг 3: Убрать invalidateKeycloakSSO()
+
+- [x] Удалить invalidateKeycloakSSO() (~110 строк)
+- [x] Удалить getAdminToken() (~45 строк)
+- [x] Удалить fetchAdmin() (~30 строк)
+- [x] Удалить unused import "context"
+
+### Шаг 4: Callback.tsx — исправить getRealm()
+
+- [x] Добавить VITE_KEYCLOAK_REALM=lkfl-sdek в .env.dev
+
+### Шаг 5: Обновить E2E тест
+
+- [x] Убрать ручную инвалидацию Keycloak SSO
+- [x] Убрать ручную очистку cookies
+- [x] Добавить клик Keycloak logout confirmation button (#kc-logout)
+- [x] Добавить assert: Keycloak показывает форму логина на второй вход
+
+### Шаг 6: Обновить риски
+
+- [x] R-042 → mitigated
+
+## Порядок выполнения
+
+1. Шаг 1 (backend Logout handler)
+2. Шаг 3 (удаление invalidateKeycloakSSO)
+3. Шаг 2 (frontend authStore)
+4. Шаг 4 (Callback.tsx realm)
+5. `go build ./...` + `tsc --noEmit` + `npm run build`
+6. Шаг 5 (E2E тест)
+7. Шаг 6 (риски)

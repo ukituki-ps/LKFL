@@ -177,14 +177,14 @@ func TestRBAC_HRRoute_HRAllowed(t *testing.T) {
 	}
 }
 
-// TestLogout — POST /api/v1/auth/logout → 302 redirect
+// TestLogout — GET /api/v1/auth/logout → 302 Keycloak logout redirect
 func TestLogout(t *testing.T) {
 	ts, cleanup := setupAuthTest(t)
 	defer cleanup()
 
 	adminToken := testutil.TestTokenAdmin("admin-user")
 
-	resp, err := ts.PostWithToken("/api/v1/auth/logout", adminToken, nil)
+	resp, err := ts.GetWithToken("/api/v1/auth/logout", adminToken)
 	if err != nil {
 		t.Fatalf("logout: %v", err)
 	}

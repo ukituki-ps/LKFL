@@ -152,20 +152,22 @@ func NewServer(
 	authRouter.Use(authLimiter)
 	authRouter.Get("/login", authHandler.LoginRedirect)
 	authRouter.Get("/callback", authHandler.LoginCallback)
-	authRouter.Post("/logout", authHandler.Logout)
+	// GET — browser-based logout: window.location.href = '/api/v1/auth/logout'
+	// Browser follows 302 redirect to Keycloak logout, which invalidates SSO.
+	authRouter.Get("/logout", authHandler.Logout)
 // /me — provisioning endpoint: requires JWT + tenant middleware.
 		// Added to authRouter so chi mount doesn't shadow it.
 		authRouter.With(
-			sharedauth.JWTMiddleware(verifier),
+			authHandler.SessionMiddleware(),
 			func(next http.Handler) http.Handler {
 				return tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics)(next)
 			},
 		).Get("/me", authHandler.Me)
 	r.Mount("/api/v1/auth", authRouter)
 
-	// ─── Employee routes (JWT + tenant middleware) ───
+	// ─── Employee routes (Session + tenant middleware) ───
 	r.Route("/api/v1/", func(r chi.Router) {
-		r.Use(sharedauth.JWTMiddleware(verifier))
+		r.Use(authHandler.SessionMiddleware())
 		r.Use(tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics))
 
 		// User profile
@@ -185,9 +187,9 @@ func NewServer(
 		})
 	})
 
-	// ─── Admin routes (JWT + RBAC + admin tenant middleware) ───
+	// ─── Admin routes (Session + RBAC + admin tenant middleware) ───
 	r.Route("/admin/", func(r chi.Router) {
-		r.Use(sharedauth.JWTMiddleware(verifier))
+		r.Use(authHandler.SessionMiddleware())
 		r.Use(tenant.AdminTenantMiddleware(tenantService, redis, appMetrics))
 		r.Use(adminLimiter)
 
