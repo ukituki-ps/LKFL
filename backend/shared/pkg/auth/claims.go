@@ -8,6 +8,9 @@ import (
 	"github.com/coreos/go-oidc"
 )
 
+// ClaimsKey — ключ для хранения Claims в контексте.
+type ClaimsKey struct{}
+
 // Claims — стандартные OIDC claims.
 // Keycloak-specific данные (roles, tenant_slug) извлекаются через
 // idToken.Claims(map[string]interface{}) для гибкости.
@@ -21,6 +24,8 @@ type Claims struct {
 	// Issuer — OIDC issuer (например, https://host/realms/lkfl-sdek).
 	// Используется tenant middleware для извлечения slug tenant'а из JWT.
 	Issuer string `json:"iss"`
+	// TenantID — slug tenant'а, извлечён из Issuer (используется в сессиях).
+	TenantID string `json:"tenant_id"`
 }
 
 // ExtractClaims извлекает стандартные claims и Keycloak роли из ID Token.

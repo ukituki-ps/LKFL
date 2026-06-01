@@ -2,6 +2,9 @@ package auth
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -15,7 +18,6 @@ const (
 	// UserIDKey — ключ user ID (subject) в context.
 	UserIDKey contextKey = "auth_user_id"
 	// ClaimsKey — ключ Claims в context.
-	ClaimsKey contextKey = "auth_claims"
 	// RolesKey — ключ ролей пользователя в context.
 	RolesKey contextKey = "auth_roles"
 )
@@ -57,7 +59,7 @@ func JWTMiddleware(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handl
 
 			// Храним Claims как value (не pointer) — UserIDFromContext/RolesFromContext
 			// ожидают именно Claims, не *Claims. Type assertion на pointer упадёт.
-			ctx := context.WithValue(r.Context(), ClaimsKey, *claims)
+			ctx := context.WithValue(r.Context(), ClaimsKey{}, *claims)
 			ctx = context.WithValue(ctx, RolesKey, roles)
 
 			// Извлекаем tenant slug из issuer и ставим X-Tenant-ID.
@@ -78,7 +80,6 @@ func JWTMiddleware(verifier *oidc.IDTokenVerifier) func(http.Handler) http.Handl
 }
 
 // sessionCookieName — имя httpOnly cookie для сессионного токена (D2).
-const sessionCookieName = "lkfl_session"
 
 // extractToken извлекает токен из запроса.
 // Сначала проверяет Authorization: Bearer <token>, затем cookie lkfl_session.
@@ -106,7 +107,7 @@ func extractToken(r *http.Request) string {
 //
 // Возвращает пустую строку, если claims отсутствуют в context.
 func UserIDFromContext(ctx context.Context) string {
-	claims, ok := ctx.Value(ClaimsKey).(Claims)
+	claims, ok := ctx.Value(ClaimsKey{}).(Claims)
 	if !ok {
 		return ""
 	}
@@ -122,4 +123,90 @@ func RolesFromContext(ctx context.Context) []string {
 		return nil
 	}
 	return roles
+}
+
+// SessionMiddleware — middleware для session-based аутентификации.
+//
+// Алгоритм:
+//  1. Извлекает session token из cookie (lkfl_session)
+//  2. Проверяет сессию в Redis (SessionStore)
+//  3. Проверяет/обновляет access token в Redis (TokenStore)
+//  4. Если token истёк — делает refresh через TokenRefresher
+//  5. Извлекает claims из access token и добавляет в context
+//
+// При ошибке сессии (отсутствует/истёкла) — удаляет cookie и возвращает 401.
+func SessionMiddleware(sessionStore *SessionStore, tokenStore *TokenStore, tokenRefresher *TokenRefresher) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			sessionToken := ExtractSessionCookie(r)
+			if sessionToken == "" {
+				WriteAuthError(w, http.StatusUnauthorized, "unauthorized")
+				return
+			}
+
+			sessionData, err := sessionStore.Get(r.Context(), sessionToken)
+			if err != nil {
+				clearSessionCookie(w, r)
+				WriteAuthError(w, http.StatusUnauthorized, "session expired")
+				return
+			}
+
+			accessToken, err := tokenStore.GetAccessToken(r.Context(), sessionData.UserID)
+			if err != nil {
+				accessToken, _, err = tokenRefresher.Refresh(r.Context(), sessionData.UserID)
+				if err != nil {
+					clearSessionCookie(w, r)
+					WriteAuthError(w, http.StatusUnauthorized, "token refresh failed")
+					return
+				}
+			}
+
+			claims, roles, err := extractClaimsFromAccessToken(accessToken)
+			if err != nil {
+				WriteAuthError(w, http.StatusUnauthorized, "invalid token claims")
+				return
+			}
+
+			ctx := context.WithValue(r.Context(), ClaimsKey{}, *claims)
+			ctx = context.WithValue(ctx, RolesKey, roles)
+
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
+// extractClaimsFromAccessToken парсит access token и извлекает claims + roles.
+func extractClaimsFromAccessToken(token string) (*Claims, []string, error) {
+	parts := strings.Split(token, ".")
+	if len(parts) != 3 {
+		return nil, nil, fmt.Errorf("invalid token format")
+	}
+
+	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	var rawClaims map[string]interface{}
+	if err := json.Unmarshal(payloadBytes, &rawClaims); err != nil {
+		return nil, nil, err
+	}
+
+	claims := &Claims{}
+	if sub, ok := rawClaims["sub"].(string); ok {
+		claims.Subject = sub
+	}
+	if email, ok := rawClaims["email"].(string); ok {
+		claims.Email = email
+	}
+	if name, ok := rawClaims["name"].(string); ok {
+		claims.Name = name
+	}
+	if iss, ok := rawClaims["iss"].(string); ok {
+		claims.Issuer = iss
+	}
+
+	roles := extractKeycloakRolesFromClaims(rawClaims)
+
+	return claims, roles, nil
 }

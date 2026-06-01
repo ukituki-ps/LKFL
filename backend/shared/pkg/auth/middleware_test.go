@@ -46,7 +46,7 @@ func (m *testJWTMiddleware) Handler(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), ClaimsKey, m.claims)
+		ctx := context.WithValue(r.Context(), ClaimsKey{}, m.claims)
 		ctx = context.WithValue(ctx, RolesKey, m.roles)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
@@ -701,7 +701,7 @@ func TestExtractKeycloakRoles_MultipleClientsSecondHasRoles(t *testing.T) {
 // =============================================================================
 
 func TestUserIDFromContext_WrongType(t *testing.T) {
-	ctx := context.WithValue(context.Background(), ClaimsKey, "not-claims")
+	ctx := context.WithValue(context.Background(), ClaimsKey{}, "not-claims")
 	result := UserIDFromContext(ctx)
 	if result != "" {
 		t.Errorf("expected empty string for wrong type, got '%s'", result)
@@ -725,7 +725,7 @@ func TestRolesFromContext_IntSlice(t *testing.T) {
 }
 
 func TestUserIDFromContext_ValidClaims(t *testing.T) {
-	ctx := context.WithValue(context.Background(), ClaimsKey, Claims{
+	ctx := context.WithValue(context.Background(), ClaimsKey{}, Claims{
 		Subject: "user-789",
 		Email:   "valid@example.com",
 	})
@@ -736,7 +736,7 @@ func TestUserIDFromContext_ValidClaims(t *testing.T) {
 }
 
 func TestUserIDFromContext_EmptySubject(t *testing.T) {
-	ctx := context.WithValue(context.Background(), ClaimsKey, Claims{
+	ctx := context.WithValue(context.Background(), ClaimsKey{}, Claims{
 		Subject: "",
 		Email:   "no-sub@example.com",
 	})

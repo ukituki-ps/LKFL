@@ -781,7 +781,7 @@ func isValidPostLogoutRedirect(uri string) bool {
 
 // Me — текущий пользователь с provisioning.
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
-	claims, ok := r.Context().Value(sharedauth.ClaimsKey).(sharedauth.Claims)
+	claims, ok := r.Context().Value(sharedauth.ClaimsKey{}).(sharedauth.Claims)
 	if !ok || claims.Subject == "" {
 		shhttp.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return

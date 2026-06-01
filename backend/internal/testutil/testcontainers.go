@@ -344,7 +344,7 @@ func TestMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), sharedauth.ClaimsKey, *claims)
+			ctx := context.WithValue(r.Context(), sharedauth.ClaimsKey{}, *claims)
 			ctx = context.WithValue(ctx, sharedauth.RolesKey, roles)
 
 			next.ServeHTTP(w, r.WithContext(ctx))

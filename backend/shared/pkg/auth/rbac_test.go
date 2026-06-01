@@ -161,7 +161,7 @@ func TestUserIDFromContext(t *testing.T) {
 	}{
 		{
 			name: "claims present",
-			ctx: context.WithValue(context.Background(), ClaimsKey, Claims{
+			ctx: context.WithValue(context.Background(), ClaimsKey{}, Claims{
 				Subject: "user-123",
 				Email:   "test@example.com",
 			}),
