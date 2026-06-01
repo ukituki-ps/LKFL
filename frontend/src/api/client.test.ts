@@ -14,7 +14,6 @@ describe('apiRequest', () => {
 
 	it('добавляет Authorization header с токеном', async () => {
 		useAuthStore.getState().setAuth(
-			'test-token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			[]
 		)
@@ -361,7 +360,6 @@ describe('apiRequest', () => {
 		})
 
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['employee']
 		)
@@ -373,14 +371,13 @@ describe('apiRequest', () => {
 		await expect(apiRequest('/api/v1/test')).rejects.toThrow('Unauthorized')
 
 		expect(useAuthStore.getState().isAuthenticated).toBe(false)
-		expect(useAuthStore.getState().token).toBeNull()
+		expect(useAuthStore.getState().isAuthenticated).toBe(false)
 		expect(useAuthStore.getState().user).toBeNull()
 		expect(useAuthStore.getState().userRoles).toEqual([])
 	})
 
 	it('403 не очищает auth store', async () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['employee']
 		)
@@ -393,7 +390,7 @@ describe('apiRequest', () => {
 
 		// Auth state should be preserved on 403
 		expect(useAuthStore.getState().isAuthenticated).toBe(true)
-		expect(useAuthStore.getState().token).toBe('token')
+		expect(useAuthStore.getState().isAuthenticated).toBe(true)
 	})
 
 	it('200 с пустым JSON', async () => {

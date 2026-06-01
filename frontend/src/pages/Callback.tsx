@@ -92,7 +92,7 @@ export function Callback() {
 					return
 				}
 
-				setAuth(token, data.user, data.roles ?? [])
+				setAuth(data.user, data.roles ?? [])
 				navigate('/', { replace: true })
 			})
 			.catch((err) => {

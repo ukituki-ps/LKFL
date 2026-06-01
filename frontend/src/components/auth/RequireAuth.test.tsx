@@ -10,7 +10,6 @@ const ProtectedContent = () => (
 
 function renderWithRouter(path: string, roles: string[], requiredRoles?: string[]) {
 	useAuthStore.getState().setAuth(
-		'token',
 		{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 		roles as any
 	)
@@ -100,7 +99,6 @@ describe('RequireAuth', () => {
 
 	it('role change — пользователь без роли видит forbidden', () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['employee']
 		)
@@ -123,7 +121,6 @@ describe('RequireAuth', () => {
 
 	it('nested auth guards — RequireAuth внутри RequireAuth', () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['admin']
 		)
@@ -168,7 +165,6 @@ describe('RequireAuth', () => {
 
 	it('nested auth guards — внутренняя guard провалена', () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['employee']
 		)
@@ -193,7 +189,6 @@ describe('RequireAuth', () => {
 
 	it('concurrent navigation — переход между защищёнными маршрутами', () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['admin']
 		)
@@ -235,7 +230,6 @@ describe('RequireAuth', () => {
 
 	it('empty roles array — любой авторизованный получает доступ', () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['employee']
 		)
@@ -258,7 +252,6 @@ describe('RequireAuth', () => {
 
 	it('undefined roles — любой авторизованный получает доступ', () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			['employee']
 		)
@@ -280,7 +273,6 @@ describe('RequireAuth', () => {
 
 	it('пользователь без ролей не проходит guard с ролями', () => {
 		useAuthStore.getState().setAuth(
-			'token',
 			{ id: '1', email: 't@t.com', first_name: 'T', last_name: 'T' },
 			[]
 		)
