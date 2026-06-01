@@ -61,18 +61,32 @@ test.describe('Login Flow (browser-based logout)', () => {
     await page.locator('text=Выйти').click();
 
     // Flow: window.location.href → backend /logout → 302 Keycloak logout
-    // Keycloak shows "Logging out" confirmation page
-    console.log('Step 5: Wait for Keycloak logout confirmation page');
+    //
+    // After T2309 (hybrid logout) the backend invalidates SSO server-side first.
+    // Keycloak may either:
+    //   A) Show the "Logging out" confirmation page (#kc-logout button visible)
+    //   B) Redirect immediately (SSO already dead in DB, no confirmation needed)
+    // The test must handle both cases.
+    console.log('Step 5: Wait for Keycloak logout page');
     await page.waitForURL('**://localhost:8081/realms/lkfl-sdek/protocol/openid-connect/logout**', {
       timeout: 15000,
     });
     console.log('  Keycloak logout page:', page.url());
 
-    // Click the "Log out" confirmation button on Keycloak page
-    console.log('Step 6: Click Keycloak "Log out" confirmation button');
-    await page.locator('#kc-logout').waitFor({ state: 'visible', timeout: 10000 });
-    await page.locator('#kc-logout').click();
-    console.log('  Keycloak logout confirmed ✅');
+    // Click confirmation button ONLY if visible (case A).
+    // If not visible within 3s, SSO was already invalidated server-side (case B)
+    // and Keycloak is redirecting automatically.
+    console.log('Step 6: Handle Keycloak confirmation page (if any)');
+    const kcLogoutBtn = page.locator('#kc-logout');
+    try {
+      await kcLogoutBtn.waitFor({ state: 'visible', timeout: 3000 });
+      await kcLogoutBtn.click();
+      console.log('  Keycloak confirmation page clicked (case A) ✅');
+    } catch {
+      // Button not visible — SSO already invalidated server-side,
+      // Keycloak redirects automatically without confirmation (case B)
+      console.log('  No confirmation page — SSO invalidated server-side (case B) ✅');
+    }
 
     // Keycloak redirects to post_logout_redirect_uri → http://localhost:5173/login
     await page.waitForURL('**://localhost:5173/**', { timeout: 15000 });

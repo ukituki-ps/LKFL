@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -188,12 +189,29 @@ func TestLogout(t *testing.T) {
 	if err != nil {
 		t.Fatalf("logout: %v", err)
 	}
-	body := testutil.ReadBody(resp)
-	t.Logf("Logout: status=%d body=%s", resp.StatusCode, body)
+	resp.Body.Close()
 
-	// Logout may return 302 redirect or 200 OK depending on implementation
-	if resp.StatusCode != http.StatusFound && resp.StatusCode != http.StatusOK {
-		t.Logf("Logout returned status %d (may vary)", resp.StatusCode)
+	// Must return 302 redirect to Keycloak logout endpoint
+	if resp.StatusCode != http.StatusFound {
+		t.Errorf("expected 302 redirect, got %d", resp.StatusCode)
+	}
+
+	location := resp.Header.Get("Location")
+	if location == "" {
+		t.Error("Logout response missing Location header")
+	} else {
+		// Location must point to Keycloak logout endpoint
+		if !strings.Contains(location, "protocol/openid-connect/logout") {
+			t.Errorf("Location header does not contain logout endpoint: %s", location)
+		}
+		// Must include post_logout_redirect_uri parameter
+		if !strings.Contains(location, "post_logout_redirect_uri=") {
+			t.Error("Location header missing post_logout_redirect_uri parameter")
+		}
+		// Must include client_id parameter
+		if !strings.Contains(location, "client_id=") {
+			t.Error("Location header missing client_id parameter")
+		}
 	}
 }
 
