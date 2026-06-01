@@ -798,13 +798,6 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	shhttp.WriteJSON(w, http.StatusOK, user.ToProfile())
 }
 
-// isAjaxRequest проверяет, является ли запрос AJAX.
-func isAjaxRequest(r *http.Request) bool {
-	return r.Header.Get("X-Requested-With") == "XMLHttpRequest" ||
-		strings.Contains(r.Header.Get("Accept"), "application/json") ||
-		r.Header.Get("Content-Type") == "application/json"
-}
-
 // ExtractSessionCookie — публичный алиас для extractSessionCookie.
 func ExtractSessionCookie(r *http.Request) string {
 	return sharedauth.ExtractSessionCookie(r)

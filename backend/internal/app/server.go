@@ -155,14 +155,14 @@ func NewServer(
 	// GET — browser-based logout: window.location.href = '/api/v1/auth/logout'
 	// Browser follows 302 redirect to Keycloak logout, which invalidates SSO.
 	authRouter.Get("/logout", authHandler.Logout)
-// /me — provisioning endpoint: requires JWT + tenant middleware.
-		// Added to authRouter so chi mount doesn't shadow it.
-		authRouter.With(
-			authHandler.SessionMiddleware(),
-			func(next http.Handler) http.Handler {
-				return tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics)(next)
-			},
-		).Get("/me", authHandler.Me)
+	// /me — provisioning endpoint: requires JWT + tenant middleware.
+	// Added to authRouter so chi mount doesn't shadow it.
+	authRouter.With(
+		authHandler.SessionMiddleware(),
+		func(next http.Handler) http.Handler {
+			return tenant.TenantMiddlewareWithService(tenantService, redis, appMetrics)(next)
+		},
+	).Get("/me", authHandler.Me)
 	r.Mount("/api/v1/auth", authRouter)
 
 	// ─── Employee routes (Session + tenant middleware) ───

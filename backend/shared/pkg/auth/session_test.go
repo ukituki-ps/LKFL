@@ -572,5 +572,3 @@ func TestSessionData_JSONRoundtrip(t *testing.T) {
 		t.Errorf("TenantID mismatch: %q vs %q", decoded.TenantID, data.TenantID)
 	}
 }
-
-

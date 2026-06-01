@@ -36,9 +36,9 @@ var ErrSessionNotFound = errors.New("session not found")
 
 // SessionData — данные серверной сессии.
 type SessionData struct {
-	UserID    string    // Keycloak sub
-	Email     string    // user email (needed for Keycloak Admin API lookup)
-	TenantID  string    // resolved from issuer
+	UserID    string // Keycloak sub
+	Email     string // user email (needed for Keycloak Admin API lookup)
+	TenantID  string // resolved from issuer
 	CreatedAt time.Time
 }
 

@@ -4,10 +4,10 @@
 // который обменивает refresh_token на новые токены через Keycloak token endpoint.
 //
 // Поток:
-//   1. POST /protocol/openid-connect/token с grant_type=refresh_token
-//   2. Извлечь новый access_token + refresh_token из ответа
-//   3. Сохранить в TokenStore
-//   4. Вернуть decoded claims из нового access_token
+//  1. POST /protocol/openid-connect/token с grant_type=refresh_token
+//  2. Извлечь новый access_token + refresh_token из ответа
+//  3. Сохранить в TokenStore
+//  4. Вернуть decoded claims из нового access_token
 package auth
 
 import (
