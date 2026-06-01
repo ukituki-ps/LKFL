@@ -368,8 +368,8 @@ jobs:
         run: |
           docker compose -f docker-compose.staging.yml --env-file /home/ukituki/LKFL-staging/.env.staging -p lkfl-staging down || \
             echo "No old staging services to stop"
-          # Kill any orphan container on ports we use (8086 frontend may have different project name)
-          for port in 8083 8084 8085 8086 8090 8091 8092 9092; do
+          # Kill orphan containers on all staging ports
+          for port in 8086 9092 13000 13100 15432 16379 18080 18090 18091 19081 19090; do
             CID=$(docker ps -q --filter "publish=$port" 2>/dev/null)
             if [ -n "$CID" ]; then
               echo "Stopping orphan container on port $port: $CID"
