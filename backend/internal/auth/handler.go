@@ -28,6 +28,13 @@ const protoHTTPS = "https"
 // sessionCookieName — имя httpOnly cookie для хранения сессионного токена.
 const sessionCookieName = "lkfl_session"
 
+// httpClient — общий HTTP-клиент с таймаутом для запросов к Keycloak.
+//
+// Используется в invalidateKeycloakSSO(), getAdminToken(), fetchAdmin().
+// Таймаут 10 секунд: достаточно для Admin REST API (lookup + delete sessions),
+// защищает от вечного зависания при недоступном Keycloak.
+var httpClient = &http.Client{Timeout: 10 * time.Second}
+
 // Handler — HTTP handlers для аутентификации.
 type Handler struct {
 	verifier       *oidc.IDTokenVerifier
@@ -520,9 +527,12 @@ func (h *Handler) resolvePostLogoutRedirect(r *http.Request) string {
 		}
 	}
 
-	// 2. Origin header
+	// 2. Origin header (validирован по allowlist)
 	if origin := r.Header.Get("Origin"); origin != "" {
-		return origin + "/login"
+		redirectURI := origin + "/login"
+		if isValidPostLogoutRedirect(redirectURI) {
+			return redirectURI
+		}
 	}
 
 	// 3. Referer header
@@ -610,7 +620,7 @@ func (h *Handler) invalidateKeycloakSSO(ctx context.Context, sessionData shareda
 							)
 							delReq, _ := http.NewRequestWithContext(ctx, http.MethodDelete, deleteURL, nil)
 							delReq.Header.Set("Authorization", "Bearer "+adminToken)
-							delResp, delErr := http.DefaultClient.Do(delReq)
+							delResp, delErr := httpClient.Do(delReq)
 							if delErr == nil {
 								_ = delResp.Body.Close()
 								if delResp.StatusCode == http.StatusOK || delResp.StatusCode == http.StatusNoContent {
@@ -629,8 +639,8 @@ func (h *Handler) invalidateKeycloakSSO(ctx context.Context, sessionData shareda
 	}
 
 	// === Попытка 2: Fallback — POST logout с access_token hint ===
-	accessToken, err := h.tokenStore.GetAccessToken(ctx, sessionData.UserID)
-	if err != nil {
+	accessToken, getErr := h.tokenStore.GetAccessToken(ctx, sessionData.UserID)
+	if getErr != nil {
 		slog.Debug("keycloak SSO invalidation skipped (both methods failed)",
 			"admin_api", "unavailable", "access_token", "not found")
 		return
@@ -651,7 +661,7 @@ func (h *Handler) invalidateKeycloakSSO(ctx context.Context, sessionData shareda
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		slog.Warn("failed to reach keycloak logout endpoint (fallback)", "error", err.Error())
 		return
@@ -659,7 +669,11 @@ func (h *Handler) invalidateKeycloakSSO(ctx context.Context, sessionData shareda
 	defer func() { _ = resp.Body.Close() }()
 	_, _ = io.ReadAll(resp.Body)
 
-	slog.Info("keycloak SSO invalidated via fallback logout", "status", resp.StatusCode)
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusFound {
+		slog.Info("keycloak SSO invalidated via fallback logout", "status", resp.StatusCode)
+	} else {
+		slog.Warn("keycloak fallback logout returned unexpected status", "status", resp.StatusCode)
+	}
 }
 
 // getAdminToken получает admin access token через client_credentials grant.
@@ -681,7 +695,7 @@ func (h *Handler) getAdminToken(ctx context.Context) (string, error) {
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("admin token request: %w", err)
 	}
@@ -715,7 +729,7 @@ func (h *Handler) fetchAdmin(ctx context.Context, adminToken string, apiURL stri
 	req.Header.Set("Authorization", "Bearer "+adminToken)
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return nil, err
 	}
