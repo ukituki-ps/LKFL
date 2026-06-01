@@ -226,7 +226,7 @@ func buildTestServer(db *pgxpool.Pool, redisClient *redis.Client) (*httptest.Ser
 	// Auth routes (public, no JWT)
 	r.Get("/api/v1/auth/login", authHandler.LoginRedirect)
 	r.Get("/api/v1/auth/callback", authHandler.LoginCallback)
-	r.Post("/api/v1/auth/logout", authHandler.Logout)
+	r.Get("/api/v1/auth/logout", authHandler.Logout)
 
 	// Employee routes (test JWT + tenant middleware)
 	r.Route("/api/v1/", func(r chi.Router) {
