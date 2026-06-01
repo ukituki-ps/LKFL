@@ -73,6 +73,7 @@ jobs:
           version: v1.64
           working-directory: backend
           args: --timeout=5m
+          skip-cache: true
 
       # ── Frontend ──
       - name: Setup Node.js
