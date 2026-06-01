@@ -466,9 +466,9 @@ func extractRealmSlug(issuer string) string {
 // Logout — гибридная инвалидация сессии.
 //
 // Поток:
-//   1. Server-side: Keycloak SSO invalidation (Admin REST API → fallback POST logout)
-//   2. Server-side: Redis cleanup (session + tokens)
-//   3. Browser-based: 302 → Keycloak logout → очистка KAUTH_SESSION_ID cookie
+//  1. Server-side: Keycloak SSO invalidation (Admin REST API → fallback POST logout)
+//  2. Server-side: Redis cleanup (session + tokens)
+//  3. Browser-based: 302 → Keycloak logout → очистка KAUTH_SESSION_ID cookie
 //
 // Шаг 1 вызывается ДО шага 2, потому что fallback POST logout
 // требует access_token из TokenStore.
@@ -515,10 +515,10 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 // resolvePostLogoutRedirect определяет URL для redirect после logout.
 //
 // Приоритет:
-//   1. Query param: ?post_logout_redirect_uri=...
-//   2. Origin header
-//   3. Referer header (parsed to origin)
-//   4. Default: http://localhost:5173/login
+//  1. Query param: ?post_logout_redirect_uri=...
+//  2. Origin header
+//  3. Referer header (parsed to origin)
+//  4. Default: http://localhost:5173/login
 func (h *Handler) resolvePostLogoutRedirect(r *http.Request) string {
 	// 1. Query param (validирован по allowlist)
 	if redirect := r.URL.Query().Get("post_logout_redirect_uri"); redirect != "" {
@@ -571,10 +571,10 @@ func (h *Handler) buildKeycloakLogoutURL(postLogoutRedirect string) string {
 // через Admin REST API.
 //
 // Поток:
-//   1. Получить admin token (client_credentials grant)
-//   2. Найти пользователя по email
-//   3. Найти его сессии
-//   4. Удалить все активные сессии
+//  1. Получить admin token (client_credentials grant)
+//  2. Найти пользователя по email
+//  3. Найти его сессии
+//  4. Удалить все активные сессии
 //
 // Fallback: POST /protocol/openid-connect/logout с access_token hint.
 func (h *Handler) invalidateKeycloakSSO(ctx context.Context, sessionData sharedauth.SessionData) {

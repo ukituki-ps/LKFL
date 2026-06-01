@@ -171,6 +171,17 @@ func ExtractSessionCookie(r *http.Request) string {
 	return cookie.Value
 }
 
+// clearSessionCookie удаляет session cookie.
+func clearSessionCookie(w http.ResponseWriter, _ *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     sessionCookieName,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+	})
+}
+
 // decodeAccessToken парсит access token Keycloak (JWT) и извлекает payload + roles.
 //
 // Используется только в тестах (не для продакшн-валидации — используйте ExtractClaims).
@@ -199,7 +210,7 @@ func decodeAccessToken(rawToken string) (map[string]interface{}, []string, error
 // Поддерживает realm_access (access token) и resource_access (ID token).
 func extractKeycloakRolesFromClaims(raw map[string]interface{}) []string {
 	roles := []string{}
-	
+
 	// realm_access (access token): {"roles": ["admin", "employee"]}
 	if ra, ok := raw["realm_access"].(map[string]interface{}); ok {
 		if roleList, ok := ra["roles"].([]interface{}); ok {
@@ -210,7 +221,7 @@ func extractKeycloakRolesFromClaims(raw map[string]interface{}) []string {
 			}
 		}
 	}
-	
+
 	// resource_access (ID token): {"clientID": {"roles": ["admin"]}}
 	if ra, ok := raw["resource_access"].(map[string]interface{}); ok {
 		for _, v := range ra {
@@ -225,6 +236,7 @@ func extractKeycloakRolesFromClaims(raw map[string]interface{}) []string {
 			}
 		}
 	}
+
 	return roles
 }
 
@@ -246,7 +258,7 @@ func isTokenExpired(claims map[string]interface{}) bool {
 // Claims используется только в тестах (для проверки roundtrip).
 func buildClaims(rawClaims map[string]interface{}, sd SessionData) Claims {
 	claims := Claims{
-		Subject: sd.UserID,
+		Subject:  sd.UserID,
 		TenantID: sd.TenantID,
 	}
 	if email, ok := rawClaims["email"].(string); ok {
@@ -268,28 +280,4 @@ func buildClaims(rawClaims map[string]interface{}, sd SessionData) Claims {
 		claims.Issuer = iss
 	}
 	return claims
-}
-
-// decodeBase64URL декодирует base64url (без padding).
-func decodeBase64URL(s string) ([]byte, error) {
-	switch len(s) % 4 {
-	case 2:
-		s += "=="
-	case 3:
-		s += "="
-	}
-	s = strings.ReplaceAll(s, "-", "+")
-	s = strings.ReplaceAll(s, "_", "/")
-	return base64.StdEncoding.DecodeString(s)
-}
-
-// clearSessionCookie удаляет session cookie.
-func clearSessionCookie(w http.ResponseWriter, r *http.Request) {
-	http.SetCookie(w, &http.Cookie{
-		Name:     sessionCookieName,
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		MaxAge:   -1,
-	})
 }
