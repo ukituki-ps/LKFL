@@ -196,8 +196,22 @@ func decodeAccessToken(rawToken string) (map[string]interface{}, []string, error
 }
 
 // extractKeycloakRolesFromClaims извлекает Keycloak роли из raw claims.
+// Поддерживает realm_access (access token) и resource_access (ID token).
 func extractKeycloakRolesFromClaims(raw map[string]interface{}) []string {
 	roles := []string{}
+	
+	// realm_access (access token): {"roles": ["admin", "employee"]}
+	if ra, ok := raw["realm_access"].(map[string]interface{}); ok {
+		if roleList, ok := ra["roles"].([]interface{}); ok {
+			for _, r := range roleList {
+				if role, ok := r.(string); ok {
+					roles = append(roles, role)
+				}
+			}
+		}
+	}
+	
+	// resource_access (ID token): {"clientID": {"roles": ["admin"]}}
 	if ra, ok := raw["resource_access"].(map[string]interface{}); ok {
 		for _, v := range ra {
 			if roleMap, ok := v.(map[string]interface{}); ok {
