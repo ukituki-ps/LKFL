@@ -335,7 +335,8 @@ jobs:
         run: |
           export IMAGE_TAG="${{ steps.tag.outputs.tag }}"
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
-          docker compose -f docker-compose.staging.yml --env-file /home/ukituki/LKFL-staging/.env.staging -p lkfl-staging pull --ignore-buildable
+          # Pull только наши образы из GHCR (keycloak/postgres/redis — pull_policy: missing, уже на сервере)
+          docker compose -f docker-compose.staging.yml --env-file /home/ukituki/LKFL-staging/.env.staging -p lkfl-staging pull --ignore-buildable lkfl-server lkfl-integration-proxy lkfl-frontend lkfl-deploy-worker
 
       - name: Run migrations (retry 3x)
         working-directory: /home/ukituki/LKFL-staging
