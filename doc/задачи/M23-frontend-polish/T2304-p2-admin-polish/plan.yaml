@@ -1,0 +1,46 @@
+# T2304 — P2 Fixes + Admin Polish
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Documents
+
+- [x] Heading: «Документы» + подзаголовок
+- [x] Download button: как в прототипе
+- [x] Table header: uppercase, letter-spacing 0.5px
+
+### Support
+
+- [x] Layout: 1fr 380px
+- [x] FAQ: кастомный accordion с chevron rotate
+- [x] Success state: как в прототипе
+
+### Admin HR
+
+- [x] Таблица пользователей (mock)
+- [x] Периоды начислений (mock)
+
+### Admin Catalog
+
+- [x] Список карточек (mock)
+- [x] Форма добавления/редактирования
+
+### Admin Content
+
+- [x] FAQ: список вопросов/ответов (mock)
+- [x] Баннеры: stub
+
+### Валидация
+
+- [x] tsc --noEmit ✅
+- [x] npm run build ✅
+- [x] Визуальная проверка
+
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2301]

@@ -1,0 +1,44 @@
+/* Brand default — April teal (white-label neutral)
+ *
+ * Загружается ПЕРЕД login.css в theme.properties.
+ * Определяет 18 токенов --brand-* для white-label персонализации.
+ * Совпадает с @ukituki-ps/april-tokens.
+ */
+:root {
+  /* Primary */
+  --brand-primary: #12b886;
+  --brand-primary-hover: #0ca678;
+  --brand-primary-active: #099268;
+
+  /* Background */
+  --brand-bg: #ffffff;
+  --brand-bg-alt: #f8f9fa;
+
+  /* Border */
+  --brand-border: #EBEBEB;
+  --brand-border-input: #dee2e6;
+
+  /* Text */
+  --brand-text: #212529;
+  --brand-text-muted: #868e96;
+  --brand-text-subtle: #9CA3AF;
+
+  /* Radius */
+  --brand-radius-card: 14px;
+  --brand-radius-btn: 6px;
+  --brand-radius-input: 6px;
+
+  /* Shadow */
+  --brand-shadow-card: 0 1px 4px rgba(0, 0, 0, 0.06);
+
+  /* Semantic */
+  --brand-danger: #fa5252;
+  --brand-warning: #fd7e14;
+  --brand-success: #40c057;
+
+  /* Primary light */
+  --brand-primary-light: #c3fae8;
+
+  /* Font */
+  --brand-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}

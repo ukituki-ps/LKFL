@@ -1,0 +1,59 @@
+# T2305 — Catalog Visual Polish
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Filter pills
+
+- [x] borderRadius: 20px
+- [x] border: 1.5px solid
+- [x] Active: green bg + white text
+- [x] Inactive: card bg + muted text
+- [x] fontSize: 12px, fontWeight: 600, padding: 6px 14px
+
+### Search box
+
+- [x] border: 1.5px solid var(--brand-border)
+- [x] borderRadius: 8px
+- [x] padding: 8px 14px
+- [x] Icon search слева
+
+### Grid
+
+- [x] grid-template-columns: repeat(3, 1fr)
+- [x] gap: 14px
+
+### Card hover
+
+- [x] transition: transform 0.15s, box-shadow 0.15s
+- [x] Hover: translateY(-2px), shadow
+
+### Card layout
+
+- [x] Icon: 44×44, borderRadius 12
+- [x] Name: 14px, fontWeight 700
+- [x] Provider: 11px, text-subtle
+- [x] Desc: 12px, text-muted, line-height 1.5
+- [x] Footer: border-top
+
+### Badge colors
+
+- [x] green: #DCFCE7 / #166534
+- [x] yellow: #FEF9C3 / #854D0E
+- [x] gray: #F3F4F6 / #4B5563
+- [x] blue: #DBEAFE / #1D4ED8
+
+### Валидация
+
+- [x] tsc --noEmit ✅
+- [x] npm run build ✅
+- [x] Визуальная проверка каталога
+
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2301]

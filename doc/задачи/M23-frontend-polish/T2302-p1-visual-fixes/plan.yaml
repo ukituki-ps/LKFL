@@ -1,0 +1,49 @@
+# T2302 — P1 Visual Fixes
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Stat cards
+
+- [x] Grid 3 колонки вместо flex Group
+- [x] gap 12px
+- [x] Убрать flex: 1, minWidth
+
+### Active benefits
+
+- [x] Ссылка «Весь каталог» → navigate('/catalog')
+
+### Quick actions
+
+- [x] Белый квадрат иконки 32×32
+- [x] box-shadow: 0 1px 3px
+
+### Bell icon
+
+- [x] border: 1px solid var(--brand-border)
+
+### Page headings
+
+- [x] Dashboard: h1 24px/800
+- [x] Points/Documents/Support: h1 + p подзаголовок
+
+### Benefit rows
+
+- [x] Icon 38×38, borderRadius 10
+- [x] Badge справа (active/awaiting)
+- [x] Hover green-light
+
+### Валидация
+
+- [x] tsc --noEmit ✅
+- [x] npm run build ✅
+- [ ] Визуальная проверка
+
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2301]

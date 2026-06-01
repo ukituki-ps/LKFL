@@ -1,0 +1,58 @@
+# T2301 — P0 Critical Fixes
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### StubBadge
+
+- [x] Удалить StubBadge из Dashboard.tsx
+- [x] Удалить StubBadge из Points.tsx
+- [x] Удалить StubBadge из Documents.tsx
+- [x] Удалить StubBadge из Support.tsx
+- [x] Удалить компонент StubBadge.tsx если не используется
+
+### Avatar
+
+- [x] UserMenu.tsx: radius="xl" → circle (border-radius: 50%)
+
+### Transaction filters
+
+- [x] Заменить SegmentedControl на custom pills
+- [x] border-radius: 20px, border: 1.5px solid
+- [x] Active state: black bg + white text
+
+### Transaction rows
+
+- [x] Добавить tx-icon 36×36 (plus/minus)
+- [x] Сuffix «б» к сумме
+- [x] Layout: flex, gap 12px, padding 13px 18px
+
+### Logout
+
+- [x] RequireAuth.tsx: redirect на /login после logout
+- [x] authStore.logout: clearAuth + redirect
+
+### Support form
+
+- [x] Удалить поле «Заголовок»
+- [x] Кнопка uppercase «ОТПРАВИТЬ»
+- [x] Placeholder textarea: «Опишите ваш вопрос подробно...»
+
+### FAQ
+
+- [x] Заменить mockFaq на 6 вопросов из прототипа
+
+### Валидация
+
+- [x] tsc --noEmit ✅
+- [x] npm run build ✅
+- [x] Визуальная проверка всех страниц
+
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: []

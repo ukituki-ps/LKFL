@@ -1,0 +1,47 @@
+# T1714 — Staging CI/CD: миграции, realm JSON, schema fix
+
+## Прогресс
+
+0%
+
+## Checklist
+
+### Фаза 1: Миграция user_roles
+
+- [ ] Создать `migrations/20260531090001_user_roles_columns.sql`
+- [ ] Добавить `granted_at`, `granted_by`, `expires_at` в user_roles
+- [ ] Коммит + push
+
+### Фаза 2: CI/CD migrations job
+
+- [ ] Добавить job `run-migrations` в `.github/workflows/build.yml`
+- [ ] Коммит + push
+
+### Фаза 3: Realm JSON volume mount
+
+- [ ] Добавить volume mount для realm-lkfl-sdek.json в `docker-compose.staging.yml`
+- [ ] Коммит + push
+
+### Фаза 4: Keycloak hostname URL
+
+- [ ] Добавить `KC_HOSTNAME_URL` в Keycloak service compose
+- [ ] Коммит + push
+
+### Фаза 5: Schema health check
+
+- [ ] Добавить step в CI/CD для проверки схемы
+- [ ] Коммит + push
+
+### Фаза 6: E2E валидация
+
+- [ ] Push на main → CI/CD → staging deploy
+- [ ] Проверить: миграции применены
+- [ ] Проверить: realm JSON обновлён
+- [ ] Проверить: Keycloak issuer правильный
+- [ ] E2E: login → /me → 200 OK
+
+- [ ] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T1711]

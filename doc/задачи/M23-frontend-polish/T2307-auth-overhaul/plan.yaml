@@ -1,0 +1,187 @@
+# T2307 — Ревизия системы аутентификации
+
+## Прогресс
+
+100%
+
+## Checklist
+
+### Фаза 1: Backend — Session Layer
+
+#### Шаг 1: SessionStore
+
+- [x] Создать `shared/pkg/auth/session.go`
+- [x] `SessionStore` struct + constructor
+- [x] `Create()` — генерация session token (crypto/rand 32 bytes), запись в Redis
+- [x] `Get()` — чтение из Redis, десериализация SessionData
+- [x] `Delete()` — удаление по token
+- [x] `DeleteByUserID()` — поиск и удаление по user_sub (для logout всех сессий)
+- [x] Redis key prefix: `lkfl:sess:`
+- [x] TTL: 24 часа (настраиваемый через config)
+- [x] Unit-тесты: create, get, delete, expired, not found
+
+#### Шаг 2: TokenStore
+
+- [x] Создать `shared/pkg/auth/tokenstore.go`
+- [x] `TokenStore` struct + constructor
+- [x] `SaveTokens()` — запись access_token + refresh_token в Redis
+- [x] `GetAccessToken()` — чтение access_token
+- [x] `GetRefreshToken()` — чтение refresh_token
+- [x] `Delete()` — удаление обоих токенов
+- [x] Redis key prefix: `lkfl:kc:`
+- [x] TTL: access_token — 15 мин, refresh_token — 7 дней
+- [x] Unit-тесты: save, get, delete, expired
+
+#### Шаг 3: Рефакторинг JWTMiddleware
+
+- [x] Заменить `extractToken()` (Bearer/cookie ID Token) на `ExtractSessionCookie()`
+- [x] Session lookup → Redis `lkfl:sess:{token}`
+- [x] Token lookup → Redis `lkfl:kc:token:{sub}`
+- [x] Decode access_token payload → claims (без верификации подписи — токен наш)
+- [x] Expiration check + server-side refresh branch
+- [x] Tenant ID validation → 403 если пусто
+- [x] Claims + roles → context
+- [x] Удалить `oidc.IDTokenVerifier` из middleware (не нужен)
+
+#### Шаг 4: TokenRefresher
+
+- [x] Создать `shared/pkg/auth/refresher.go`
+- [x] `TokenRefresher` struct: issuer, clientID, clientSecret, tokenStore
+- [x] `Refresh()` — POST /protocol/openid-connect/token с refresh_token grant
+- [x] Сохранить новые токены в TokenStore
+- [x] Return decoded claims из нового access_token
+- [x] Error handling: refresh_token expired → return error (middleware → 401)
+- [x] Unit-тесты: success refresh, expired refresh, network error
+
+#### Шаг 5: Рефакторинг LoginCallback
+
+- [x] Сохранять refresh_token в TokenStore (сейчас только ID Token в Redis)
+- [x] Генерировать server_session token → SessionStore.Create()
+- [x] Set-Cookie: lkfl_session = session_token (не ID Token)
+- [x] Ответ body: `{ user, roles }` — убрать `"token"` поле
+- [x] Cookie params: SameSite=None, Secure=true, HttpOnly=true, MaxAge=86400
+
+#### Шаг 6: Рефакторинг Logout
+
+- [x] Извлечь session_token из cookie
+- [x] SessionStore.Delete(session_token)
+- [x] TokenStore.Delete(user_sub) — удалить kc tokens
+- [x] invalidateKeycloakSSO() — POST logout endpoint с access_token hint (fallback)
+- [x] Set-Cookie: lkfl_session="" MaxAge=-1 (удаление)
+- [x] Ответ: 200 { ok: true } для AJAX
+
+### Фаза 2: Backend — Error format + Tenant validation
+
+#### Шаг 7: Формат ошибок
+
+- [x] Создать `AuthErrorResponse` struct: code, message, metadata
+- [x] `WriteAuthError()` → JSON с request ID из context
+- [x] Заменить все вызовы `WriteAuthError(w, status, message)` на новый формат
+- [x] Файлы: `shared/pkg/auth/errors.go`, `shared/pkg/auth/middleware.go`, `shared/pkg/auth/rbac.go`
+
+#### Шаг 8: Tenant ID validation
+
+- [x] В middleware: после claims extraction → проверить TenantID != ""
+- [x] Если пусто → 403 `{"code":"tenant_required","message":"..."}`
+- [x] Unit-тест: JWT без tenant_id → 403
+
+#### Шаг 9: Open redirect защита
+
+- [x] `isValidPostLogoutRedirect()` — allowlist проверка
+- [x] Config: `POST_LOGOUT_REDIRECT_WHITELIST` env var (comma-separated origins)
+- [x] В Logout handler: проверка redirect URI перед использованием
+
+### Фаза 3: Frontend
+
+#### Шаг 10: authStore рефакторинг
+
+- [x] Убрать `token: string | null` из `AuthState`
+- [x] `setAuth(token, user, roles)` → `setAuth(user, roles)`
+- [x] `setAuth()`: убрать запись token в store
+- [x] `clearAuth()`: убрать очистку token
+- [x] `logout()`: без изменений (AJAX POST + clearAuth + redirect)
+- [x] `restoreAuth()`: убрать token restoration
+- [x] Обновить `setupAuthForTest()` — без token параметра
+- [x] Обновить все unit-тесты (`authStore.test.ts`)
+
+#### Шаг 11: api/client.ts
+
+- [x] 401 handler: clearAuth() → window.location.href = '/login' (без изменений)
+- [x] Обновить client.test.ts — убрать token-связанные проверки
+
+#### Шаг 12: Callback.tsx
+
+- [x] Убрать проверку `if (!token)` из response
+- [x] `setAuth(data.user, data.roles ?? [])` — без token
+- [x] Убрать `const token = data.token`
+- [x] Обновить TypeScript типы: убрать `token` из `CallbackResponse`
+
+### Фаза 4: Cookie configuration
+
+#### Шаг 13: Cookie params
+
+- [x] SameSite: `http.SameSiteNoneMode` (для production с HTTPS)
+- [x] Secure: `true` (в production), зависит от HTTPS
+- [x] HttpOnly: `true` (уже есть)
+- [x] MaxAge: 86400 (24 часа)
+- [x] Domain: `os.Getenv("COOKIE_DOMAIN")` (пусто для localhost, `.lkfl.ru` для prod)
+
+### Фаза 5: Тестирование
+
+#### Шаг 14: Unit-тесты
+
+- [x] SessionStore: Create, Get, Delete, DeleteByUserID, Uniqueness
+- [x] TokenStore: SaveTokens, GetAccessToken, GetRefreshToken, Delete, NotFound
+- [x] TokenRefresher: Success refresh, expired refresh, network error, missing token
+- [x] SessionMiddleware: Valid session, invalid session, expired session, missing tenant ID
+- [x] WriteAuthError: новый формат с code/message/metadata
+- [x] RBAC: обновлённые тесты для нового формата ошибок
+- [x] JWT decode helpers: decodeAccessToken, isTokenExpired
+- [x] ExtractSessionCookie: present, missing, empty value
+- [x] Frontend: authStore.test.ts, client.test.ts, RequireAuth.test.tsx
+
+#### Шаг 15: E2E тесты (Playwright)
+
+- [ ] Пропущено — требуют запускаемого Keycloak
+
+## Порядок выполнения
+
+1. **Фаза 1** (шаги 1-6) — Backend session layer — ✅
+2. **Фаза 2** (шаги 7-9) — Error format + validation — ✅
+3. **Фаза 3** (шаги 10-12) — Frontend рефакторинг — ✅
+4. **Фаза 4** (шаг 13) — Cookie configuration — ✅
+5. **Фаза 5** (шаг 14) — Unit-тесты — ✅ (шаг 15 пропущен)
+
+## Результаты проверки
+
+| Проверка | Результат |
+|----------|-----------|
+| `go build ./...` | ✅ OK |
+| `go test ./shared/pkg/auth/...` | ✅ OK (99 тестов) |
+| `go test ./internal/auth/...` | ✅ OK (7 тестов) |
+| `tsc --noEmit` | ✅ OK |
+| `npm test -- --run` | ✅ OK (111 passed) |
+| `npm run build` | ✅ OK |
+
+## Дополнительные изменения (R-042 + R-043)
+
+| Риск | Статус | Что сделано |
+|------|--------|-------------|
+| **R-042** Keycloak SSO инвалидация | 🟢 Смитигирован | Admin REST API path (client_credentials → find user by email → delete sessions) + fallback POST logout |
+| **R-043** SameSite cookie в dev | ✅ Закрыт | Lax fallback для localhost, None только при `isSecure=true`, startup log `LogStartupWarnings()` |
+| **R-029** Session idle timeout | 🟡 Мониторинг | Absolute timeout 24h реализован; idle timeout 30min — отложен |
+
+## Изменённые файлы
+
+| Файл | Изменение |
+|------|-----------|
+| `shared/pkg/auth/session.go` | `SessionData.Email` — добавлено для Admin API lookup |
+| `shared/pkg/auth/middleware.go` | Без изменений (session-based auth) |
+| `shared/pkg/auth/tokenstore.go` | Без изменений |
+| `shared/pkg/auth/refresher.go` | Без изменений |
+| `internal/auth/handler.go` | `invalidateKeycloakSSO()` — Admin REST API + fallback; `LogStartupWarnings()`; cookie Lax/None fix |
+| `internal/app/config.go` | `CookieDomain` поле в `Config` struct |
+| `internal/app/wire.go` | `LogStartupWarnings()` вызов при старте |
+| `doc/архитектура/риски.md` | R-041, R-042, R-043 добавлены; git-конфликт разрешён |
+| `doc/архитектура/adr/README.md` | Git-конфликт разрешён |
+| `AGENTS.md` | Git-конфликт разрешён (статус задач) |

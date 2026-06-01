@@ -1,0 +1,46 @@
+# T2303 — API Mocks Layer
+
+## Прогресс
+
+80% (API слой готов, интеграция компонентов — follow-up)
+
+## Checklist
+
+### Mock data
+
+- [x] mocks.ts: dashboard stats, benefits, events
+- [x] mocks.ts: points balance, transactions
+- [x] mocks.ts: documents list
+- [x] mocks.ts: FAQ (6 вопросов из прототипа), support submit
+
+### API functions
+
+- [x] api/dashboard.ts — интерфейсы + getDashboardStats, getActiveBenefits, getEvents
+- [x] api/points.ts — интерфейсы + getPointsBalance, getTransactions
+- [x] api/documents.ts — интерфейсы + getDocuments
+- [x] api/support.ts — интерфейсы + getFaq, postSupportTicket
+
+### Компоненты
+
+- [ ] Dashboard.tsx → useQuery
+- [ ] Points.tsx → useQuery
+- [ ] Documents.tsx → useQuery
+- [ ] Support.tsx → useQuery + useMutation
+
+### Переключение
+
+- [x] VITE_USE_MOCKS=true → mock, false → real API
+- [x] .env.dev: VITE_USE_MOCKS=true
+
+### Валидация
+
+- [x] tsc --noEmit ✅
+- [x] npm run build ✅
+- [ ] Все страницы работают с mock
+- [ ] Все страницы работают с реальным API (доступные эндпоинты)
+
+- [x] Заполнить report.md
+
+## Зависимости
+
+depends_on: [T2301]

@@ -1,0 +1,176 @@
+# T1708 — CI/CD Foundation: production-grade pipeline
+# Чеклист реализации
+
+## Секция 1: Удаление устаревших workflow
+
+- [ ] Удалить `.github/workflows/ci.yml`
+- [ ] Удалить `.github/workflows/cd.yml`
+- [ ] Удалить `.github/workflows/deploy.yml`
+- [ ] Убедиться что `build.yml` покрывает весь функционал
+
+## Секция 2: `build.yml` — единый pipeline (5 job'ов)
+
+### Job 1: lint-test (lkfl runner на serverAi)
+- [ ] `runs-on: lkfl`
+- [ ] Go: mod tidy, vet, test -race, golangci-lint
+- [ ] Frontend: npm ci, eslint, tsc --noEmit, vitest run
+- [ ] OpenAPI: redocly lint (continue-on-error: true)
+- [ ] Config validation: KEYCLOAK_PUBLIC_URL + KC_HOSTNAME
+- [ ] NPM registry auth для @ukituki-ps
+
+### Job 2: build-push (lkfl runner на serverAi)
+- [ ] `runs-on: lkfl`
+- [ ] `docker/setup-buildx-action`
+- [ ] `docker/login-action` с `secrets.GHCR_PAT` (PAT с write:packages)
+- [ ] Matrix: `[server, proxy, frontend, deploy-worker]`
+- [ ] `max-parallel: 2`, `fail-fast: false`
+- [ ] Tag: `{branch}-{sha7}` + `{service}:main-latest` (только main)
+- [ ] Registry: `ghcr.io/ukituki-ps/lkfl/{service}`
+- [ ] Frontend: `NPM_TOKEN=${{ github.token }}`
+
+### Job 3: deploy-staging (lkfl runner на serverAi)
+- [ ] `runs-on: lkfl`, `needs: [build-push]`
+- [ ] `if: github.ref == 'refs/heads/main' && github.event_name == 'push'`
+- [ ] Checkout → sync compose + env на serverAi
+- [ ] `docker compose -f docker-compose.staging.yml -p lkfl-staging pull`
+- [ ] `docker compose run --rm lkfl-migrate` (retry 3x)
+- [ ] `docker compose run --rm lkfl-seed`
+- [ ] `docker compose up -d`
+- [ ] Health check polling: server, frontend, keycloak (5x, 15s)
+- [ ] `docker image prune -f`
+
+### Job 4: smoke-test-staging (lkfl runner на serverAi)
+- [ ] `runs-on: lkfl`, `needs: [deploy-staging]`
+- [ ] `if: github.ref == 'refs/heads/main' && github.event_name == 'push'`
+- [ ] Checkout `infra/smoke-test.sh`
+- [ ] Retry polling: 5x, 10s interval
+- [ ] `infra/smoke-test.sh https://dev.april.ukituki.tech`
+- [ ] Прямой LAN доступ к serverPr01 (192.168.1.46) — нет задержки интернета
+
+### Job 5: deploy-production (lkfl runner на serverAi)
+- [ ] `runs-on: lkfl`, `needs: [smoke-test-staging]`
+- [ ] `if: github.event_name == 'workflow_dispatch'`
+- [ ] Checkout → sync compose + env prod
+- [ ] `docker compose -f docker-compose.prod.yml -p lkfl-prod pull`
+- [ ] `docker compose run --rm lkfl-migrate` (retry 3x)
+- [ ] `docker compose run --rm lkfl-seed`
+- [ ] `docker compose up -d`
+- [ ] Health check polling
+
+## Секция 3: `cmd/deploy-worker` — доработка существующего
+
+### Фактическая структура (5 файлов)
+- [ ] `main.go` — HTTP server :9092, 14 routes, graceful shutdown ✅
+- [ ] `handler.go` — 7 endpoints + auth + helpers ✅ (+ добавить GET /history)
+- [ ] `deployer.go` — Docker compose orchestrator (pull→migrate→seed→up→health) ✅
+- [ ] `config.go` — Config из env vars (6 params) ✅
+- [ ] `state.go` — Thread-safe state + mutex concurrency lock ✅ (+ DeployHistory)
+
+### Delta — что добавить
+- [ ] `handler.go` — `GET /history` endpoint (список деплоев)
+- [ ] `state.go` — `DeployHistory` slice, min 10 записей, auto-save при success
+
+### Endpoints (фактические)
+- [ ] `POST /deploy-webhook/deploy` — webhook handler ✅
+- [ ] `POST /deploy-webhook/deploy/pr` — PR preview ✅
+- [ ] `POST /deploy-webhook/rollback` — откат к предыдущему ✅
+- [ ] `GET /deploy-webhook/status` — текущий статус ✅
+- [ ] `GET /deploy-webhook/logs` — логи последнего деплоя ✅
+- [ ] `GET /deploy-webhook/healthz` — health check ✅
+- [ ] `GET /history` — история деплоев ❌ (добавить)
+
+### Функциональность
+- [ ] Concurrency lock: in-memory `sync.Mutex` ✅
+- [ ] 409 Conflict при параллельном deploy ✅
+- [ ] Deploy логика: pull → migrate → seed → up → health ✅
+- [ ] History storage (in-memory, min 10 entries) ❌ (добавить)
+- [ ] Rollback: restore previous image tag ✅
+- [ ] PreviousTag файл (`.deploy-previous-tag`) ✅
+- [ ] `go build ./cmd/deploy-worker/` — OK ✅
+
+## Секция 4: `docker-compose.prod.yml` — production-grade
+
+- [ ] Все сервисы с resource limits
+- [ ] Restart policies: `unless-stopped`
+- [ ] Health checks со start_period
+- [ ] Logging: json-file, max-size 10m, max-file 5
+- [ ] Networks: backend (internal) + frontend
+- [ ] `KEYCLOAK_PUBLIC_URL` в lkfl-server
+- [ ] `lkfl-deploy-worker` service с Docker socket
+- [ ] Persistent volumes для postgres, redis
+- [ ] Monitoring: prometheus, grafana, loki, promtail (profile: monitoring)
+- [ ] `lkfl-migrate` и `lkfl-seed` one-shot services
+
+## Секция 5: `docker-compose.staging.yml` — sync
+
+- [ ] `lkfl-deploy-worker` service корректен
+- [ ] Все сервисы с health checks
+- [ ] Monitoring profile
+- [ ] Resource limits для всех сервисов
+
+## Секция 6: Nginx setup
+
+### serverAi (192.168.1.27)
+- [ ] `infra/nginx/serverAi.conf` — nginx на 18000
+- [ ] Proxy rules: api, frontend, keycloak, health
+- [ ] `infra/scripts/setup-nginx-serverAi.sh` — setup script
+- [ ] Deploy на serverAi
+
+### serverPr01 (192.168.1.46)
+- [ ] `infra/nginx/serverPr01-internal.conf` — nginx на 18000 → serverAi:18000
+- [ ] `infra/scripts/setup-nginx-serverPr01.sh` — setup script
+- [ ] Deploy на serverPr01
+
+### Master script
+- [ ] `infra/scripts/setup-all.sh` — sequential setup обоих серверов
+
+## Секция 7: `.env` файлы на serverAi
+
+### `.env.staging` (переделать из weak passwords)
+- [ ] `POSTGRES_PASSWORD` = из `/home/ukituki/lkfl/.env`
+- [ ] `REDIS_PASSWORD` = из `/home/ukituki/lkfl/.env`
+- [ ] `KEYCLOAK_ADMIN` = kcadmin
+- [ ] `KEYCLOAK_ADMIN_PASSWORD` = из `/home/ukituki/lkfl/.env`
+- [ ] `JWT_SECRET` = из `/home/ukituki/lkfl/.env`
+- [ ] `DEPLOY_TOKEN` = сгенерировать (64-char hex)
+- [ ] `IMAGE_TAG=main-latest`
+- [ ] `GHCR_REGISTRY=ghcr.io/ukituki-ps/lkfl`
+- [ ] `KEYCLOAK_PUBLIC_URL=https://dev.april.ukituki.tech/realms/lkfl-sdek`
+- [ ] `KEYCLOAK_CLIENT_SECRET` = сгенерировать
+
+### `.env.prod` (создать)
+- [ ] Аналогично staging
+- [ ] Production URL (не staging)
+- [ ] Production секреты
+
+## Секция 9: `infra/smoke-test.sh` — улучшение
+
+- [ ] Retry polling logic (не `sleep 90`)
+- [ ] 5 attempts, 10s interval
+- [ ] Exit code handling
+- [ ] Color output для CI
+- [ ] Все 6 чекпоинтов
+
+---
+
+## Порядок выполнения
+
+1. Секция 3 — `cmd/deploy-worker` (Go код, нужен для Dockerfile)
+2. Секция 4 — `docker-compose.prod.yml` (production-grade)
+3. Секция 7 — `.env.staging` + `.env.prod` на serverAi
+4. Секция 6 — Nginx setup scripts + deploy
+5. Секция 2 — `build.yml` (единый pipeline, 5 job'ов, все на lkfl)
+6. Секция 9 — Улучшение smoke-test.sh
+7. Секция 1 — Удаление ci.yml, cd.yml, deploy.yml
+8. Тест — push на main → полный pipeline
+
+## Метрики успеха
+
+- `gh workflow run build.yml` на PR → Job 1 PASS
+- Push на main → Job 1+2+3+4 PASS → staging доступен
+- `workflow_dispatch` → Job 5 PASS → production доступен
+- `https://dev.april.ukituki.tech/healthz` → 200
+- Frontend загружается
+- API работает (401 without token)
+- Deploy-worker: все 5 endpoints работают
+- Concurrency lock: 409 при параллельном deploy
