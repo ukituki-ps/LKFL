@@ -1,0 +1,57 @@
+# T2310 — CI/CD Pipeline Optimization
+
+## Прогресс
+
+100% — все рекомендации реализованы
+
+## Checklist
+
+### R1: Go cache (критический — экономия ~9m)
+
+- [x] Добавлен step `Init Go cache directory` — создаёт директории при каждом запуске
+- [x] Отключить GitHub cache API: `cache: false` в `actions/setup-go@v5`
+- [x] Установить `GOMODCACHE=/home/runner/go-cache/mod` и `GOCACHE=/home/runner/go-cache/build` в workflow env
+- [ ] Проверить что `go mod download` использует local cache (требует запуска pipeline)
+- [ ] Проверить что `Post Setup Go` не очищает кэш (требует запуска pipeline)
+
+### R2: Docker build cache (экономия 1-2m)
+
+- [x] Добавить `cache-from: type=registry,ref=...buildcache` в build-push-action
+- [x] Добавить `cache-to: type=registry,ref=...buildcache,mode=max` в build-push-action
+- [x] Перейти на `driver: docker-container` (поддержка registry cache)
+- [x] buildcache образ не публикуется как production tag (отдельный tag `:buildcache`)
+- [ ] Тестировать на 2 последовательных push — второй должен быть быстрее (требует запуска pipeline)
+
+### R3: golangci-lint cache (экономия 10-20s)
+
+- [x] `skip-cache: true` → `skip-cache: false`
+- [x] Добавить `skip-pull-check: true` (не проверять обновления бинарника)
+- [ ] Проверить что cache dir доступен на self-hosted runner (требует запуска pipeline)
+
+### R4: E2E Staging — polling вместо sleep 30 (экономия 20s)
+
+- [x] Заменить `sleep 30` на loop polling OIDC discovery endpoint
+- [x] Интервал polling — 3s, max attempts — 20 (60s)
+- [x] URL: `https://dev.april.ukituki.tech/realms/lkfl-sdek/.well-known/openid-configuration`
+
+### R5: Node.js 24 migration
+
+- [x] Добавить `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` в workflow env
+- [ ] Проверить совместимость всех action'ов (требует запуска pipeline)
+
+### Бонус: npm cache fix
+
+- [x] Все три job'а: `actions/setup-node@v4` → `cache: false`
+- [x] `~/.npm` сохраняется на persistent filesystem self-hosted runner
+
+### Валидация
+
+- [ ] Запустить pipeline 3 раза на feature-ветке (не main) — измерить время
+- [ ] Среднее время < 15 минут
+- [ ] Первый запуск (cold cache) < 20 минут (допустимо медленнее — cache разогреется)
+- [ ] Push на main — полный pipeline до deploy staging + smoke test
+- [ ] Проверить GHCR — buildcache образы не дублируют production
+
+## Зависимости
+
+depends_on: []

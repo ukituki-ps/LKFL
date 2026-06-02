@@ -31,6 +31,11 @@ env:
   NODE_VERSION: '20'
   GHCR_REGISTRY: ghcr.io/ukituki-ps/lkfl
   GOTOOLCHAIN: 'local'
+  # T2310 R1: Persistent Go cache для self-hosted runner (GitHub Cache API недоступен)
+  GOMODCACHE: /home/runner/go-cache/mod
+  GOCACHE: /home/runner/go-cache/build
+  # T2310 R5: Принудительный переход на Node.js 24 для actions
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 permissions:
   contents: read
@@ -48,12 +53,16 @@ jobs:
         uses: actions/checkout@v4
 
       # ── Go ──
+      - name: Init Go cache directory (T2310 R1)
+        run: |
+          mkdir -p /home/runner/go-cache/mod /home/runner/go-cache/build
+          echo "Go cache warm: $(du -sh /home/runner/go-cache/mod 2>/dev/null || echo 'cold')"
+
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-          cache: true
-          cache-dependency-path: backend/go.sum
+          cache: false # T2310 R1: GitHub Cache API недоступен на self-hosted — используем persistent volume
 
       - name: Go mod tidy
         working-directory: backend
@@ -73,15 +82,15 @@ jobs:
           version: v1.64
           working-directory: backend
           args: --timeout=5m
-          skip-cache: true
+          skip-cache: false # T2310 R3: включить кэш бинарника и analysis cache
+          skip-pull-check: true # T2310 R3: не проверять обновления бинарника каждый раз
 
       # ── Frontend ──
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache: false # T2310: GitHub Cache API недоступен на self-hosted — ~/.npm persists locally
 
       - name: Configure npm registry for @ukituki-ps packages
         working-directory: frontend
@@ -170,8 +179,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache: false # T2310: GitHub Cache API недоступен на self-hosted
 
       - name: Configure npm registry for @ukituki-ps packages
         working-directory: frontend
@@ -251,7 +259,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          driver: docker
+          driver: docker-container # T2310 R2: необходим для registry cache
 
       - name: Login to GHCR
         if: github.event_name != 'pull_request'
@@ -270,6 +278,8 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           build-args: |
             NPM_TOKEN=${{ github.token }}
+          cache-from: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:buildcache
+          cache-to: type=registry,ref=${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:buildcache,mode=max
           tags: |
             ${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:${{ steps.tag.outputs.tag }}
             ${{ (github.ref == 'refs/heads/main' && format('{0}/{1}:main-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
@@ -493,7 +503,17 @@ jobs:
       - name: Wait for Keycloak full readiness
         run: |
           echo "Waiting for Keycloak realm to be fully initialized after deploy..."
-          sleep 30
+          # T2310 R4: polling OIDC discovery вместо hardcoded sleep 30
+          for i in $(seq 1 20); do
+            if curl -sf https://dev.april.ukituki.tech/realms/lkfl-sdek/.well-known/openid-configuration >/dev/null 2>&1; then
+              echo "Keycloak OIDC ready after ${i}s"
+              break
+            fi
+            if [[ $i -eq 20 ]]; then
+              echo "WARN: Keycloak OIDC not ready after 20 attempts — continuing anyway"
+            fi
+            sleep 3
+          done
 
       - name: Verify OIDC discovery
         continue-on-error: true
@@ -509,8 +529,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache: false # T2310: GitHub Cache API недоступен на self-hosted
 
       - name: Configure npm registry for @ukituki-ps packages
         working-directory: frontend
