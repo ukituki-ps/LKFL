@@ -2,61 +2,79 @@
 # dev-deploy.sh — ручной деплой на dev стенд (serverAi)
 # ADR-043: Два стенда — dev (ручной) + staging (CI/CD)
 #
-# Запуск: infra/deploy/dev-deploy.sh <IMAGE_TAG>
-# Пример:  infra/deploy/dev-deploy.sh main-a1b2c3d
-#          infra/deploy/dev-deploy.sh feature-x-login-abc1234
-# Без аргумента — берёт последний main-latest
+# Запуск: infra/deploy/dev-deploy.sh [IMAGE_TAG] [BRANCH]
+# Пример:  infra/deploy/dev-deploy.sh main-latest
+#          infra/deploy/dev-deploy.sh main-a1b2c3d feature-x-login
+# Без аргументов — pull origin/main, берёт последний IMAGE_TAG из .env
 #
-# Работает на serverAi (192.168.1.27). Не нужен SSH — скрипт выполняется
-# локально на сервере.
-#
+# Работает на serverAi (192.168.1.27) в директории LKFL-dev (git repo).
 # Idempotent — безопасно перезапускать.
 set -euo pipefail
 
 # ── Параметры ───────────────────────────────────────────────
-IMAGE_TAG="${1:-main-latest}"
+IMAGE_TAG="${1:-}"
+BRANCH="${2:-main}"
 COMPOSE_FILE="docker-compose.dev-server.yml"
 ENV_FILE=".env.dev-server"
 PROJECT_NAME="lkfl-dev"
 DEV_DIR="/home/ukituki/LKFL-dev"
-COMPOSE="docker compose -f $COMPOSE_FILE --env-file $ENV_FILE -p $PROJECT_NAME"
 
 echo "============================================"
 echo "  LKFL Dev Deploy — project.ukituki.tech"
-echo "  IMAGE_TAG: $IMAGE_TAG"
-echo "  DIR: $DEV_DIR"
+echo "  BRANCH: $BRANCH"
+echo "  IMAGE_TAG: ${IMAGE_TAG:-из .env}"
 echo "============================================"
+
+# ── Git pull ────────────────────────────────────────────────
+cd "$DEV_DIR"
+
+if [[ ! -d ".git" ]]; then
+    echo "❌ $DEV_DIR не является git-репозиторием"
+    exit 1
+fi
+
+echo ""
+echo "🔄 Git pull origin/$BRANCH..."
+CURRENT_HASH=$(git rev-parse --short HEAD)
+git fetch origin "$BRANCH" 2>&1 | tail -3
+git reset --hard "origin/$BRANCH" 2>&1 | tail -2
+NEW_HASH=$(git rev-parse --short HEAD)
+
+if [[ "$CURRENT_HASH" != "$NEW_HASH" ]]; then
+    echo "  ✅ Обновлён: $CURRENT_HASH → $NEW_HASH"
+else
+    echo "  ⏭️  Уже актуален: $NEW_HASH"
+fi
 
 # ── Проверки ────────────────────────────────────────────────
 if [[ ! -f "$DEV_DIR/$COMPOSE_FILE" ]]; then
-    echo "❌ $COMPOSE_FILE не найден в $DEV_DIR"
-    echo "   Синхронизируйте файлы: cp ~/LKFL/$COMPOSE_FILE $DEV_DIR/"
+    echo "❌ $COMPOSE_FILE не найден после git pull"
     exit 1
 fi
 
 if [[ ! -f "$DEV_DIR/$ENV_FILE" ]]; then
-    echo "❌ $ENV_FILE не найден в $DEV_DIR"
-    echo "   Создайте: cp $DEV_DIR/.env.dev-server.example $ENV_FILE"
-    exit 1
+    echo "⚠️  $ENV_FILE не найден, создаю из example..."
+    cp "$DEV_DIR/.env.dev-server.example" "$DEV_DIR/$ENV_FILE"
 fi
-
-cd "$DEV_DIR"
 
 # ── Обновить IMAGE_TAG в .env ──────────────────────────────
-if grep -q '^IMAGE_TAG=' "$ENV_FILE"; then
-    sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$IMAGE_TAG|" "$ENV_FILE"
-else
-    echo "IMAGE_TAG=$IMAGE_TAG" >> "$ENV_FILE"
+if [[ -n "$IMAGE_TAG" ]]; then
+    if grep -q '^IMAGE_TAG=' "$ENV_FILE"; then
+        sed -i "s|^IMAGE_TAG=.*|IMAGE_TAG=$IMAGE_TAG|" "$ENV_FILE"
+    else
+        echo "IMAGE_TAG=$IMAGE_TAG" >> "$ENV_FILE"
+    fi
 fi
 
-export IMAGE_TAG
+export IMAGE_TAG=$(grep '^IMAGE_TAG=' "$ENV_FILE" | cut -d'=' -f2)
 export GHCR_REGISTRY="${GHCR_REGISTRY:-ghcr.io/ukituki-ps/lkfl}"
 
+COMPOSE="docker compose -f $COMPOSE_FILE --env-file $ENV_FILE -p $PROJECT_NAME"
+
 echo ""
-echo "📦 Pull образов из GHCR..."
-$COMPOSE pull --ignore-buildable lkfl-server lkfl-integration-proxy lkfl-frontend 2>&1 || {
-    echo "⚠️  Pull завершён с предупреждениями (возможно старые образы для proxy/frontend)"
-}
+echo "📦 Проверка локальных образов..."
+# Images уже кэшированы на serverAi (CI/CD push). Пытаемся pull, но не падаем.
+$COMPOSE pull lkfl-server 2>&1 || echo "⚠️  Pull пропущен (образ $IMAGE_TAG уже локально)"
 
 # ── Миграции ────────────────────────────────────────────────
 echo ""
@@ -64,7 +82,7 @@ echo "🗄️  Миграции..."
 MIGRATION_OK=false
 for i in 1 2 3; do
     echo "  Попытка $i/3..."
-    if $COMPOSE run --rm lkfl-migrate; then
+    if timeout 90 $COMPOSE run --rm lkfl-migrate; then
         MIGRATION_OK=true
         break
     fi
@@ -81,13 +99,13 @@ fi
 # ── Seed ────────────────────────────────────────────────────
 echo ""
 echo "🌱 Seed..."
-$COMPOSE run --rm lkfl-seed 2>&1 || echo "⚠️  Seed пропущен (данные могут уже существовать)"
+timeout 60 $COMPOSE run --rm lkfl-seed 2>&1 || echo "⚠️  Seed пропущен (данные могут уже существовать)"
 
 # ── Перезапуск сервисов ────────────────────────────────────
 echo ""
 echo "🔄 Перезапуск сервисов..."
-$COMPOSE down --remove-orphans
-$COMPOSE up -d
+$COMPOSE down --remove-orphans 2>&1 | tail -3
+$COMPOSE up -d 2>&1 | tail -10
 
 # ── Health check ────────────────────────────────────────────
 echo ""
@@ -134,6 +152,6 @@ echo "  ✅ Dev deploy завершён!"
 echo "  URL: https://project.ukituki.tech"
 echo "  Backend: http://127.0.0.1:18082/healthz"
 echo "  Keycloak: http://127.0.0.1:19083"
-echo "  Frontend: http://127.0.0.1:8088"
+echo "  Frontend: http://127.0.0.1:18088"
 echo "  IMAGE_TAG: $IMAGE_TAG"
 echo "============================================"

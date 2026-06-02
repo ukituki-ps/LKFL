@@ -105,13 +105,13 @@ services:
       KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
       KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl}
       KC_HTTP_RELATIVE_PATH: /
-      # ADR-037: hostname:v1 — форсировать HTTPS в issuer URL через nginx proxy
+      # ADR-037: Keycloak за nginx — issuer = public URL, discovery через internal nginx.
+      # Цепочка: lkfl-server → http://127.0.0.1:18002/realms/ → nginx(18002) → keycloak:19083
       KC_PROXY_HEADERS: xforwarded
       KC_HOSTNAME: project.ukituki.tech
       KC_HOSTNAME_STRICT: "false"
       KC_HOSTNAME_STRICT_HTTPS: "true"
       KC_FRONTEND_URL: https://project.ukituki.tech
-      KC_HOSTNAME_ADMIN: https://project.ukituki.tech
       TZ: Europe/Moscow
       RATE_LIMIT_AUTH: "100"
       RATE_LIMIT_CATALOG: "500"
