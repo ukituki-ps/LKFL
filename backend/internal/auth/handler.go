@@ -466,9 +466,9 @@ func extractRealmSlug(issuer string) string {
 // Logout — гибридная инвалидация сессии.
 //
 // Поток:
-//  1. Server-side: Keycloak SSO invalidation (Admin REST API → fallback POST logout)
-//  2. Server-side: Redis cleanup (session + tokens)
-//  3. Browser-based: 302 → Keycloak logout → очистка KAUTH_SESSION_ID cookie
+//   1. Server-side: Keycloak SSO invalidation (Admin REST API → fallback POST logout)
+//   2. Server-side: Redis cleanup (session + tokens)
+//   3. Browser-based: 302 → Keycloak logout → очистка KAUTH_SESSION_ID cookie
 //
 // Шаг 1 вызывается ДО шага 2, потому что fallback POST logout
 // требует access_token из TokenStore.
@@ -485,7 +485,7 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 		sessionData, err = h.sessionStore.Get(r.Context(), sessionToken)
 		if err == nil {
 			hasSession = true
-		}
+}
 	}
 
 	// ── 1. Server-side Keycloak SSO invalidation (ДО удаления токенов) ──
@@ -515,10 +515,10 @@ func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 // resolvePostLogoutRedirect определяет URL для redirect после logout.
 //
 // Приоритет:
-//  1. Query param: ?post_logout_redirect_uri=...
-//  2. Origin header
-//  3. Referer header (parsed to origin)
-//  4. Default: http://localhost:5173/login
+//   1. Query param: ?post_logout_redirect_uri=...
+//   2. Origin header
+//   3. Referer header (parsed to origin)
+//   4. Default: http://localhost:5173/login
 func (h *Handler) resolvePostLogoutRedirect(r *http.Request) string {
 	// 1. Query param (validирован по allowlist)
 	if redirect := r.URL.Query().Get("post_logout_redirect_uri"); redirect != "" {
@@ -571,10 +571,277 @@ func (h *Handler) buildKeycloakLogoutURL(postLogoutRedirect string) string {
 // через Admin REST API.
 //
 // Поток:
-//  1. Получить admin token (client_credentials grant)
-//  2. Найти пользователя по email
-//  3. Найти его сессии
-//  4. Удалить все активные сессии
+//   1. Получить admin token (client_credentials grant)
+//   2. Найти пользователя по email
+//   3. Найти его сессии
+//   4. Удалить все активные сессии
+//
+// Fallback: POST /protocol/openid-connect/logout с access_token hint.
+func (h *Handler) invalidateKeycloakSSO(ctx context.Context, sessionData sharedauth.SessionData) {
+	realm := extractRealmSlug(h.issuer)
+	if realm == "" {
+		slog.Warn("keycloak SSO invalidation skipped", "reason", "cannot extract realm from issuer")
+		return
+	}
+
+	adminBase := strings.Split(h.issuer, "/realms/")[0]
+	if adminBase == "" {
+		adminBase = h.issuer
+	}
+
+	// === Попытка 1: Admin REST API ===
+	adminToken, err := h.getAdminToken(ctx)
+	if err != nil {
+		slog.Debug("admin REST API unavailable, trying fallback", "error", err.Error())
+	} else if sessionData.Email != "" {
+		usersURL := fmt.Sprintf(
+			"%s/admin/realms/%s/users?email=%s&exact=true",
+			adminBase, realm, url.QueryEscape(sessionData.Email),
+		)
+		userResp, err := h.fetchAdmin(ctx, adminToken, usersURL)
+		if err == nil && len(userResp) > 0 {
+			userUUID := ""
+			if uuidVal, ok := userResp[0]["id"].(string); ok {
+				userUUID = uuidVal
+			}
+			if userUUID != "" {
+				sessionsURL := fmt.Sprintf(
+					"%s/admin/realms/%s/users/%s/sessions",
+					adminBase, realm, userUUID,
+				)
+				sessionsResp, err := h.fetchAdmin(ctx, adminToken, sessionsURL)
+				if err == nil {
+					deleted := 0
+					for _, sess := range sessionsResp {
+						if sessID, ok := sess["id"].(string); ok {
+							deleteURL := fmt.Sprintf(
+								"%s/admin/realms/%s/sessions/%s",
+								adminBase, realm, sessID,
+							)
+							delReq, _ := http.NewRequestWithContext(ctx, http.MethodDelete, deleteURL, nil)
+							delReq.Header.Set("Authorization", "Bearer "+adminToken)
+							delResp, delErr := httpClient.Do(delReq)
+							if delErr == nil {
+								_ = delResp.Body.Close()
+								if delResp.StatusCode == http.StatusOK || delResp.StatusCode == http.StatusNoContent {
+									deleted++
+								}
+							}
+						}
+					}
+					if deleted > 0 {
+						slog.Info("keycloak SSO invalidated via Admin REST API", "sessions_deleted", deleted)
+						return
+					}
+				}
+			}
+		}
+	}
+
+	// === Попытка 2: Fallback — POST logout с access_token hint ===
+	accessToken, getErr := h.tokenStore.GetAccessToken(ctx, sessionData.UserID)
+	if getErr != nil {
+		slog.Debug("keycloak SSO invalidation skipped (both methods failed)",
+			"admin_api", "unavailable", "access_token", "not found")
+		return
+	}
+
+	logoutURL := fmt.Sprintf(
+		"%s/protocol/openid-connect/logout?client_id=%s&post_logout_redirect_uri=%s",
+		h.issuer,
+		url.QueryEscape(h.clientID),
+		url.QueryEscape(h.publicIssuer+"/"),
+	)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, logoutURL, nil)
+	if err != nil {
+		slog.Warn("failed to build keycloak logout request", "error", err.Error())
+		return
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		slog.Warn("failed to reach keycloak logout endpoint (fallback)", "error", err.Error())
+		return
+	}
+	defer func() { _ = resp.Body.Close() }()
+	_, _ = io.ReadAll(resp.Body)
+
+	if resp.StatusCode == http.StatusOK || resp.StatusCode == http.StatusFound {
+		slog.Info("keycloak SSO invalidated via fallback logout", "status", resp.StatusCode)
+	} else {
+		slog.Warn("keycloak fallback logout returned unexpected status", "status", resp.StatusCode)
+	}
+}
+
+// getAdminToken получает admin access token через client_credentials grant.
+func (h *Handler) getAdminToken(ctx context.Context) (string, error) {
+	if h.clientSecret == "" {
+		return "", fmt.Errorf("client_secret not configured — Admin REST API unavailable")
+	}
+
+	tokenEndpoint := h.issuer + "/protocol/openid-connect/token"
+	form := url.Values{}
+	form.Set("grant_type", "client_credentials")
+	form.Set("client_id", h.clientID)
+	form.Set("client_secret", h.clientSecret)
+	form.Set("audience", "realm-management")
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, tokenEndpoint, strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", fmt.Errorf("build admin token request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("admin token request: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("read admin token response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("admin token failed: status %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	var tokenSet struct {
+		AccessToken string `json:"access_token"`
+	}
+	if err := json.Unmarshal(body, &tokenSet); err != nil {
+		return "", fmt.Errorf("parse admin token: %w", err)
+	}
+
+	return tokenSet.AccessToken, nil
+}
+
+// fetchAdmin выполняет GET запрос к Keycloak Admin REST API.
+func (h *Handler) fetchAdmin(ctx context.Context, adminToken string, apiURL string) ([]map[string]interface{}, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "Bearer "+adminToken)
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("admin API error: status %d, body: %s", resp.StatusCode, string(body))
+	}
+
+	var result []map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+// isValidPostLogoutRedirect проверяет redirect URI по allowlist.
+func isValidPostLogoutRedirect(uri string) bool {
+	allowed := os.Getenv("POST_LOGOUT_REDIRECT_WHITELIST")
+	if allowed == "" {
+		allowed = os.Getenv("FRONTEND_URL")
+	}
+	if allowed == "" {
+		return false
+	}
+
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		return false
+	}
+
+	for _, origin := range strings.Split(allowed, ",") {
+		origin = strings.TrimSpace(origin)
+		if origin == "" {
+			continue
+		}
+		if strings.HasPrefix(parsed.String(), origin) {
+			return true
+		}
+	}
+	return false
+}
+
+// resolvePostLogoutRedirect определяет URL для redirect после logout.
+//
+// Приоритет:
+//   1. Query param: ?post_logout_redirect_uri=...
+//   2. Origin header
+//   3. Referer header (parsed to origin)
+//   4. Default: http://localhost:5173/login
+func (h *Handler) resolvePostLogoutRedirect(r *http.Request) string {
+	// 1. Query param (validирован по allowlist)
+	if redirect := r.URL.Query().Get("post_logout_redirect_uri"); redirect != "" {
+		if isValidPostLogoutRedirect(redirect) {
+			return redirect
+		}
+	}
+
+	// 2. Origin header (validирован по allowlist)
+	if origin := r.Header.Get("Origin"); origin != "" {
+		redirectURI := origin + "/login"
+		if isValidPostLogoutRedirect(redirectURI) {
+			return redirectURI
+		}
+	}
+
+	// 3. Referer header
+	if ref := r.Header.Get("Referer"); ref != "" {
+		if u, err := url.Parse(ref); err == nil {
+			return u.Scheme + "://" + u.Host + "/login"
+		}
+	}
+
+	// 4. Default
+	return "http://localhost:5173/login"
+}
+
+// buildKeycloakLogoutURL формирует Keycloak logout URL.
+//
+// publicIssuer = http://localhost:8081 (публичный URL Keycloak)
+// realmPath = /realms/lkfl-sdek (извлечён из issuer)
+//
+// Результат: http://localhost:8081/realms/lkfl-sdek/protocol/openid-connect/logout
+func (h *Handler) buildKeycloakLogoutURL(postLogoutRedirect string) string {
+	realmPath := ""
+	if idx := strings.Index(h.issuer, "/realms/"); idx >= 0 {
+		realmPath = h.issuer[idx:]
+	}
+
+	return fmt.Sprintf(
+		"%s%s/protocol/openid-connect/logout?client_id=%s&post_logout_redirect_uri=%s",
+		h.publicIssuer,
+		realmPath,
+		url.QueryEscape(h.clientID),
+		url.QueryEscape(postLogoutRedirect),
+	)
+}
+
+// invalidateKeycloakSSO программно инвалидирует Keycloak SSO сессию
+// через Admin REST API.
+//
+// Поток:
+//   1. Получить admin token (client_credentials grant)
+//   2. Найти пользователя по email
+//   3. Найти его сессии
+//   4. Удалить все активные сессии
 //
 // Fallback: POST /protocol/openid-connect/logout с access_token hint.
 func (h *Handler) invalidateKeycloakSSO(ctx context.Context, sessionData sharedauth.SessionData) {
@@ -780,24 +1047,16 @@ func isValidPostLogoutRedirect(uri string) bool {
 }
 
 // Me — текущий пользователь с provisioning.
-// GET /api/v1/auth/me
-// Требует JWT middleware (токен в Authorization: Bearer <token> или cookie lkfl_session).
-//
-// При первом входе создаёт запись в БД из OIDC claims + назначает роли.
-// При повторных входах обновляет email/имя/фамилию из Keycloak.
-// Гарантирует существование аккаунта (баланс 0).
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
-	// Извлекаем claims из context (установлен JWTMiddleware).
+// Извлекаем claims из context (установлен JWTMiddleware).
 	claims, ok := r.Context().Value(sharedauth.ClaimsKey{}).(sharedauth.Claims)
 	if !ok || claims.Subject == "" {
 		shhttp.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
-	// Извлекаем роли из context (установлен JWTMiddleware).
 	roles := sharedauth.RolesFromContext(r.Context())
 
-	// Provisioning: create или update + ensure account + sync roles.
 	user, err := h.service.CreateOrUpdateUser(r.Context(), &claims, roles)
 	if err != nil {
 		shhttp.WriteJSONError(w, http.StatusInternalServerError, "failed to resolve user: "+err.Error())
@@ -805,6 +1064,13 @@ func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
 	}
 
 	shhttp.WriteJSON(w, http.StatusOK, user.ToProfile())
+}
+
+// isAjaxRequest проверяет, является ли запрос AJAX.
+func isAjaxRequest(r *http.Request) bool {
+	return r.Header.Get("X-Requested-With") == "XMLHttpRequest" ||
+		strings.Contains(r.Header.Get("Accept"), "application/json") ||
+		r.Header.Get("Content-Type") == "application/json"
 }
 
 // ExtractSessionCookie — публичный алиас для extractSessionCookie.
