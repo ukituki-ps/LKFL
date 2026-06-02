@@ -68,6 +68,8 @@ services:
   # =========================================================================
   # Keycloak 25.0 — OIDC Identity Provider
   # Realm per tenant (lkfl-sdek, lkfl-tenant2, ...)
+  # hostname:v2: KC_HOSTNAME для browser redirect'ов через nginx HTTPS
+  # Бэкенд обращается напрямую к keycloak:8080 через Docker DNS (ADR-037)
   # =========================================================================
   keycloak:
     image: quay.io/keycloak/keycloak:25.0
@@ -79,6 +81,9 @@ services:
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # hostname:v2 — browser redirect URI для login flow (ADR-037)
+      # KC_HOSTNAME задаёт публичный URL для браузерных редиректов.
+      # Бэкенд обращается к Keycloak напрямую через Docker DNS (http://keycloak:8080).
       KC_HOSTNAME_URL: http://project.ukituki.tech
       KC_HTTP_RELATIVE_PATH: /
       KC_DB: postgres
@@ -92,7 +97,6 @@ services:
     volumes:
       - lkfl_keycloak_data:/opt/keycloak/data
       - ./infra/keycloak/realm-lkfl-sdek.json:/opt/keycloak/data/import/realm-lkfl-sdek.json:ro
-      # Тема lkfl удалена — realm использует встроенную тему "keycloak"
     healthcheck:
       # Keycloak 25.x management interface on port 9000 has /health endpoint
       # TCP check as fallback since keycloak image has no curl/wget
@@ -112,17 +116,21 @@ services:
   # Nginx 1.27 — Reverse Proxy + SPA Serve
   # Маршрутизация: /api/v1/* → lkfl-server, / → frontend dist
   # Dev: volume mount ./frontend/dist для горячей перезагрузки фронтенда
+  # HTTPS: self-signed cert на :443 (для Secure cookies Keycloak)
   # =========================================================================
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
     ports:
       - "80:80"
+      - "443:443"
     dns:
       - 127.0.0.11
     volumes:
       - ./infra/nginx/server/default.conf:/etc/nginx/conf.d/default.conf:ro
       - ./frontend/dist:/usr/share/nginx/html:ro
+      # Self-signed SSL cert для local dev HTTPS (project.ukituki.tech)
+      - ./infra/ssl-dev:/etc/nginx/ssl:ro
     depends_on:
       lkfl-server:
         condition: service_started
@@ -139,24 +147,24 @@ services:
   # =========================================================================
   # lkfl-server — Go backend (modular monolith)
   # 16 internal-пакетов, HTTP :8080
-  # Build локально из Dockerfile target: server
+  # Dev build: target=server-dev (Alpine + ca-certificates для self-signed TLS)
+  # Production build: target=server (distroless, без shell)
   # =========================================================================
   lkfl-server:
     build:
       context: .
       dockerfile: Dockerfile
-      target: server
+      target: server-dev
     restart: unless-stopped
-    # extra_hosts: project.ukituki.tech → host-gateway для OIDC discovery
+    # extra_hosts: project.ukituki.tech → host-gateway для HTTPS OIDC discovery через nginx :443
     extra_hosts:
       - "project.ukituki.tech:host-gateway"
-    # No host port mapping — routed through nginx upstream (lkfl-server:8080)
     env_file:
       - .env
     environment:
       DB_DSN: ${DB_DSN}
       REDIS_URL: ${REDIS_URL}
-      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_ISSUER: https://project.ukituki.tech/realms/lkfl-sdek
       KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
       KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
       SERVER_PORT: ${SERVER_PORT}

@@ -5,7 +5,6 @@
   "sslRequired": "external",
   "loginTheme": "keycloak",
   "accountTheme": "keycloak",
-
   "clients": [
     {
       "clientId": "lkfl-spa",
@@ -20,7 +19,8 @@
         "https://dev.april.ukituki.tech/*",
         "http://dev.april.ukituki.tech/*",
         "http://project.ukituki.tech/*",
-        "http://lkfl-staging.example.com/*"
+        "http://lkfl-staging.example.com/*",
+        "https://project.ukituki.tech/*"
       ],
       "webOrigins": [
         "http://localhost:80",
@@ -30,7 +30,8 @@
         "http://host.docker.internal:8080",
         "https://dev.april.ukituki.tech",
         "http://dev.april.ukituki.tech",
-        "http://project.ukituki.tech"
+        "http://project.ukituki.tech",
+        "https://project.ukituki.tech"
       ],
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
@@ -70,40 +71,38 @@
       }
     }
   ],
-
   "roles": {
     "realm": [
       {
         "id": "role-employee",
         "name": "employee",
-        "description": "Сотрудник"
+        "description": "\u0421\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a"
       },
       {
         "id": "role-hr",
         "name": "hr",
-        "description": "HR-менеджер"
+        "description": "HR-\u043c\u0435\u043d\u0435\u0434\u0436\u0435\u0440"
       },
       {
         "id": "role-catalog-manager",
         "name": "catalog_manager",
-        "description": "Менеджер каталога"
+        "description": "\u041c\u0435\u043d\u0435\u0434\u0436\u0435\u0440 \u043a\u0430\u0442\u0430\u043b\u043e\u0433\u0430"
       },
       {
         "id": "role-admin",
         "name": "admin",
-        "description": "Администратор платформы"
+        "description": "\u0410\u0434\u043c\u0438\u043d\u0438\u0441\u0442\u0440\u0430\u0442\u043e\u0440 \u043f\u043b\u0430\u0442\u0444\u043e\u0440\u043c\u044b"
       }
     ]
   },
-
   "users": [
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
       "username": "admin",
       "enabled": true,
       "email": "admin@sdek.local",
-      "firstName": "Александр",
-      "lastName": "Петров",
+      "firstName": "\u0410\u043b\u0435\u043a\u0441\u0430\u043d\u0434\u0440",
+      "lastName": "\u041f\u0435\u0442\u0440\u043e\u0432",
       "credentials": [
         {
           "type": "password",
@@ -111,15 +110,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["admin"]
+      "realmRoles": [
+        "admin"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaabb",
       "username": "hr",
       "enabled": true,
       "email": "hr@sdek.local",
-      "firstName": "Елена",
-      "lastName": "Иванова",
+      "firstName": "\u0415\u043b\u0435\u043d\u0430",
+      "lastName": "\u0418\u0432\u0430\u043d\u043e\u0432\u0430",
       "credentials": [
         {
           "type": "password",
@@ -127,15 +128,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["hr"]
+      "realmRoles": [
+        "hr"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaacc",
       "username": "catalog",
       "enabled": true,
       "email": "catalog@sdek.local",
-      "firstName": "Дмитрий",
-      "lastName": "Сидоров",
+      "firstName": "\u0414\u043c\u0438\u0442\u0440\u0438\u0439",
+      "lastName": "\u0421\u0438\u0434\u043e\u0440\u043e\u0432",
       "credentials": [
         {
           "type": "password",
@@ -143,15 +146,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["catalog_manager"]
+      "realmRoles": [
+        "catalog_manager"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaadd",
       "username": "ivanov",
       "enabled": true,
       "email": "ivanov@sdek.local",
-      "firstName": "Иван",
-      "lastName": "Петров",
+      "firstName": "\u0418\u0432\u0430\u043d",
+      "lastName": "\u041f\u0435\u0442\u0440\u043e\u0432",
       "credentials": [
         {
           "type": "password",
@@ -159,15 +164,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["employee"]
+      "realmRoles": [
+        "employee"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaee",
       "username": "petrova",
       "enabled": true,
       "email": "petrova@sdek.local",
-      "firstName": "Мария",
-      "lastName": "Петрова",
+      "firstName": "\u041c\u0430\u0440\u0438\u044f",
+      "lastName": "\u041f\u0435\u0442\u0440\u043e\u0432\u0430",
       "credentials": [
         {
           "type": "password",
@@ -175,15 +182,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["employee"]
+      "realmRoles": [
+        "employee"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaff",
       "username": "sidorov",
       "enabled": true,
       "email": "sidorov@sdek.local",
-      "firstName": "Сергей",
-      "lastName": "Сидоров",
+      "firstName": "\u0421\u0435\u0440\u0433\u0435\u0439",
+      "lastName": "\u0421\u0438\u0434\u043e\u0440\u043e\u0432",
       "credentials": [
         {
           "type": "password",
@@ -191,15 +200,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["employee"]
+      "realmRoles": [
+        "employee"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaag0",
       "username": "kozlova",
       "enabled": true,
       "email": "kozlova@sdek.local",
-      "firstName": "Анна",
-      "lastName": "Козлова",
+      "firstName": "\u0410\u043d\u043d\u0430",
+      "lastName": "\u041a\u043e\u0437\u043b\u043e\u0432\u0430",
       "credentials": [
         {
           "type": "password",
@@ -207,15 +218,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["employee"]
+      "realmRoles": [
+        "employee"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaag1",
       "username": "novikov",
       "enabled": true,
       "email": "novikov@sdek.local",
-      "firstName": "Артём",
-      "lastName": "Новиков",
+      "firstName": "\u0410\u0440\u0442\u0451\u043c",
+      "lastName": "\u041d\u043e\u0432\u0438\u043a\u043e\u0432",
       "credentials": [
         {
           "type": "password",
@@ -223,15 +236,17 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["employee"]
+      "realmRoles": [
+        "employee"
+      ]
     },
     {
       "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaah1",
       "username": "test.employee",
       "enabled": true,
       "email": "test.employee@sdek.local",
-      "firstName": "Тест",
-      "lastName": "Сотрудник",
+      "firstName": "\u0422\u0435\u0441\u0442",
+      "lastName": "\u0421\u043e\u0442\u0440\u0443\u0434\u043d\u0438\u043a",
       "credentials": [
         {
           "type": "password",
@@ -239,7 +254,9 @@
           "temporary": false
         }
       ],
-      "realmRoles": ["employee"]
+      "realmRoles": [
+        "employee"
+      ]
     }
   ]
 }
