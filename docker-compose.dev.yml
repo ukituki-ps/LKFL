@@ -81,10 +81,10 @@ services:
     environment:
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
-      # hostname:v2 — browser redirect URI для login flow (ADR-037)
-      # KC_HOSTNAME задаёт публичный URL для браузерных редиректов.
-      # Бэкенд обращается к Keycloak напрямую через Docker DNS (http://keycloak:8080).
-      KC_HOSTNAME_URL: http://project.ukituki.tech
+      # KC_PROXY_HEADERS=xforwarded — Keycloak читает X-Forwarded-* от nginx.
+      # Без hostname:v2 → нет конфликта (ADR-037 Правило 3).
+      # Discovery через HTTPS nginx возвращает issuer=https://...
+      KC_PROXY_HEADERS: xforwarded
       KC_HTTP_RELATIVE_PATH: /
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
