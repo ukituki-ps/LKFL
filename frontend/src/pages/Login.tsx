@@ -13,6 +13,12 @@ export function Login() {
 			return
 		}
 
+		// После logout — не делать auto-redirect на Keycloak (показываем UI с кнопкой)
+		if (sessionStorage.getItem('lkfl_just_logged_out') === 'true') {
+			sessionStorage.removeItem('lkfl_just_logged_out')
+			return
+		}
+
 		// Очистка счётчика попыток при старте login
 		sessionStorage.removeItem('lkfl_login_attempts')
 

@@ -65,7 +65,7 @@ export default defineConfig({
 			testIgnore: [], // Сбрасываем глобальные игноры — проект работает только с e2e/integration/
 			use: {
 				...devices['Desktop Chrome'],
-				baseURL: process.env.E2E_BASE_URL || 'http://localhost:80',
+				baseURL: process.env.E2E_BASE_URL || 'http://project.ukituki.tech',
 				ignoreHTTPSErrors: true,
 				storageState: { cookies: [], origins: [] },
 				screenshot: 'on',

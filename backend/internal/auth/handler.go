@@ -181,7 +181,7 @@ func (h *Handler) LoginRedirect(w http.ResponseWriter, r *http.Request) {
 
 	authorizeURL := fmt.Sprintf(
 		"%s/protocol/openid-connect/auth?client_id=%s&redirect_uri=%s&response_type=code&scope=openid+profile+email&state=%s&code_challenge=%s&code_challenge_method=S256%s",
-		h.issuer,
+		h.publicIssuer,
 		h.clientID,
 		url.QueryEscape(redirect),
 		state,

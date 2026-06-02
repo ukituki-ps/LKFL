@@ -34,9 +34,11 @@ test.describe('Login Flow (browser-based logout)', () => {
     await page.waitForURL('**://localhost:8081/realms/lkfl-sdek/protocol/openid-connect/auth**', { timeout: 15000 });
 
     console.log('Step 2: Login with petrova/dev-password');
-    await page.locator('#username').fill('petrova');
-    await page.locator('#password').fill('dev-password');
-    await page.locator('#kc-login').click();
+    // Wait for Keycloak v2 theme JS-rendered form
+    await page.waitForLoadState('networkidle');
+    await page.locator('input[name="username"]').first().fill('petrova');
+    await page.locator('input[name="password"]').first().fill('dev-password');
+    await page.locator('button[type="submit"]').click();
 
     console.log('Step 3: Wait for callback → dashboard');
     await waitForDashboard(page);
@@ -68,7 +70,7 @@ test.describe('Login Flow (browser-based logout)', () => {
     //   B) Redirect immediately (SSO already dead in DB, no confirmation needed)
     // The test must handle both cases.
     console.log('Step 5: Wait for Keycloak logout page');
-    await page.waitForURL('**://localhost:8081/realms/lkfl-sdek/protocol/openid-connect/logout**', {
+    await page.waitForURL('**://://localhost:8081/realms/lkfl-sdek/protocol/openid-connect/logout**', {
       timeout: 15000,
     });
     console.log('  Keycloak logout page:', page.url());

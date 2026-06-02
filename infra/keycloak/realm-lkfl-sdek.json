@@ -3,8 +3,8 @@
   "realm": "lkfl-sdek",
   "enabled": true,
   "sslRequired": "external",
-  "loginTheme": "lkfl",
-  "accountTheme": "lkfl",
+  "loginTheme": "keycloak",
+  "accountTheme": "keycloak",
 
   "clients": [
     {
@@ -19,6 +19,7 @@
         "http://host.docker.internal:8080/*",
         "https://dev.april.ukituki.tech/*",
         "http://dev.april.ukituki.tech/*",
+        "http://project.ukituki.tech/*",
         "http://lkfl-staging.example.com/*"
       ],
       "webOrigins": [
@@ -28,7 +29,8 @@
         "http://host.docker.internal:5173",
         "http://host.docker.internal:8080",
         "https://dev.april.ukituki.tech",
-        "http://dev.april.ukituki.tech"
+        "http://dev.april.ukituki.tech",
+        "http://project.ukituki.tech"
       ],
       "protocol": "openid-connect",
       "standardFlowEnabled": true,
