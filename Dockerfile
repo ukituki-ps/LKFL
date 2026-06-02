@@ -87,7 +87,33 @@ EXPOSE 8080
 ENTRYPOINT ["/app/server"]
 
 # ============================================================================
-# Stage 5: Proxy runtime — lkfl-integration-proxy (production)
+# Stage 6: Server dev runtime — lkfl-server (local development)
+# Alpine-based with ca-certificates for trusting self-signed TLS certs.
+# Used ONLY by docker-compose.dev.yml. Production uses distroless `server`.
+# CA cert baked at build time → Go trusts HTTPS to project.ukituki.tech via nginx.
+# ============================================================================
+FROM golang:1.24-alpine AS server-dev
+
+RUN apk add --no-cache ca-certificates tzdata
+
+WORKDIR /app
+
+COPY --chown=1001:1001 --from=server-build /server /app/server
+COPY --chown=1001:1001 --from=frontend-build /dist /app/dist
+COPY --chown=1001:1001 migrations/ /app/migrations/
+
+# Bake self-signed CA cert into Alpine trust store (ADR-037: чистый verifier.go)
+COPY infra/ssl-dev/server.crt /usr/local/share/ca-certificates/lkfl-dev-ca.crt
+RUN update-ca-certificates
+
+USER 1001:1001
+
+EXPOSE 8080
+
+ENTRYPOINT ["/app/server"]
+
+# ============================================================================
+# Stage 7: Proxy runtime — lkfl-integration-proxy (production)
 # ============================================================================
 FROM gcr.io/distroless/base-debian12 AS proxy
 
