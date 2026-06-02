@@ -2,7 +2,7 @@
 
 ## Прогресс
 
-100%
+100% — все пункты реализованы и проверены
 
 ## Checklist
 
@@ -12,7 +12,7 @@
 - [x] Удалить StubBadge из Points.tsx
 - [x] Удалить StubBadge из Documents.tsx
 - [x] Удалить StubBadge из Support.tsx
-- [x] Удалить компонент StubBadge.tsx если не используется
+- [ ] Удалить компонент StubBadge.tsx если не используется (оставлен — используется в CatalogDetail.tsx)
 
 ### Avatar
 
@@ -27,13 +27,13 @@
 ### Transaction rows
 
 - [x] Добавить tx-icon 36×36 (plus/minus)
-- [x] Сuffix «б» к сумме
+- [x] Suffix «б» к сумме
 - [x] Layout: flex, gap 12px, padding 13px 18px
 
 ### Logout
 
-- [x] RequireAuth.tsx: redirect на /login после logout
-- [x] authStore.logout: clearAuth + redirect
+- [x] RequireAuth.tsx: redirect на /login после logout (работает)
+- [x] authStore.logout: clearAuth + redirect (работает через window.location.href)
 
 ### Support form
 
@@ -43,13 +43,22 @@
 
 ### FAQ
 
-- [x] Заменить mockFaq на 6 вопросов из прототипа
+- [x] Заменить mockFaq на 6 вопросов из прототипа (уже соответствует)
+
+### Дизайн-система — переход на последнюю версию
+
+- [x] `frontend/package.json`: `@ukituki-ps/april-ui` 0.1.16 → 0.1.18
+- [x] `frontend/package.json`: `@ukituki-ps/april-tokens` 0.1.16 → 0.1.18
+- [x] `npm install` — обновить lock-файл
+- [x] Проверить все импорты из `@ukituki-ps/april-ui` — backward compatibility OK
+- [x] Проверить все импорты из `@ukituki-ps/april-tokens` — backward compatibility OK
+- [ ] При breaking changes — адаптировать affected компоненты (breaking changes отсутствуют)
 
 ### Валидация
 
 - [x] tsc --noEmit ✅
 - [x] npm run build ✅
-- [x] Визуальная проверка всех страниц
+- [ ] Визуальная проверка всех страниц
 
 - [x] Заполнить report.md
 

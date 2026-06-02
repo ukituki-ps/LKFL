@@ -106,6 +106,9 @@ code
 
 - Все 7 пунктов исправлены
 - Визуальное соответствие прототипу на уровне P0
+- **Переход на последнюю версию дизайн-системы:** `@ukituki-ps/april-ui` и `@ukituki-ps/april-tokens` обновить с `0.1.16` → `0.1.18`
+  - Проверить backward compatibility всех импортов из `@ukituki-ps/april-ui`
+  - При breaking changes — адаптировать affected компоненты
 - `tsc --noEmit` без ошибок
 - `npm run build` без ошибок
 
@@ -118,10 +121,13 @@ code
 - [ ] Logout → redirect на /login
 - [ ] Support form — 2 поля (Тема + Сообщение), кнопка uppercase «ОТПРАВИТЬ»
 - [ ] FAQ — 6 вопросов из прототипа
+- [ ] `@ukituki-ps/april-ui` → `0.1.18` в `frontend/package.json`
+- [ ] `@ukituki-ps/april-tokens` → `0.1.18` в `frontend/package.json`
+- [ ] Все импорты из DS-пакетов компилируются без breaking changes
 - [ ] `tsc --noEmit` ✅
 - [ ] `npm run build` ✅
 
 ## Зависимости
 
 - **depends_on:** M21 (базовый фронтенд)
-- **touches:** `Dashboard.tsx`, `Points.tsx`, `Documents.tsx`, `Support.tsx`, `UserMenu.tsx`, `authStore.ts`, `RequireAuth.tsx`
+- **touches:** `Dashboard.tsx`, `Points.tsx`, `Documents.tsx`, `Support.tsx`, `UserMenu.tsx`, `authStore.ts`, `RequireAuth.tsx`, `package.json`

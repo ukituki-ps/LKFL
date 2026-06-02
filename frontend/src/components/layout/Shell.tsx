@@ -1,6 +1,6 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { AprilProductHeader, AprilIconPanelLeft } from '@ukituki-ps/april-ui'
-import { Drawer, Group, Text, UnstyledButton, Stack } from '@mantine/core'
+import { Drawer, Group, UnstyledButton, Stack, Title } from '@mantine/core'
 import { useDisclosure, useMediaQuery } from '@mantine/hooks'
 import { useAuthStore } from '@/stores/authStore'
 import { employeeRoutes } from '@/routes/employee'
@@ -35,23 +35,7 @@ export function Shell() {
 		>
 			{/* Header */}
 			<AprilProductHeader
-				left={
-					<UnstyledButton
-						onClick={() => navigate(isAdminRoute ? '/admin/hr' : '/')}
-						style={{ display: 'flex', alignItems: 'center', gap: 8, padding: 0 }}
-					>
-						<Text
-							data-testid="app-header"
-							style={{
-								fontWeight: 700,
-								fontSize: 18,
-								color: 'var(--brand-text, #1A1A1A)',
-							}}
-						>
-							ЛКФЛ
-						</Text>
-					</UnstyledButton>
-				}
+				left={undefined}
 				center={
 					!isMobile && (
 						<HeaderNav isAdmin={hasAdminAccess && isAdminRoute} />
@@ -89,6 +73,24 @@ export function Shell() {
 					padding: '28px 28px 56px',
 				}}
 			>
+				{/* Лого на уровне контента */}
+				<UnstyledButton
+					onClick={() => navigate(isAdminRoute ? '/admin/hr' : '/')}
+					style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20 }}
+				>
+					<Title
+						data-testid="app-header"
+						order={2}
+						style={{
+							fontWeight: 800,
+							fontSize: 22,
+							color: 'var(--brand-text, #1A1A1A)',
+							margin: 0,
+						}}
+					>
+						ЛКФЛ
+					</Title>
+				</UnstyledButton>
 				<Outlet />
 			</main>
 
@@ -109,7 +111,7 @@ export function Shell() {
 										userRoles.includes(role as never),
 									),
 								)
-							: employeeRoutes
+							: employeeRoutes.filter((item) => item.hidden !== true)
 						).map((item) => {
 							const isActive = location.pathname === item.path
 							return (

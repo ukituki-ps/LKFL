@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Card, Badge as MantineBadge, Text, Group, Box } from '@mantine/core'
+import { Card, Text, Group, Box } from '@mantine/core'
 import { Link } from 'react-router-dom'
 import type { EngagementTypeResponse } from '@/api/types'
 import {
@@ -24,11 +24,19 @@ interface EngagementCardProps {
 	engagement: EngagementTypeResponse
 }
 
-// ─── Helpers ──
+// ─── Badge colors ──
+
+/** Кастомные цвета бейджей по прототипу. */
+const badgeColors: Record<string, { bg: string; color: string }> = {
+	green: { bg: '#DCFCE7', color: '#166534' },
+	yellow: { bg: '#FEF9C3', color: '#854D0E' },
+	gray: { bg: '#F3F4F6', color: '#4B5563' },
+	blue: { bg: '#DBEAFE', color: '#1D4ED8' },
+}
 
 /** Цвет бейджа из badge_color или по значению badge. */
-function getBadgeColor(badgeColor: string, badge: string): string {
-	if (badgeColor) return badgeColor
+function getBadgeColorKey(badgeColor: string, badge: string): string {
+	if (badgeColor && badgeColors[badgeColor]) return badgeColor
 	switch (badge) {
 		case 'Промо':
 			return 'yellow'
@@ -41,6 +49,39 @@ function getBadgeColor(badgeColor: string, badge: string): string {
 		default:
 			return 'gray'
 	}
+}
+
+/** Рендерит бейдж с кастомными цветами из прототипа. */
+function Badge({
+	children,
+	colorKey,
+	size = 'sm',
+}: {
+	children: React.ReactNode
+	colorKey: string
+	size?: 'xs' | 'sm'
+}) {
+	const colors = badgeColors[colorKey] || badgeColors.gray
+	const fontSize = size === 'xs' ? '10px' : '11px'
+	const padding = size === 'xs' ? '2px 6px' : '3px 8px'
+
+	return (
+		<span
+			style={{
+				display: 'inline-block',
+				backgroundColor: colors.bg,
+				color: colors.color,
+				fontSize,
+				fontWeight: 600,
+				padding,
+				borderRadius: '6px',
+				lineHeight: '1.4',
+				whiteSpace: 'nowrap',
+			}}
+		>
+			{children}
+		</span>
+	)
 }
 
 /** Склонение слова «вариант/варианта/вариантов». */
@@ -110,15 +151,18 @@ function formatPrice(cents: number): string {
  * │  Цена        [badge]    │
  * └─────────────────────────┘
  *
- * ГЭП-8: hover-эффект — translateY(-2px) + усиленный shadow.
+ * Hover: translateY(-2px) + box-shadow 0 4px 16px.
  */
 export function EngagementCard({ engagement }: EngagementCardProps) {
-	const badgeColor = getBadgeColor(engagement.badge_color, engagement.badge)
+	const badgeColorKey = getBadgeColorKey(
+		engagement.badge_color,
+		engagement.badge,
+	)
 	const priceDisplay =
 		engagement.price_display ||
 		(engagement.cost_cents != null ? formatPrice(engagement.cost_cents) : '')
 
-	/* ГЭП-8: hover state */
+	/* Hover state */
 	const [hovered, setHovered] = useState(false)
 
 	return (
@@ -141,18 +185,26 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 		>
 			<Link
 				to={`/catalog/${engagement.slug}`}
-				style={{ textDecoration: 'none', color: 'inherit', flex: 1, display: 'flex', flexDirection: 'column' }}
+				style={{
+					textDecoration: 'none',
+					color: 'inherit',
+					flex: 1,
+					display: 'flex',
+					flexDirection: 'column',
+				}}
 			>
 				<Box>
-					{/* Icon */}
+					{/* Icon — 44×44, borderRadius 12 */}
 					<Group
 						gap={8}
 						mb="md"
 						style={{
-							padding: '12px',
-							borderRadius: 'var(--brand-radius-card, 14px)',
-							backgroundColor: 'var(--brand-row, #F9FAFB)',
+							width: 44,
 							height: 44,
+							padding: '10px',
+							borderRadius: 12,
+							backgroundColor: 'var(--brand-row, #F9FAFB)',
+							justifyContent: 'center',
 						}}
 					>
 						{renderIcon(engagement.icon_name || '')}
@@ -160,9 +212,7 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 
 					{/* Badge + Category */}
 					<Group justify="space-between" mb="xs">
-						<MantineBadge color={badgeColor} size="sm" variant="light">
-							{engagement.badge}
-						</MantineBadge>
+						<Badge colorKey={badgeColorKey}>{engagement.badge}</Badge>
 
 						{engagement.category && (
 							<Text size="xs" c="dimmed">
@@ -171,28 +221,51 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 						)}
 					</Group>
 
-					{/* Name */}
-					<Text fw={700} size="md" mb="xs" lineClamp={1}>
+					{/* Name — 14px, fontWeight 700 */}
+					<Text
+						fw={700}
+						style={{ fontSize: '14px' }}
+						mb="xs"
+						lineClamp={1}
+					>
 						{engagement.name}
 					</Text>
 
-					{/* Provider */}
+					{/* Provider — 11px, text-subtle */}
 					{engagement.provider_name && (
-						<Text size="xs" c="dimmed" mb="xs">
+						<Text
+							style={{
+								fontSize: '11px',
+								color: 'var(--brand-text-subtle)',
+							}}
+							mb="xs"
+						>
 							{engagement.provider_name}
 						</Text>
 					)}
 
-					{/* Description */}
+					{/* Description — 12px, text-muted, lineHeight 1.5 */}
 					{engagement.description && (
-						<Text size="sm" c="dimmed" mb="md" lineClamp={2}>
+						<Text
+							style={{
+								fontSize: '12px',
+								color: 'var(--brand-text-muted)',
+								lineHeight: 1.5,
+							}}
+							mb="md"
+							lineClamp={2}
+						>
 							{engagement.description}
 						</Text>
 					)}
 				</Box>
 
-				{/* Footer — price + badge */}
-				<Box mt="auto" pt="md" style={{ borderTop: '1px solid var(--brand-border)' }}>
+				{/* Footer — border-top: 1px solid var(--brand-row) */}
+				<Box
+					mt="auto"
+					pt="md"
+					style={{ borderTop: '1px solid var(--brand-row)' }}
+				>
 					<Group justify="space-between" wrap="nowrap">
 						{priceDisplay && (
 							<Text fw={700} size="md" style={{ color: 'var(--brand-green)' }}>
@@ -200,9 +273,9 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 							</Text>
 						)}
 						{engagement.badge && (
-							<MantineBadge color={badgeColor} size="xs" variant="light">
+							<Badge colorKey={badgeColorKey} size="xs">
 								{engagement.badge}
-							</MantineBadge>
+							</Badge>
 						)}
 					</Group>
 
@@ -221,7 +294,7 @@ export function EngagementCard({ engagement }: EngagementCardProps) {
 
 // ─── Grid ──
 
-/** Сетка карточек для каталога — 3 колонки. */
+/** Сетка карточек для каталога — 3 колонки, gap 14px. */
 export function EngagementGrid({
 	engagements,
 }: {
@@ -232,7 +305,7 @@ export function EngagementGrid({
 			style={{
 				display: 'grid',
 				gridTemplateColumns: 'repeat(3, 1fr)',
-				gap: '16px',
+				gap: '14px',
 			}}
 		>
 			{engagements.map((e) => (

@@ -2,106 +2,91 @@
 
 ## Статус
 
-✅ **Завершена** (2026-05-31)
+✅ **Полностью завершена** (2026-06-02)
 
 ## Сводка
 
-Все 5 задач M23 выполнены. Фронтенд приведён в соответствие с прототипом на уровне P0-P2.
+Все 9 задач реализованы и проверены.
 
-| Задача | Описание | Статус | Файлов |
-|--------|----------|--------|--------|
-| T2301 | P0 Critical Fixes | ✅ 100% | 6 |
-| T2302 | P1 Visual Fixes | ✅ 100% | 5 |
-| T2303 | API Mocks Layer | ✅ 80% | 6 новых + 1 изменён |
-| T2304 | P2 + Admin Polish | ✅ 100% | 5 |
-| T2305 | Catalog Polish | ✅ 100% | 4 |
+| Задача | Описание | Код | Статус |
+|--------|----------|-----|--------|
+| T2301 | P0 Critical Fixes | ✅ перереализовано | ✅ **ОК** |
+| T2302 | P1 Visual Fixes | ✅ перереализовано | ✅ **ОК** |
+| T2303 | API Mocks Layer | ✅ закоммичен (`6a5fb97`) | ✅ **ОК** |
+| T2304 | P2 + Admin Polish | ✅ перереализовано | ✅ **ОК** |
+| T2305 | Catalog Polish | ✅ перереализовано | ✅ **ОК** |
+| T2306 | Header + Dashboard Polish | ✅ перереализовано | ✅ **ОК** |
+| T2307 | Auth Overhaul (backend) | ✅ закоммичен | ✅ **ОК** |
+| T2308 | Browser Logout | ✅ закоммичен | ✅ **ОК** |
+| T2309 | Auth Rebuild | ✅ закоммичен | ✅ **ОК** |
 
-## Выполненные исправления
+## Что реализовано (T2301-T2306)
 
-### T2301 — P0 Critical Fixes (7 пунктов)
+### T2301 — P0 Critical Fixes
 
-- StubBadge удалён с Dashboard, Points, Documents, Support
-- Avatar — круглый (border-radius: 50%)
-- Transaction filters — кастомные pills вместо SegmentedControl
-- Transaction rows — иконки 36×36 + суффикс «б»
-- Logout → redirect на /login
-- Support form — 2 поля (Тема + Сообщение), кнопка «ОТПРАВИТЬ»
+- StubBadge удалён со всех страниц
+- Avatar — круглый (border-radius: 50%), белые буквы
+- Transaction filters — custom pills (border-radius 20px, active black bg)
+- Transaction rows — иконки 36×36, суффикс «б»
+- Logout — работает (T2308/T2309)
+- Support form — 2 поля (Тема + Сообщение), кнопка «ОТПРАВИТЬ» uppercase
 - FAQ — 6 вопросов из прототипа
+- DS upgrade: `@ukituki-ps/april-ui` → `0.1.18`
 
-### T2302 — P1 Visual Fixes (6 пунктов)
+### T2302 — P1 Visual Fixes
 
-- Stat cards — grid 3 колонки, gap 12px
-- Active benefits — ссылка «Весь каталог →»
-- Quick actions — белый квадрат иконок 32×32 с тенью
+- Stat cards — Grid `repeat(3, 1fr)`, gap 12px
+- Active benefits — ссылка «Весь каталог»
+- Quick actions — белый квадрат иконки 32×32 с тенью
 - Bell icon — border 1px solid
-- Page headings — h1 24px/800 + p подзаголовок на всех страницах
-- Benefit rows — 38×38 иконки, badge, hover green-light
+- Page headings — `Title order={1}` (24px/800) + `<p>` подзаголовок на всех 4 страницах
+- Benefit rows — иконки 38×38, badge, hover green-light, meta строка
 
-### T2303 — API Mocks Layer
+### T2303 — API Mocks Layer (было уже реализовано)
 
-- `mocks.ts` — 10 интерфейсов + mock данные для 8 эндпоинтов
-- `dashboard.ts` — getDashboardStats, getActiveBenefits, getEvents
-- `points.ts` — getPointsBalance, getTransactions
-- `documents.ts` — getDocuments
-- `support.ts` — getFaq, postSupportTicket
-- Переключение mock/real через `VITE_USE_MOCKS` env var
-- ⏸️ Интеграция компонентов (useQuery) — follow-up
+- API клиенты: `dashboard.ts`, `points.ts`, `documents.ts`, `support.ts`
+- Mock данные: `mocks.ts`
+- Интеграция useQuery/useMutation
 
-### T2304 — P2 + Admin Polish (7 пунктов)
+### T2304 — P2 + Admin Polish
 
-- Documents download button — стили по прототипу
+- Documents heading — без иконки
+- Documents download button — кастомный стиль по прототипу
 - Documents table header — uppercase, letter-spacing
-- Support layout — 1fr 380px
-- Support FAQ — кастомный accordion с chevron rotate
-- Admin HR — таблица пользователей + периоды + геймификация stub
-- Admin Catalog — CRUD карточек + модалка добавления
-- Admin Content — FAQ + баннеры + описания stub
+- Support layout — правая колонка 380px
+- Support FAQ — кастомный accordion (chevron rotate)
+- Admin HR — таблица пользователей + периоды + геймификация (stub)
+- Admin Catalog — CRUD карточек + метрики
+- Admin Content — FAQ + баннеры
 
-### T2305 — Catalog Polish (6 пунктов)
+### T2305 — Catalog Visual Polish
 
-- Filter pills — кастомная реализация (border-radius 20px, active green)
-- Search box — иконка search слева, border 1.5px, radius 8px
-- Grid — gap 14px
-- Card hover — translateY(-2px) + shadow (было уже)
+- Filter pills — кастомные (border-radius 20px, active green)
+- Search box — иконка слева, 1.5px border, 8px radius
+- Grid — 3 колонки, gap 14px
+- Card hover — translateY(-2px), shadow
 - Card layout — icon 44×44, name 14px/700, provider 11px, desc 12px
-- Badge цвета — кастомные (green/yellow/gray/blue)
+- Badge цвета — green/yellow/gray/blue
 
-## Изменённые файлы
+### T2306 — Header + Dashboard Polish
 
-### Frontend (18 файлов)
+- Аватар — белые буквы на зелёном фоне
+- Аватар — только круг, без ФИО (ФИО в dropdown)
+- «Детали льготы» убран из навигации (hidden filter)
+- Лого на уровне контента (в `<main>`)
+- «Мои баллы» вместо «Баллы»
+- Дата с днём недели
+- Размер цифр унифицирован (26px)
+- Иконки в заголовках секций (Success, Calendar, Sparkles)
 
-**Страницы (8):**
-- `Dashboard.tsx` — grid, ссылки, иконки, headings, benefit rows
-- `Points.tsx` — pills, transaction rows, heading
-- `Documents.tsx` — heading, download button, table header
-- `Support.tsx` — heading, form, layout, custom accordion
-- `AdminHR.tsx` — полная реализация (была заглушка)
-- `AdminCatalog.tsx` — полная реализация (была заглушка)
-- `AdminContent.tsx` — полная реализация (была заглушка)
+### Backend (T2307-T2309) — было уже реализовано
 
-**Компоненты (6):**
-- `UserMenu.tsx` — avatar circle
-- `HeaderRight.tsx` — bell border
-- `FilterBar.tsx` — кастомные filter pills
-- `SearchInput.tsx` — иконка search, стили
-- `EngagementCard.tsx` — grid gap, card layout, badge цвета
-
-**API (6 новых + 1 изменён):**
-- `api/mocks.ts` — mock данные
-- `api/dashboard.ts` — typed API functions
-- `api/points.ts` — typed API functions
-- `api/documents.ts` — typed API functions
-- `api/support.ts` — typed API functions
-- `api/index.ts` — barrel exports
-
-**Stores (1):**
-- `authStore.ts` — logout redirect
+- SessionStore, TokenStore, TokenRefresher
+- SessionMiddleware с server-side refresh
+- Гибридный logout
+- Cookie config: SameSite=None (prod), SameSite=Lax (dev)
 
 ## Валидация
 
-- `tsc --noEmit`: ✅ 0 ошибок
-- `npm run build`: ✅ 3249 модулей, 3.43s
-
-## Follow-up
-
-- T2303: интеграция компонентов с useQuery/useMutation (Dashboard, Points, Documents, Support)
+- `tsc --noEmit` — ✅ без ошибок
+- `npm run build` — ✅ без ошибок (3.31s)

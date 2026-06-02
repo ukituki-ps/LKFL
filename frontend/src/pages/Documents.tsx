@@ -1,27 +1,46 @@
 import {
 	Card,
 	Text,
-	Group,
 	Stack,
 	Table,
 	Badge,
 	Button,
 	Skeleton,
+	Title,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import {
-	AprilIconFileText,
 	AprilIconSuccess,
 	AprilIconDownload,
 } from '@ukituki-ps/april-ui'
-import { StubBadge } from '@/components/ui/StubBadge'
 import { getDocuments } from '@/api/documents'
+
+const headerCellStyle: React.CSSProperties = {
+	textTransform: 'uppercase',
+	letterSpacing: '0.5px',
+	fontSize: 11,
+	fontWeight: 600,
+	color: 'var(--brand-text-subtle)',
+	background: 'var(--brand-row)',
+	padding: '10px 16px',
+}
+
+const downloadButtonStyle: React.CSSProperties = {
+	padding: '6px 12px',
+	background: 'var(--brand-row)',
+	border: '1px solid var(--brand-border)',
+	borderRadius: 6,
+	fontSize: 12,
+	fontWeight: 600,
+	color: 'var(--brand-text-muted)',
+}
 
 /**
  * Страница «Документы» — данные через React Query.
  *
  * ГЭП-9: secondary doc-meta строка под названием.
- * ГЭП-10: кнопка «Скачать» с текстом + иконка.
+ * ГЭП-10: кнопка «Скачать» по стилю прототипа.
+ * P2: table header uppercase + letter-spacing.
  */
 export function Documents() {
 	// ─── React Query ───
@@ -34,15 +53,14 @@ export function Documents() {
 	return (
 		<Stack gap="lg">
 			{/* Heading */}
-			<Group justify="space-between">
-				<Group gap={8} align="center">
-					<AprilIconFileText size={20} style={{ color: 'var(--brand-green)' }} />
-					<Text fw={600} size="lg">
-						Мои документы
-					</Text>
-				</Group>
-				<StubBadge />
-			</Group>
+			<div>
+				<Title order={1} style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
+					Документы
+				</Title>
+				<Text size="sm" c="dimmed">
+					Заявления, согласия и сформированные документы
+				</Text>
+			</div>
 
 			{/* Documents table */}
 			<Card
@@ -60,30 +78,20 @@ export function Documents() {
 					<Table striped highlightOnHover>
 						<thead>
 							<tr>
-								<th>
-									<Text size="xs" fw={600} c="dimmed">
-										Документ
-									</Text>
+								<th style={headerCellStyle}>
+									Документ
 								</th>
-								<th>
-									<Text size="xs" fw={600} c="dimmed">
-										Тип
-									</Text>
+								<th style={headerCellStyle}>
+									Тип
 								</th>
-								<th>
-									<Text size="xs" fw={600} c="dimmed">
-										Дата
-									</Text>
+								<th style={headerCellStyle}>
+									Дата
 								</th>
-								<th>
-									<Text size="xs" fw={600} c="dimmed">
-										Статус
-									</Text>
+								<th style={headerCellStyle}>
+									Статус
 								</th>
-								<th style={{ width: 100 }}>
-									<Text size="xs" fw={600} c="dimmed">
-										—
-									</Text>
+								<th style={{ ...headerCellStyle, width: 100 }}>
+									—
 								</th>
 							</tr>
 						</thead>
@@ -134,11 +142,12 @@ export function Documents() {
 										</Badge>
 									</td>
 									<td>
-										{/* ГЭП-10: кнопка «Скачать» с текстом */}
+										{/* ГЭП-10: кнопка «Скачать» по стилю прототипа */}
 										<Button
-											variant="subtle"
+											variant="default"
 											size="xs"
-											leftSection={<AprilIconDownload size={12} />}
+											leftSection={<AprilIconDownload size={13} />}
+											style={downloadButtonStyle}
 											onClick={() => {
 												// Stub — скачивание файла в F2
 											}}

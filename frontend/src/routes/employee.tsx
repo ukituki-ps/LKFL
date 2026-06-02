@@ -1,13 +1,18 @@
 // Employee routes — константы и типы для маршрутов сотрудника
 // Используется в навигации (T2105) и App.tsx
 
-export const employeeRoutes = [
+export const employeeRoutes: {
+	path: string
+	label: string
+	icon: string
+	hidden?: boolean
+}[] = [
 	{ path: '/', label: 'Главная', icon: 'home' },
 	{ path: '/catalog', label: 'Каталог льгот', icon: 'grid' },
-	{ path: '/points', label: 'Баллы', icon: 'star' },
+	{ path: '/points', label: 'Мои баллы', icon: 'star' },
 	{ path: '/documents', label: 'Документы', icon: 'file' },
 	{ path: '/support', label: 'Поддержка', icon: 'help' },
 	{ path: '/catalog/:slug', label: 'Детали льготы', icon: 'grid', hidden: true },
-] as const
+]
 
-export type EmployeeRoute = (typeof employeeRoutes)[number]
+export type EmployeeRoute = typeof employeeRoutes[number]

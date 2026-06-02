@@ -4,13 +4,11 @@ import {
 	Group,
 	Stack,
 	Progress,
-	Paper,
-	SegmentedControl,
 	Skeleton,
+	Title,
 } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
 import { AprilIconSuccess, AprilIconClose } from '@ukituki-ps/april-ui'
-import { StubBadge } from '@/components/ui/StubBadge'
 import { useState } from 'react'
 import { getPointsBalance, getTransactions } from '@/api/points'
 
@@ -46,12 +44,14 @@ export function Points() {
 	return (
 		<Stack gap="lg">
 			{/* Heading */}
-			<Group justify="space-between">
-				<Text fw={600} size="lg">
+			<div>
+				<Title order={1} style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
 					Мои баллы
+				</Title>
+				<Text size="sm" c="dimmed">
+					История начислений и списаний
 				</Text>
-				<StubBadge />
-			</Group>
+			</div>
 
 			{/* ГЭП-4: layout side-by-side */}
 			<Group wrap="nowrap" gap="md" align="flex-start">
@@ -121,39 +121,73 @@ export function Points() {
 							boxShadow: 'var(--brand-shadow-card)',
 						}}
 					>
-						<Group justify="space-between" mb="md">
-							<Text fw={600} size="md">
+						<Text fw={600} size="md" mb="md">
 								Транзакции
 							</Text>
-							<StubBadge />
-						</Group>
 
-						<SegmentedControl
-							data={[
-								{ value: 'all', label: 'Все' },
-								{ value: 'credits', label: 'Начисления' },
-								{ value: 'debits', label: 'Списания' },
-							]}
-							value={filter}
-							onChange={(v) => setFilter(v as FilterType)}
-							radius="md"
-							mb="md"
-						/>
+						<Group gap="sm" mb="md">
+							{(['all', 'credits', 'debits'] as FilterType[]).map((f) => (
+								<button
+									key={f}
+									onClick={() => setFilter(f)}
+									style={{
+										padding: '5px 12px',
+										borderRadius: 20,
+										border: '1.5px solid',
+										borderColor: filter === f ? 'var(--brand-text)' : 'var(--brand-border)',
+										background: filter === f ? 'var(--brand-text)' : 'transparent',
+										color: filter === f ? '#fff' : 'var(--brand-text-muted)',
+										fontSize: 13,
+										fontWeight: 500,
+										cursor: 'pointer',
+										transition: 'all 150ms',
+										fontFamily: 'inherit',
+									}}
+								>
+									{f === 'all' ? 'Все' : f === 'credits' ? 'Начисления' : 'Списания'}
+								</button>
+							))}
+						</Group>
 
 						{transactionsLoading ? (
 							<Skeleton height={200} />
 						) : transactionsError ? (
 							<Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
 						) : (
-							<Stack gap="sm">
-								{displayTransactions.map((t, i) => (
-									<Paper
-										key={`${t.date}-${t.description}-${i}`}
-										withBorder
-										style={{ padding: 12, borderRadius: 'var(--brand-radius-btn, 6px)' }}
-									>
-										<Group justify="space-between">
-											<div>
+								<div>
+									{displayTransactions.map((t, i) => (
+										<div
+											key={`${t.date}-${t.description}-${i}`}
+											style={{
+												display: 'flex',
+												alignItems: 'center',
+												gap: 12,
+												padding: '13px 18px',
+												borderBottom: '1px solid var(--brand-row)',
+											}}
+										>
+											{/* tx-icon 36×36 */}
+											<div
+												style={{
+													width: 36,
+													height: 36,
+													borderRadius: 10,
+													display: 'flex',
+													alignItems: 'center',
+													justifyContent: 'center',
+													flexShrink: 0,
+													background: t.type === 'credit' ? '#DCFCE7' : 'var(--brand-bg)',
+													color: t.type === 'credit' ? '#16A34A' : 'var(--brand-text-subtle)',
+												}}
+											>
+												{t.type === 'credit' ? (
+													<AprilIconSuccess size={18} />
+												) : (
+													<AprilIconClose size={18} />
+												)}
+											</div>
+											{/* Description + date */}
+											<div style={{ flex: 1, minWidth: 0 }}>
 												<Text size="sm" fw={500}>
 													{t.description}
 												</Text>
@@ -161,26 +195,18 @@ export function Points() {
 													{t.date}
 												</Text>
 											</div>
-											<Group gap={4} align="center">
-												{t.type === 'credit' ? (
-													<AprilIconSuccess size={14} style={{ color: '#00B33C' }} />
-												) : (
-													<AprilIconClose size={14} style={{ color: '#EF4444' }} />
-												)}
-												<Text
-													size="sm"
-													fw={600}
-													c={t.type === 'credit' ? 'green' : 'red'}
-												>
-													{t.type === 'credit' ? '+' : '-'}
-													{t.amount}
-												</Text>
-											</Group>
-										</Group>
-									</Paper>
-								))}
-							</Stack>
-						)}
+											{/* Amount with suffix */}
+											<Text
+												size="sm"
+												fw={600}
+												c={t.type === 'credit' ? 'green' : 'red'}
+											>
+												{t.type === 'credit' ? '+' : '−'}{Math.abs(t.amount)}{' '}б
+											</Text>
+										</div>
+									))}
+								</div>
+							)}
 					</Card>
 				</div>
 			</Group>

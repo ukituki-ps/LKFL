@@ -1,5 +1,6 @@
-import { Card, Text, Group, Stack, Title, Badge, Paper, Skeleton } from '@mantine/core'
+import { Button, Card, Text, Group, Stack, Title, Badge, Paper, Skeleton } from '@mantine/core'
 import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from 'react-router-dom'
 import {
 	AprilIconCoins,
 	AprilIconSuccess,
@@ -11,8 +12,8 @@ import {
 	AprilIconShoppingBag,
 	AprilIconBrain,
 	AprilIconBaby,
+	AprilIconSparkles,
 } from '@ukituki-ps/april-ui'
-import { StubBadge } from '@/components/ui/StubBadge'
 import { getDashboardStats, getActiveBenefits, getEvents } from '@/api/dashboard'
 
 /* ─── Icon mapping (API returns icon name strings) ─── */
@@ -118,20 +119,15 @@ function StatCard({
 			withBorder
 			padding="md"
 			style={{
-				flex: 1,
-				minWidth: 180,
 				borderRadius: 'var(--brand-radius-card, 14px)',
 				boxShadow: 'var(--brand-shadow-card)',
 				background: isGreen ? 'var(--brand-green, #00B33C)' : 'transparent',
 				color: isGreen ? '#FFFFFF' : 'inherit',
 			}}
 		>
-			<Group justify="space-between" mb="xs">
-				<Text size="xs" c={isGreen ? 'white' : 'dimmed'} opacity={isGreen ? 0.85 : 1}>
-					{title}
-				</Text>
-				<StubBadge />
-			</Group>
+			<Text size="xs" c={isGreen ? 'white' : 'dimmed'} opacity={isGreen ? 0.85 : 1} mb="xs">
+				{title}
+			</Text>
 			<Group align="flex-end" gap={4} mb="xs">
 				<span style={{ opacity: isGreen ? 0.9 : 1 }}>
 					<Icon size={20} />
@@ -141,7 +137,7 @@ function StatCard({
 						<Text
 							fw={800}
 							style={{
-								fontSize: suffix ? 26 : undefined,
+								fontSize: 26,
 								lineHeight: 1.1,
 								color: isGreen ? '#FFFFFF' : 'var(--brand-text)',
 							}}
@@ -172,6 +168,8 @@ function ActiveBenefitsList({
 	isLoading: boolean
 	isError: boolean
 }) {
+	const navigate = useNavigate()
+
 	if (isLoading) return <Skeleton height={200} />
 	if (isError) return <Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
 
@@ -183,52 +181,81 @@ function ActiveBenefitsList({
 				boxShadow: 'var(--brand-shadow-card)',
 			}}
 		>
-			<Group justify="space-between" mb="md">
-				<Text fw={600} size="md">
-					Активные льготы
-				</Text>
-				<StubBadge />
+			<Group justify="space-between" align="center" mb="md">
+				<Group gap={6} align="center">
+					<AprilIconSuccess size={18} style={{ color: 'var(--brand-green)' }} />
+					<Text fw={600} size="md">
+						Активные льготы
+					</Text>
+				</Group>
+				<Button
+					variant="link"
+					size="xs"
+					onClick={() => navigate('/catalog')}
+					style={{
+						fontSize: 12,
+						fontWeight: 600,
+						color: 'var(--brand-green)',
+						padding: 0,
+						height: 'auto',
+					}}
+				>
+					Весь каталог →
+				</Button>
 			</Group>
 			<Stack gap="sm">
 				{benefits.map((b) => {
 					const Icon = iconMap[b.icon] || AprilIconHeart
 					return (
-						<Group
+						<div
 							key={b.name}
-							gap="sm"
-							style={{ padding: '8px 0', borderBottom: '1px solid var(--brand-border)' }}
+							style={{
+								padding: '8px 10px',
+								borderBottom: '1px solid var(--brand-border)',
+								borderRadius: 8,
+								transition: 'background-color 150ms',
+								cursor: 'default',
+							}}
+							onMouseEnter={(e) => {
+								e.currentTarget.style.backgroundColor = 'var(--brand-green-light, #F0FDF4)'
+							}}
+							onMouseLeave={(e) => {
+								e.currentTarget.style.backgroundColor = 'transparent'
+							}}
 						>
-							<div
-								style={{
-									width: 32,
-									height: 32,
-									display: 'flex',
-									alignItems: 'center',
-									justifyContent: 'center',
-									borderRadius: 8,
-									backgroundColor: 'var(--brand-row, #F9FAFB)',
-									flexShrink: 0,
-									color: 'var(--brand-green)',
-								}}
-							>
-								<Icon size={16} />
-							</div>
-							<div style={{ flex: 1 }}>
-								<Text size="sm" fw={500}>
-									{b.name}
-								</Text>
-								<Text size="xs" c="dimmed">
-									{b.provider}
-								</Text>
-							</div>
-							<Badge
-								variant="light"
-								color={b.status === 'active' ? 'green' : 'yellow'}
-								size="xs"
-							>
-								{b.status === 'active' ? 'Активна' : 'Ожидает'}
-							</Badge>
-						</Group>
+							<Group gap="sm">
+								<div
+									style={{
+										width: 38,
+										height: 38,
+										display: 'flex',
+										alignItems: 'center',
+										justifyContent: 'center',
+										borderRadius: 10,
+										backgroundColor: 'var(--brand-row, #F9FAFB)',
+										flexShrink: 0,
+										color: 'var(--brand-green)',
+									}}
+								>
+									<Icon size={18} />
+								</div>
+								<div style={{ flex: 1 }}>
+									<Text size="sm" fw={500}>
+										{b.name}
+									</Text>
+									<Text size="xs" c="dimmed">
+										{b.provider} · до 31.12.2025
+									</Text>
+								</div>
+								<Badge
+									variant="light"
+									color={b.status === 'active' ? 'green' : 'yellow'}
+									size="xs"
+								>
+									{b.status === 'active' ? 'Активна' : 'Ожидает'}
+								</Badge>
+							</Group>
+						</div>
 					)
 				})}
 			</Stack>
@@ -284,11 +311,11 @@ function EventsFeed({
 				boxShadow: 'var(--brand-shadow-card)',
 			}}
 		>
-			<Group justify="space-between" mb="md">
+			<Group gap={6} align="center" mb="md">
+				<AprilIconCalendar size={18} style={{ color: 'var(--brand-green)' }} />
 				<Text fw={600} size="md">
 					Последние события
 				</Text>
-				<StubBadge />
 			</Group>
 			<Stack gap="md">
 				{events.map((e, i) => {
@@ -336,11 +363,11 @@ function QuickActionsGrid({ onActionClick }: { onActionClick: () => void }) {
 				width: 292,
 			}}
 		>
-			<Group justify="space-between" mb="md">
+			<Group gap={6} align="center" mb="md">
+				<AprilIconSparkles size={18} style={{ color: 'var(--brand-green)' }} />
 				<Text fw={600} size="md">
 					Быстрые действия
 				</Text>
-				<StubBadge />
 			</Group>
 			<div
 				style={{
@@ -368,7 +395,22 @@ function QuickActionsGrid({ onActionClick }: { onActionClick: () => void }) {
 							e.currentTarget.style.backgroundColor = 'transparent'
 						}}
 					>
-						<a.icon size={18} />
+						<div
+							style={{
+								width: 32,
+								height: 32,
+								borderRadius: 8,
+								background: '#fff',
+								boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+								display: 'flex',
+								alignItems: 'center',
+								justifyContent: 'center',
+								color: 'var(--brand-green)',
+								margin: '0 auto',
+							}}
+						>
+							<a.icon size={18} />
+						</div>
 						<Text size="xs" fw={500} mt={4} lineClamp={2}>
 							{a.label}
 						</Text>
@@ -398,6 +440,7 @@ function getGreeting(): string {
  */
 export function Dashboard() {
 	const today = new Date().toLocaleDateString('ru-RU', {
+		weekday: 'long',
 		day: 'numeric',
 		month: 'long',
 		year: 'numeric',
@@ -458,11 +501,18 @@ export function Dashboard() {
 			{/* Greeting */}
 			<Group justify="space-between" align="flex-start">
 				<div>
-					<Title order={2} style={{ marginBottom: 4 }}>
+					<Title
+						order={1}
+						style={{
+							fontSize: 24,
+							fontWeight: 800,
+							marginBottom: 4,
+						}}
+					>
 						{getGreeting()}, Алексей!
 					</Title>
 					<Text size="sm" c="dimmed">
-						{today}
+						{today} · Добро пожаловать в личный кабинет льгот
 					</Text>
 				</div>
 				<Badge variant="light" color="green">
@@ -471,15 +521,23 @@ export function Dashboard() {
 			</Group>
 
 			{/* ГЭП-6 + ГЭП-12: stat cards — данные с API */}
-			<Group gap="md" wrap="wrap">
+			<div
+				style={{
+					display: 'grid',
+					gridTemplateColumns: 'repeat(3, 1fr)',
+					gap: 12,
+				}}
+			>
 				{statsLoading ? (
 					<>
-						<Skeleton height={100} style={{ flex: 1, minWidth: 180 }} />
-						<Skeleton height={100} style={{ flex: 1, minWidth: 180 }} />
-						<Skeleton height={100} style={{ flex: 1, minWidth: 180 }} />
+						<Skeleton height={100} />
+						<Skeleton height={100} />
+						<Skeleton height={100} />
 					</>
 				) : statsError ? (
-					<Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
+					<Text c="red" style={{ gridColumn: '1 / -1' }}>
+						Не удалось загрузить данные. Попробуйте позже.
+					</Text>
 				) : (
 					<>
 						<StatCard
@@ -504,7 +562,7 @@ export function Dashboard() {
 						/>
 					</>
 				)}
-			</Group>
+			</div>
 
 			{/* ГЭП-3: layout 2 колонки */}
 			<Group wrap="nowrap" gap="md" align="flex-start">

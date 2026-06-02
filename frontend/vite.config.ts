@@ -14,8 +14,8 @@ export default defineConfig({
     host: '0.0.0.0',
     allowedHosts: ['host.docker.internal'],
     proxy: {
-      '/api': { target: 'http://localhost:18080', changeOrigin: true },
-      '/admin': { target: 'http://localhost:18080', changeOrigin: true },
+      '/api': { target: "http://localhost:8082",  },
+      '/admin': { target: "http://localhost:8082",  },
     },
   },
   build: {

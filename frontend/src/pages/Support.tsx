@@ -3,28 +3,88 @@ import {
 	Text,
 	Group,
 	Stack,
-	Accordion,
 	Button,
-	TextInput,
 	Textarea,
 	Select,
 	Paper,
 	Skeleton,
+	Title,
 } from '@mantine/core'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import {
-	AprilIconHelp,
 	AprilIconSend,
 	AprilIconCheckCircle,
+	AprilIconChevronRight,
 } from '@ukituki-ps/april-ui'
-import { StubBadge } from '@/components/ui/StubBadge'
 import { useState } from 'react'
 import { getFaq, postSupportTicket } from '@/api/support'
+
+/**
+ * Кастомный accordion-item для FAQ.
+ *
+ * Chevron-down реализуем через AprilIconChevronRight + rotate(90deg).
+ */
+function FaqItem({
+	title,
+	content,
+}: {
+	title: string
+	content: string
+}) {
+	const [isOpen, setIsOpen] = useState(false)
+
+	return (
+		<div style={{ borderBottom: '1px solid var(--brand-row)' }}>
+			<div
+				onClick={() => setIsOpen(!isOpen)}
+				style={{
+					display: 'flex',
+					alignItems: 'center',
+					justifyContent: 'space-between',
+					padding: '16px 20px',
+					cursor: 'pointer',
+					fontSize: 13,
+					fontWeight: 600,
+					color: isOpen ? 'var(--brand-green, #00B33C)' : 'inherit',
+					transition: 'color 0.2s',
+					userSelect: 'none',
+				}}
+			>
+				<span>{title}</span>
+				<AprilIconChevronRight
+					size={18}
+					style={{
+						transform: isOpen ? 'rotate(-90deg)' : 'rotate(90deg)',
+						transition: 'transform 0.2s',
+						flexShrink: 0,
+						marginLeft: 12,
+						color: isOpen ? 'var(--brand-green, #00B33C)' : 'var(--mantine-color-dimmed)',
+					}}
+				/>
+			</div>
+			{isOpen && (
+				<div
+					style={{
+						padding: '0 20px 16px',
+						fontSize: 13,
+						color: 'var(--brand-text-muted)',
+						lineHeight: 1.6,
+					}}
+				>
+					<Text size="sm" c="dimmed">
+						{content}
+					</Text>
+				</div>
+			)}
+		</div>
+	)
+}
 
 /**
  * Страница «Поддержка» — данные через React Query.
  *
  * ГЭП-11: success state формы после сабмита.
+ * P2: кастомный accordion, правая колонка 380px.
  */
 export function Support() {
 	/* ГЭП-11: tracking формы / успеха */
@@ -32,7 +92,6 @@ export function Support() {
 
 	// Form fields
 	const [topic, setTopic] = useState<string | null>(null)
-	const [title, setTitle] = useState('')
 	const [message, setMessage] = useState('')
 
 	// ─── React Query: FAQ ───
@@ -49,7 +108,6 @@ export function Support() {
 		onSuccess: () => {
 			setSubmitted(true)
 			setTopic(null)
-			setTitle('')
 			setMessage('')
 		},
 	})
@@ -57,15 +115,14 @@ export function Support() {
 	return (
 		<Stack gap="lg">
 			{/* Heading */}
-			<Group justify="space-between">
-				<Group gap={8} align="center">
-					<AprilIconHelp size={20} style={{ color: 'var(--brand-green)' }} />
-					<Text fw={600} size="lg">
-						Поддержка
-					</Text>
-				</Group>
-				<StubBadge />
-			</Group>
+			<div>
+				<Title order={1} style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>
+					Поддержка
+				</Title>
+				<Text size="sm" c="dimmed">
+					Частые вопросы и обратная связь
+				</Text>
+			</div>
 
 			{/* Two-column layout */}
 			<Group wrap="nowrap" gap="md">
@@ -76,38 +133,31 @@ export function Support() {
 						style={{
 							borderRadius: 'var(--brand-radius-card, 14px)',
 							boxShadow: 'var(--brand-shadow-card)',
+							padding: 0,
 						}}
 					>
-						<Group justify="space-between" mb="md">
-							<Text fw={600} size="md">
-								Частые вопросы
-							</Text>
-							<StubBadge />
-						</Group>
+						<Text fw={600} size="md" style={{ padding: '16px 20px 0' }}>
+							Частые вопросы
+						</Text>
 
 						{faqLoading ? (
 							<Skeleton height={300} />
 						) : faqError ? (
-							<Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
+							<Text c="red" style={{ padding: '0 20px' }}>
+								Не удалось загрузить данные. Попробуйте позже.
+							</Text>
 						) : (
-							<Accordion variant="separated">
+							<div>
 								{(faq ?? []).map((item, i) => (
-									<Accordion.Item key={`faq-${i}`} value={`faq-${i}`}>
-										<Accordion.Control>{item.title}</Accordion.Control>
-										<Accordion.Panel>
-											<Text size="sm" c="dimmed">
-												{item.content}
-											</Text>
-										</Accordion.Panel>
-									</Accordion.Item>
+									<FaqItem key={`faq-${i}`} title={item.title} content={item.content} />
 								))}
-							</Accordion>
+							</div>
 						)}
 					</Card>
 				</div>
 
-				{/* Contact form — right column */}
-				<div style={{ flex: '1 1 45%' }}>
+				{/* Contact form — right column (fixed 380px) */}
+				<div style={{ flex: '0 0 380px' }}>
 					<Card
 						withBorder
 						style={{
@@ -115,12 +165,9 @@ export function Support() {
 							boxShadow: 'var(--brand-shadow-card)',
 						}}
 					>
-						<Group justify="space-between" mb="md">
-							<Text fw={600} size="md">
-								{submitted ? 'Обращение отправлено!' : 'Написать в поддержку'}
-							</Text>
-							<StubBadge />
-						</Group>
+						<Text fw={600} size="md" mb="md">
+							{submitted ? 'Обращение отправлено!' : 'Написать в поддержку'}
+						</Text>
 
 						{submitted ? (
 							/* ГЭП-11: success block */
@@ -182,17 +229,9 @@ export function Support() {
 									clearable
 								/>
 
-								<TextInput
-									label="Заголовок"
-									placeholder="Кратко опишите проблему"
-									value={title}
-									onChange={(e) => setTitle(e.target.value)}
-									radius="md"
-								/>
-
 								<Textarea
-									label="Описание"
-									placeholder="Подробно опишите вашу проблему..."
+									label="Сообщение"
+									placeholder="Опишите ваш вопрос подробно..."
 									value={message}
 									onChange={(e) => setMessage(e.target.value)}
 									minRows={4}
@@ -208,8 +247,9 @@ export function Support() {
 									onClick={() => {
 										submitTicket({ topic: topic ?? 'other', message })
 									}}
+									style={{ textTransform: 'uppercase' }}
 								>
-									Отправить обращение
+									ОТПРАВИТЬ
 								</Button>
 							</Stack>
 						)}

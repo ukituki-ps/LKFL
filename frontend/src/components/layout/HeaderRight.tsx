@@ -46,7 +46,10 @@ export function HeaderRight() {
 					color="dimmed"
 					size={34}
 					radius="xl"
-					style={{ backgroundColor: 'var(--brand-row)' }}
+					style={{
+						backgroundColor: 'var(--brand-row)',
+						border: '1px solid var(--brand-border)',
+					}}
 				>
 					<AprilIconBell size={18} />
 				</ActionIcon>

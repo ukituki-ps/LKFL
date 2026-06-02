@@ -19,7 +19,7 @@ export function HeaderNav({ isAdmin }: HeaderNavProps) {
 		? adminRoutes.filter((item) =>
 				item.roles.some((role) => userRoles.includes(role as never)),
 			)
-		: employeeRoutes
+		: employeeRoutes.filter((item) => item.hidden !== true)
 
 	return (
 		<nav style={{ display: 'flex', gap: '2px' }}>

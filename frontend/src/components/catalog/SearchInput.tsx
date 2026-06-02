@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { TextInput } from '@mantine/core'
 import { useDebouncedValue } from '@mantine/hooks'
+import { AprilIconSearch } from '@ukituki-ps/april-ui'
 
 interface SearchInputProps {
 	value: string
@@ -9,6 +10,14 @@ interface SearchInputProps {
 
 /**
  * Поле поиска с debounce (300ms).
+ *
+ * Стили по прототипу:
+ * - border: 1.5px solid var(--brand-border)
+ * - border-radius: 8px
+ * - padding: 8px 14px
+ * - Иконка search слева (AprilIconSearch)
+ * - font-size: 13px
+ *
  * Используется в каталоге для поиска льгот по названию и описанию.
  */
 export function SearchInput({ value, onChange }: SearchInputProps) {
@@ -30,8 +39,23 @@ export function SearchInput({ value, onChange }: SearchInputProps) {
 			value={inputValue}
 			onChange={(e) => setInputValue(e.currentTarget.value)}
 			placeholder="Поиск льгот..."
-			size="md"
-			radius="md"
+			leftSectionWidth={42}
+			leftSection={
+				<AprilIconSearch
+					size={16}
+					style={{ color: 'var(--brand-text-muted)', flexShrink: 0 }}
+				/>
+			}
+			style={{
+				fontSize: '13px',
+			}}
+			styles={{
+				input: {
+					border: '1.5px solid var(--brand-border)',
+					borderRadius: '8px',
+					padding: '8px 14px',
+				},
+			}}
 			mb="md"
 		/>
 	)
