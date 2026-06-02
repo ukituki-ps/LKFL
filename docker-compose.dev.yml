@@ -19,15 +19,17 @@ services:
     restart: unless-stopped
     ports:
       - "5432:5432"
+    env_file:
+      - .env
     environment:
       POSTGRES_DB: lkfl_platform
-      POSTGRES_USER: ${POSTGRES_USER:-lkfl}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lkfl-dev}
-      TZ: ${TZ:-Europe/Moscow}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: Europe/Moscow
     volumes:
       - lkfl_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lkfl} -d lkfl_platform"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d lkfl_platform"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -43,6 +45,8 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
+    env_file:
+      - .env
     command: >
       redis-server
       --appendonly yes
@@ -69,13 +73,15 @@ services:
     restart: unless-stopped
     ports:
       - "8081:8080"
+    env_file:
+      - .env
     environment:
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak
-      KC_DB_USERNAME: ${POSTGRES_USER:-lkfl}
-      KC_DB_PASSWORD: ${POSTGRES_PASSWORD:-lkfl-dev}
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KC_HTTP_RELATIVE_PATH: /
       TZ: ${TZ:-Europe/Moscow}
     command: >
@@ -139,16 +145,18 @@ services:
       target: server
     restart: unless-stopped
     # No host port mapping — routed through nginx upstream (lkfl-server:8080)
+    env_file:
+      - .env
     environment:
-      DB_DSN: ${DB_DSN:-postgresql://lkfl:lkfl-dev@postgres:5432/lkfl_platform?sslmode=disable}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      KEYCLOAK_ISSUER: http://keycloak:8080/realms/lkfl-sdek
-      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID:-lkfl-spa}
-      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET:-changeme-dev}
-      SERVER_PORT: ${SERVER_PORT:-8080}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
+      DB_DSN: ${DB_DSN}
+      REDIS_URL: ${REDIS_URL}
+      KEYCLOAK_ISSUER: ${KEYCLOAK_ISSUER}
+      KEYCLOAK_CLIENT_ID: ${KEYCLOAK_CLIENT_ID}
+      KEYCLOAK_CLIENT_SECRET: ${KEYCLOAK_CLIENT_SECRET}
+      SERVER_PORT: ${SERVER_PORT}
+      LOG_LEVEL: ${LOG_LEVEL}
       SENTRY_DSN: ${SENTRY_DSN:-}
-      JWT_SECRET: ${JWT_SECRET:-changeme-dev}
+      JWT_SECRET: ${JWT_SECRET}
       TZ: ${TZ:-Europe/Moscow}
     volumes:
       - ./backend:/src
@@ -175,8 +183,10 @@ services:
     ports:
       - "8090:8090"
       - "8091:8091"
+    env_file:
+      - .env
     environment:
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_URL: ${REDIS_URL}
       TZ: ${TZ:-Europe/Moscow}
     depends_on:
       redis:
