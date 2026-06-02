@@ -1,10 +1,6 @@
 # ADR — Архитектурные решения
 
-<<<<<<< HEAD
-> **36 файлов.** 27 Accepted, 4 Superseded, 5 Note.
-=======
-> **38 файлов.** 29 Accepted, 4 Superseded, 5 Note.
->>>>>>> origin/main
+> **45 файлов.** 31 Accepted, 4 Superseded, 5 Note.
 
 ---
 
@@ -47,13 +43,15 @@
 | [033](./033-frontend-testing.md) | Frontend Testing — Vitest + Playwright | ✅ | 118 |
 | [034](./034-i18n-yagni.md) | i18n — YAGNI | ✅ | 84 |
 | [035](./035-integration-proxy.md) | Integration Proxy — вынос внешних интеграций из монолита | ✅ Accepted | 438 |
-<<<<<<< HEAD
 | [036](./036-authorization-system.md) | **Авторизация — адаптация April → LKFL** | ✅ Accepted | ~600 |
-=======
-| [036](./036-ci-cd-deploy-worker.md) | CI/CD — serverAI self-hosted runners + Deploy Worker | ✅ Accepted | 122 |
 | [037](./037-keycloak-reverse-proxy.md) | Keycloak behind reverse proxy — один nginx, чистый verifier.go | ✅ Accepted | 150 |
 | [038](./038-staging-move-serverai.md) | Переезд staging с serverDev на serverAI | ✅ Accepted | 68 |
->>>>>>> origin/main
+| [039](./039-deploy-rollback-strategy.md) | Стратегия отката при деплое (Deploy Rollback Strategy) | ✅ Accepted | ~120 |
+| [040](./040-backup-disaster-recovery.md) | Backup & Disaster Recovery | ✅ Accepted | ~150 |
+| [041](./041-secrets-management-roadmap.md) | Secrets Management Roadmap | ✅ Accepted | ~100 |
+| [042](./042-zero-downtime-deployment.md) | Zero-Downtime Deployment | ✅ Accepted | ~150 |
+| [043](./043-two-environment-strategy.md) | Two-Environment Strategy — Dev (manual) + Staging (CI/CD) | ✅ Accepted | ~160 |
+| [044](./044-ci-cd-deploy-worker.md) | CI/CD — serverAI self-hosted runners + Deploy Worker | ✅ Accepted | 172 |
 
 ---
 
@@ -70,6 +68,19 @@
 | **008** | White-label | CSS-переменные для бренда |
 | **031** | Data Fetching | React Query для 118 endpoints |
 | **032** | API Types | openapi-typescodegen для types |
+
+## Инфраструктура и деплой
+
+| ADR | Тема | Зачем |
+|-----|------|-------|
+| **037** | Keycloak reverse proxy | Один nginx, X-Forwarded-Proto цепочка |
+| **038** | Staging → serverAI | Переезд staging на выделенный сервер |
+| **039** | Rollback strategy | Как откатывать деплой безопасно |
+| **040** | Backup & DR | pg_dump, volume backup, restore процедуры |
+| **041** | Secrets Management | .env → SOPS/Vault roadmap |
+| **042** | Zero-Downtime Deploy | Expand/contract pattern для миграций |
+| **043** | Two-Environment Strategy | Dev (ручной) + Staging (CI/CD) на serverAi |
+| **044** | CI/CD Deploy Worker | Self-hosted runner + webhook auto-deploy |
 
 ## Устаревшие (не использовать)
 
