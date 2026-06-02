@@ -9,7 +9,9 @@ import {
 	Textarea,
 	Select,
 	Paper,
+	Skeleton,
 } from '@mantine/core'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import {
 	AprilIconHelp,
 	AprilIconSend,
@@ -17,45 +19,40 @@ import {
 } from '@ukituki-ps/april-ui'
 import { StubBadge } from '@/components/ui/StubBadge'
 import { useState } from 'react'
-
-/* ─── Mock FAQ ─── */
-
-const mockFaq = [
-	{
-		title: 'Как активировать льготу?',
-		content:
-			'Перейдите в каталог льгот, выберите нужную и нажмите «Активировать». Льгота станет доступна в разделе «Мои льготы».',
-	},
-	{
-		title: 'Как начисляются баллы?',
-		content:
-			'Баллы начисляются ежемесячно в соответствии с вашим пакетом льгот. Дополнительно баллы можно получить, проходя опросы и участвуя в активностях.',
-	},
-	{
-		title: 'Что делать, если льгота не работает?',
-		content:
-			'Обратитесь в поддержку через эту страницу. Приложите скриншот ошибки и описание проблемы. Мы ответим в течение 2 рабочих дней.',
-	},
-	{
-		title: 'Как сменить пакет льгот?',
-		content:
-			'Смена пакета доступна в разделе «Мои баллы» → «Настройки пакета». Изменения вступят в силу с начала следующего периода.',
-	},
-	{
-		title: 'Могу ли я передать баллы коллеге?',
-		content:
-			'Перевод баллов между сотрудниками не поддерживается. Баллы привязаны к вашему личному аккаунту.',
-	},
-]
+import { getFaq, postSupportTicket } from '@/api/support'
 
 /**
- * Страница «Поддержка» — заглушка по прототипу.
+ * Страница «Поддержка» — данные через React Query.
  *
  * ГЭП-11: success state формы после сабмита.
  */
 export function Support() {
 	/* ГЭП-11: tracking формы / успеха */
 	const [submitted, setSubmitted] = useState(false)
+
+	// Form fields
+	const [topic, setTopic] = useState<string | null>(null)
+	const [title, setTitle] = useState('')
+	const [message, setMessage] = useState('')
+
+	// ─── React Query: FAQ ───
+
+	const { data: faq, isLoading: faqLoading, isError: faqError } = useQuery({
+		queryKey: ['support', 'faq'],
+		queryFn: getFaq,
+	})
+
+	// ─── React Query: Support Ticket Mutation ───
+
+	const { mutate: submitTicket, isPending: submitting } = useMutation({
+		mutationFn: postSupportTicket,
+		onSuccess: () => {
+			setSubmitted(true)
+			setTopic(null)
+			setTitle('')
+			setMessage('')
+		},
+	})
 
 	return (
 		<Stack gap="lg">
@@ -88,18 +85,24 @@ export function Support() {
 							<StubBadge />
 						</Group>
 
-						<Accordion variant="separated">
-							{mockFaq.map((item, i) => (
-								<Accordion.Item key={i} value={`faq-${i}`}>
-									<Accordion.Control>{item.title}</Accordion.Control>
-									<Accordion.Panel>
-										<Text size="sm" c="dimmed">
-											{item.content}
-										</Text>
-									</Accordion.Panel>
-								</Accordion.Item>
-							))}
-						</Accordion>
+						{faqLoading ? (
+							<Skeleton height={300} />
+						) : faqError ? (
+							<Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
+						) : (
+							<Accordion variant="separated">
+								{(faq ?? []).map((item, i) => (
+									<Accordion.Item key={`faq-${i}`} value={`faq-${i}`}>
+										<Accordion.Control>{item.title}</Accordion.Control>
+										<Accordion.Panel>
+											<Text size="sm" c="dimmed">
+												{item.content}
+											</Text>
+										</Accordion.Panel>
+									</Accordion.Item>
+								))}
+							</Accordion>
+						)}
 					</Card>
 				</div>
 
@@ -173,6 +176,8 @@ export function Support() {
 										{ value: 'technical', label: 'Техническая проблема' },
 										{ value: 'other', label: 'Другое' },
 									]}
+									value={topic}
+									onChange={setTopic}
 									radius="md"
 									clearable
 								/>
@@ -180,12 +185,16 @@ export function Support() {
 								<TextInput
 									label="Заголовок"
 									placeholder="Кратко опишите проблему"
+									value={title}
+									onChange={(e) => setTitle(e.target.value)}
 									radius="md"
 								/>
 
 								<Textarea
 									label="Описание"
 									placeholder="Подробно опишите вашу проблему..."
+									value={message}
+									onChange={(e) => setMessage(e.target.value)}
 									minRows={4}
 									radius="md"
 								/>
@@ -194,7 +203,11 @@ export function Support() {
 									leftSection={<AprilIconSend size={16} />}
 									radius="md"
 									size="md"
-									onClick={() => setSubmitted(true)}
+									loading={submitting}
+									disabled={submitting}
+									onClick={() => {
+										submitTicket({ topic: topic ?? 'other', message })
+									}}
 								>
 									Отправить обращение
 								</Button>

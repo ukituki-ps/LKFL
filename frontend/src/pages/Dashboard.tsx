@@ -1,4 +1,5 @@
-import { Card, Text, Group, Stack, Title, Badge, Paper } from '@mantine/core'
+import { Card, Text, Group, Stack, Title, Badge, Paper, Skeleton } from '@mantine/core'
+import { useQuery } from '@tanstack/react-query'
 import {
 	AprilIconCoins,
 	AprilIconSuccess,
@@ -12,83 +13,76 @@ import {
 	AprilIconBaby,
 } from '@ukituki-ps/april-ui'
 import { StubBadge } from '@/components/ui/StubBadge'
+import { getDashboardStats, getActiveBenefits, getEvents } from '@/api/dashboard'
+
+/* ─── Icon mapping (API returns icon name strings) ─── */
+
+const iconMap: Record<string, React.ComponentType<{ size?: number | string }>> = {
+	heart: AprilIconHeart,
+	dumbbell: AprilIconDumbbell,
+	shield: AprilIconSuccess,
+	coins: AprilIconCoins,
+	calendar: AprilIconCalendar,
+}
+
+/* ─── Helpers ─── */
+
+/**
+ * Парсит текст события из API, выделяя ключевые части bold-ом.
+ * Формат API: "Новая льгота: онлайн-кинотеатр", "Начислено 500 баллов за опрос", "Обновлены условия программы"
+ */
+function parseEventText(text: string): React.ReactNode {
+	// "Новая льгота: <name>"
+	const m1 = text.match(/^(Новая льгота:\s*)(.*)$/)
+	if (m1) {
+		return (
+			<>
+				{m1[1]}
+				<Text component="span" fw={700}>
+					{m1[2]}
+				</Text>
+			</>
+		)
+	}
+
+	// "Начислено <amount> баллов <reason>"
+	const m2 = text.match(/^(Начислено\s*)(\d+\s*\w+)(.*)$/)
+	if (m2) {
+		return (
+			<>
+				{m2[1]}
+				<Text component="span" fw={700}>
+					{m2[2]}
+				</Text>
+				{m2[3]}
+			</>
+		)
+	}
+
+	// "Обновлены условия <subject>"
+	const m3 = text.match(/^(Обновлены условия:\s*)(.*)$/)
+	if (m3) {
+		return (
+			<>
+				{m3[1]}
+				<Text component="span" fw={700}>
+					{m3[2]}
+				</Text>
+			</>
+		)
+	}
+
+	return text
+}
 
 /* ─── Types ─── */
-
-interface BenefitItem {
-	name: string
-	provider: string
-	icon: React.ComponentType<{ size?: number | string }>
-	status: string
-}
-
-interface EventItem {
-	text: React.ReactNode
-	color: string
-	iconBg: string
-	iconColor: string
-	time: string
-}
 
 interface QuickAction {
 	label: string
 	icon: React.ComponentType<{ size?: number | string }>
 }
 
-/* ─── Mock data (заменится на API в F2) ─── */
-
-const mockActiveBenefits: BenefitItem[] = [
-	{ name: 'Онлайн-кинотеатр', provider: 'KION', icon: AprilIconHeart, status: 'Активна' },
-	{ name: 'Фитнес-клуб', provider: 'World Class', icon: AprilIconDumbbell, status: 'Активна' },
-	{ name: 'Страховка ДМС', provider: 'СОГАЗ', icon: AprilIconHeart, status: 'Ожидает' },
-]
-
-/* ГЭП-7: события с временными метками, bold в тексте, иконки */
-const mockEvents: EventItem[] = [
-	{
-		text: (
-			<>
-				Новая льгота:{' '}
-				<Text component="span" fw={700}>
-					онлайн-кинотеатр
-				</Text>
-			</>
-		),
-		color: 'ev-green',
-		iconBg: '#DCFCE7',
-		iconColor: '#16A34A',
-		time: 'Сегодня, 14:30',
-	},
-	{
-		text: (
-			<>
-				Начислено{' '}
-				<Text component="span" fw={700}>
-					500 баллов
-				</Text>{' '}
-				за опрос
-			</>
-		),
-		color: 'ev-yellow',
-		iconBg: '#FEF9C3',
-		iconColor: '#CA8A04',
-		time: 'Вчера, 18:15',
-	},
-	{
-		text: (
-			<>
-				Обновлены условия{' '}
-				<Text component="span" fw={700}>
-					программы
-				</Text>
-			</>
-		),
-		color: 'ev-blue',
-		iconBg: '#DBEAFE',
-		iconColor: '#2563EB',
-		time: '20 мая, 10:00',
-	},
-]
+/* ─── Mock data (статические — не приходят с API) ─── */
 
 /* ГЭП-2: быстрые действия из прототипа (5 элементов, 2 колонки) */
 const mockQuickActions: QuickAction[] = [
@@ -169,7 +163,18 @@ function StatCard({
 	)
 }
 
-function ActiveBenefitsList() {
+function ActiveBenefitsList({
+	benefits,
+	isLoading,
+	isError,
+}: {
+	benefits: ReturnType<typeof getActiveBenefits> extends Promise<infer T> ? T : never
+	isLoading: boolean
+	isError: boolean
+}) {
+	if (isLoading) return <Skeleton height={200} />
+	if (isError) return <Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
+
 	return (
 		<Card
 			withBorder
@@ -185,8 +190,8 @@ function ActiveBenefitsList() {
 				<StubBadge />
 			</Group>
 			<Stack gap="sm">
-				{mockActiveBenefits.map((b) => {
-					const Icon = b.icon
+				{benefits.map((b) => {
+					const Icon = iconMap[b.icon] || AprilIconHeart
 					return (
 						<Group
 							key={b.name}
@@ -218,10 +223,10 @@ function ActiveBenefitsList() {
 							</div>
 							<Badge
 								variant="light"
-								color={b.status === 'Активна' ? 'green' : 'yellow'}
+								color={b.status === 'active' ? 'green' : 'yellow'}
 								size="xs"
 							>
-								{b.status}
+								{b.status === 'active' ? 'Активна' : 'Ожидает'}
 							</Badge>
 						</Group>
 					)
@@ -232,20 +237,44 @@ function ActiveBenefitsList() {
 }
 
 /* ГЭП-7: лента событий с иконками в цветных квадратах + временные метки */
-function EventsFeed() {
+function EventsFeed({
+	events,
+	isLoading,
+	isError,
+}: {
+	events: ReturnType<typeof getEvents> extends Promise<infer T> ? T : never
+	isLoading: boolean
+	isError: boolean
+}) {
 	/* Маппинг цветов на иконки */
 	const getEventIcon = (color: string) => {
 		switch (color) {
-			case 'ev-green':
+			case 'green':
 				return AprilIconSuccess
-			case 'ev-yellow':
+			case 'yellow':
 				return AprilIconCoins
-			case 'ev-blue':
+			case 'blue':
 				return AprilIconCalendar
 			default:
 				return AprilIconSuccess
 		}
 	}
+
+	const getEventColors = (color: string) => {
+		switch (color) {
+			case 'green':
+				return { bg: '#DCFCE7', fg: '#16A34A' }
+			case 'yellow':
+				return { bg: '#FEF9C3', fg: '#CA8A04' }
+			case 'blue':
+				return { bg: '#DBEAFE', fg: '#2563EB' }
+			default:
+				return { bg: '#DCFCE7', fg: '#16A34A' }
+		}
+	}
+
+	if (isLoading) return <Skeleton height={200} />
+	if (isError) return <Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
 
 	return (
 		<Card
@@ -262,8 +291,9 @@ function EventsFeed() {
 				<StubBadge />
 			</Group>
 			<Stack gap="md">
-				{mockEvents.map((e, i) => {
+				{events.map((e, i) => {
 					const Icon = getEventIcon(e.color)
+					const colors = getEventColors(e.color)
 					return (
 						<Group key={i} gap="sm" align="flex-start">
 							<div
@@ -274,15 +304,15 @@ function EventsFeed() {
 									alignItems: 'center',
 									justifyContent: 'center',
 									borderRadius: 8,
-									backgroundColor: e.iconBg,
+									backgroundColor: colors.bg,
 									flexShrink: 0,
-									color: e.iconColor,
+									color: colors.fg,
 								}}
 							>
 								<Icon size={16} />
 							</div>
 							<div style={{ flex: 1 }}>
-								<Text size="sm">{e.text}</Text>
+								<Text size="sm">{parseEventText(e.text)}</Text>
 								<Text size="xs" c="dimmed" mt={2}>
 									{e.time}
 								</Text>
@@ -360,8 +390,7 @@ function getGreeting(): string {
 }
 
 /**
- * Главная страница (Dashboard) — моки по прототипу.
- * Данные статические. API подключится в F2.
+ * Главная страница (Dashboard) — данные через React Query.
  *
  * ГЭП-3: layout 2 колонки — слева льготы + события, справа быстрые действия (292px).
  * ГЭП-6: Stat card 1 — зелёный фон, белый текст.
@@ -372,6 +401,23 @@ export function Dashboard() {
 		day: 'numeric',
 		month: 'long',
 		year: 'numeric',
+	})
+
+	// ─── React Query ───
+
+	const { data: stats, isLoading: statsLoading, isError: statsError } = useQuery({
+		queryKey: ['dashboard'],
+		queryFn: getDashboardStats,
+	})
+
+	const { data: benefits, isLoading: benefitsLoading, isError: benefitsError } = useQuery({
+		queryKey: ['dashboard', 'benefits'],
+		queryFn: getActiveBenefits,
+	})
+
+	const { data: events, isLoading: eventsLoading, isError: eventsError } = useQuery({
+		queryKey: ['dashboard', 'events'],
+		queryFn: getEvents,
 	})
 
 	const showF2Toast = () => {
@@ -424,28 +470,40 @@ export function Dashboard() {
 				</Badge>
 			</Group>
 
-			{/* ГЭП-6 + ГЭП-12: stat cards — первый зелёный, третий с suffix */}
+			{/* ГЭП-6 + ГЭП-12: stat cards — данные с API */}
 			<Group gap="md" wrap="wrap">
-				<StatCard
-					title="Баланс баллов"
-					value="1 250"
-					subtitle="+500 баллов в июне"
-					icon={AprilIconCoins}
-					green
-				/>
-				<StatCard
-					title="Активные льготы"
-					value="3"
-					subtitle="Из 5 доступных"
-					icon={AprilIconSuccess}
-				/>
-				<StatCard
-					title="До конца периода"
-					value="47"
-					suffix="дн"
-					subtitle="Период: янв — июн 2025"
-					icon={AprilIconCalendar}
-				/>
+				{statsLoading ? (
+					<>
+						<Skeleton height={100} style={{ flex: 1, minWidth: 180 }} />
+						<Skeleton height={100} style={{ flex: 1, minWidth: 180 }} />
+						<Skeleton height={100} style={{ flex: 1, minWidth: 180 }} />
+					</>
+				) : statsError ? (
+					<Text c="red">Не удалось загрузить данные. Попробуйте позже.</Text>
+				) : (
+					<>
+						<StatCard
+							title="Баланс баллов"
+							value={String(stats!.points)}
+							subtitle="+500 баллов в июне"
+							icon={AprilIconCoins}
+							green
+						/>
+						<StatCard
+							title="Активные льготы"
+							value={String(stats!.activeBenefits)}
+							subtitle="Из 5 доступных"
+							icon={AprilIconSuccess}
+						/>
+						<StatCard
+							title="До конца периода"
+							value={String(stats!.daysLeft)}
+							suffix="дн"
+							subtitle="Период: янв — июн 2025"
+							icon={AprilIconCalendar}
+						/>
+					</>
+				)}
 			</Group>
 
 			{/* ГЭП-3: layout 2 колонки */}
@@ -453,8 +511,16 @@ export function Dashboard() {
 				{/* Левая колонка: льготы + события */}
 				<div style={{ flex: '1 1 auto', minWidth: 0 }}>
 					<Stack gap="lg">
-						<ActiveBenefitsList />
-						<EventsFeed />
+						<ActiveBenefitsList
+							benefits={benefits ?? []}
+							isLoading={benefitsLoading}
+							isError={benefitsError}
+						/>
+						<EventsFeed
+							events={events ?? []}
+							isLoading={eventsLoading}
+							isError={eventsError}
+						/>
 					</Stack>
 				</div>
 
