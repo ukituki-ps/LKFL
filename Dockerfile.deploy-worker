@@ -16,14 +16,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -trimpath -o /deploy-work
 
 FROM alpine:3.20
 # docker-cli — для управления Docker daemon через socket
-# docker compose plugin — для orchestrator compose-файлов
+# docker-compose-plugin — для orchestrator compose-файлов (apk package, не curl с github)
 # curl --fail --silent --show-error --location: обязательна проверка HTTP-статуса
-RUN apk add --no-cache git bash curl docker-cli && \
-    mkdir -p /usr/lib/docker/cli-plugins && \
-    curl --fail --silent --show-error --location \
-        https://github.com/docker/compose/releases/download/v2.38.0/docker-compose-linux-x86_64 \
-        -o /usr/lib/docker/cli-plugins/docker-compose && \
-    chmod +x /usr/lib/docker/cli-plugins/docker-compose && \
+RUN apk add --no-cache git bash curl docker-cli docker-compose-plugin && \
     docker compose version
 COPY --from=build /deploy-worker /usr/local/bin/deploy-worker
 EXPOSE 9092
