@@ -395,6 +395,22 @@ jobs:
           export GHCR_REGISTRY="${{ env.GHCR_REGISTRY }}"
           docker compose -f docker-compose.staging.yml --env-file /home/ukituki/LKFL-staging/.env.staging -p lkfl-staging up -d
 
+      - name: Ensure keycloak DB exists
+        run: |
+          # Postgres entrypoint init scripts only run on first volume init.
+          # If volume was reused, keycloak DB may not exist.
+          for i in $(seq 1 10); do
+            if docker exec lkfl-staging-postgres-1 psql -U lkfl -d lkfl_platform -tc \
+              "SELECT 1 FROM pg_database WHERE datname='keycloak'" 2>/dev/null | grep -q 1; then
+              echo "keycloak DB exists"
+              break
+            fi
+            echo "Waiting for postgres... attempt $i"
+            sleep 5
+          done
+          docker exec lkfl-staging-postgres-1 psql -U lkfl -d lkfl_platform -c \
+            "SELECT 'CREATE DATABASE keycloak' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname='keycloak')\gexec" 2>/dev/null || true
+
       - name: Health check polling
         run: |
           echo "Waiting for services to become healthy..."
