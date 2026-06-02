@@ -31,9 +31,6 @@ env:
   NODE_VERSION: '20'
   GHCR_REGISTRY: ghcr.io/ukituki-ps/lkfl
   GOTOOLCHAIN: 'local'
-  # Node.js 20 deprecated on Actions runners (removed Sep 2026).
-  # Force Node.js 24 for all JS actions.
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
 permissions:
   contents: read
