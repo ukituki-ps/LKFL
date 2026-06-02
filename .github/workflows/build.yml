@@ -83,14 +83,14 @@ jobs:
           working-directory: backend
           args: --timeout=5m
           skip-cache: false # T2310 R3: включить кэш бинарника и analysis cache
-          skip-pull-check: true # T2310 R3: не проверять обновления бинарника каждый раз
 
       # ── Frontend ──
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: false # T2310: GitHub Cache API недоступен на self-hosted — ~/.npm persists locally
+          # T2310: cache отключён — GitHub Cache API недоступен на self-hosted,
+          # ~/.npm persists locally между run'ами
 
       - name: Configure npm registry for @ukituki-ps packages
         working-directory: frontend
@@ -179,7 +179,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: false # T2310: GitHub Cache API недоступен на self-hosted
+          # T2310: cache отключён — GitHub Cache API недоступен на self-hosted
 
       - name: Configure npm registry for @ukituki-ps packages
         working-directory: frontend
@@ -529,7 +529,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: false # T2310: GitHub Cache API недоступен на self-hosted
+          # T2310: cache отключён — GitHub Cache API недоступен на self-hosted
 
       - name: Configure npm registry for @ukituki-ps packages
         working-directory: frontend
