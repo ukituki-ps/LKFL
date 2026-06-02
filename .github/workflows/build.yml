@@ -32,8 +32,8 @@ env:
   GHCR_REGISTRY: ghcr.io/ukituki-ps/lkfl
   GOTOOLCHAIN: 'local'
   # T2310 R1: Persistent Go cache для self-hosted runner (GitHub Cache API недоступен)
-  GOMODCACHE: /home/runner/go-cache/mod
-  GOCACHE: /home/runner/go-cache/build
+  GOMODCACHE: /home/ukituki/go-cache/mod
+  GOCACHE: /home/ukituki/go-cache/build
   # T2310 R5: Принудительный переход на Node.js 24 для actions
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
 
@@ -55,8 +55,8 @@ jobs:
       # ── Go ──
       - name: Init Go cache directory (T2310 R1)
         run: |
-          mkdir -p /home/runner/go-cache/mod /home/runner/go-cache/build
-          echo "Go cache warm: $(du -sh /home/runner/go-cache/mod 2>/dev/null || echo 'cold')"
+          mkdir -p /home/ukituki/go-cache/mod /home/ukituki/go-cache/build
+          echo "Go cache warm: $(du -sh /home/ukituki/go-cache/mod 2>/dev/null || echo 'cold')"
 
       - name: Setup Go
         uses: actions/setup-go@v5
