@@ -238,7 +238,7 @@ jobs:
     runs-on: lkfl
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 2 # T2310: уменьшил с 4 — на self-hosted runner 4 параллельных build'а потребляют слишком много RAM
       matrix:
         service: [server, proxy, frontend, deploy-worker]
     steps:
