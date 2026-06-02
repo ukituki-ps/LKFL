@@ -243,7 +243,7 @@ jobs:
     runs-on: lkfl
     strategy:
       fail-fast: false
-      max-parallel: 2 # T2310: уменьшил с 4 — на self-hosted runner 4 параллельных build'а потребляют слишком много RAM
+      max-parallel: 1 # T2310: 1 за раз — E2E local + 4 build'а = перегрузка RAM (OOM на npm ci, exit 146)
       matrix:
         service: [server, proxy, frontend, deploy-worker]
     steps:
