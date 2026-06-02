@@ -2,13 +2,13 @@
 # Заменяет ci.yml, cd.yml, deploy.yml (удалены).
 # T1710 — добавлены E2E job'ы (e2e-local + e2e-staging).
 # T2311 — добавлен job e2e-integration (реальный OIDC flow через Keycloak).
-# ADR-043 — двухветочная стратегия: dev → staging, main → production.
+# ADR-045 — двухветочная стратегия: dev → staging, main → production.
 #
 # Все job'ы на self-hosted runner `lkfl` (serverAi: 192.168.1.27).
 #
 # Стратегия веток:
-#   dev   — рабочая ветка, все мержат сюда → авто-деploy на staging (project)
-#   main  — стабильная ветка → production (dev.april.ukituki.tech)
+#   dev   — рабочая ветка, все мержат сюда → auto-deploy на staging
+#   main  — стабильная ветка → production (manual)
 #
 # Pipeline:
 #   1. lint-test            → Go + Frontend + OpenAPI + Config validation
@@ -304,13 +304,13 @@ jobs:
           rm -rf /home/ukituki/docker-cache/${{ matrix.service }}
           mv /home/ukituki/docker-cache/${{ matrix.service }}-new /home/ukituki/docker-cache/${{ matrix.service }} 2>/dev/null || true
 
- # =========================================================================
-   # Job 4: DEPLOY STAGING — auto on dev push (ADR-043)
-   # =========================================================================
-   deploy-staging:
-     name: Deploy Staging
-     needs: [build-push]
-     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+  # =========================================================================
+  # Job 4: DEPLOY STAGING — auto on dev push (ADR-045)
+  # =========================================================================
+  deploy-staging:
+    name: Deploy Staging
+    needs: [build-push]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     concurrency:
       group: deploy-staging
@@ -493,9 +493,9 @@ jobs:
   # Job 5: SMOKE TEST STAGING — после deploy-staging
   # =========================================================================
   smoke-test-staging:
-     name: Smoke Test Staging
-     needs: [deploy-staging]
-     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+    name: Smoke Test Staging
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     steps:
       - name: Checkout
@@ -510,10 +510,10 @@ jobs:
   # =========================================================================
   # Job 6: E2E STAGING TESTS — real browser against staging (cookie-based auth)
   # =========================================================================
- e2e-staging:
-     name: E2E Staging Tests
-     needs: [smoke-test-staging]
-     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+  e2e-staging:
+    name: E2E Staging Tests
+    needs: [smoke-test-staging]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     continue-on-error: true # T1710: новые E2E тесты — не ломать pipeline
     steps:
@@ -586,10 +586,10 @@ jobs:
   # =========================================================================
   # Job 7: E2E INTEGRATION TESTS — реальный OIDC flow через Keycloak
   # =========================================================================
- e2e-integration:
-     name: E2E Integration Tests
-     needs: [deploy-staging]
-     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+  e2e-integration:
+    name: E2E Integration Tests
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     continue-on-error: true # T2311: новые интеграционные тесты — не ломать pipeline
     steps:
