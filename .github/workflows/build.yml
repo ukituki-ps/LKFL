@@ -287,6 +287,7 @@ jobs:
           password: ${{ secrets.GHCR_PAT }}
 
       - name: Build and push ${{ matrix.service }}
+        id: build
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -296,17 +297,18 @@ jobs:
           build-args: |
             NPM_TOKEN=${{ github.token }}
           cache-from: type=local,src=/home/ukituki/docker-cache/${{ matrix.service }}
-          # mode=max + dest в -new → атомарная замена (не ломаем текущий кэш если export падает)
-          cache-to: type=local,mode=max,dest=/home/ukituki/docker-cache/${{ matrix.service }}-new
+          # deploy-worker: без cache-to (Docker daemon на serverAi падает при cache export)
+          # Остальные сервисы: mode=max + dest в -new для атомарной замены
+          cache-to: ${{ matrix.service != 'deploy-worker' && format('type=local,mode=max,dest=/home/ukituki/docker-cache/{0}-new', matrix.service) || '' }}
           tags: |
             ${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:${{ steps.tag.outputs.tag }}
             ${{ (github.ref == 'refs/heads/main' && format('{0}/{1}:main-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
             ${{ (github.ref == 'refs/heads/dev' && format('{0}/{1}:dev-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
 
       # T2310 R6: deploy-worker buildx иногда падает с EOF при cache export
-      # (Docker daemon graceful_stop). Ретраим build без cache.
+      # (Docker daemon graceful_stop). Если так — rebuild без cache от/to.
       - name: Build deploy-worker retry (no cache)
-        if: matrix.service == 'deploy-worker' && failure()
+        if: matrix.service == 'deploy-worker' && failure() && steps.build.outcome == 'failure'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -315,6 +317,7 @@ jobs:
           load: ${{ github.event_name == 'pull_request' }}
           build-args: |
             NPM_TOKEN=${{ github.token }}
+          cache-from: type=local,src=/home/ukituki/docker-cache/deploy-worker
           tags: |
             ${{ env.GHCR_REGISTRY }}/deploy-worker:${{ steps.tag.outputs.tag }}
             ${{ (github.ref == 'refs/heads/main' && 'ghcr.io/ukituki-ps/lkfl/deploy-worker:main-latest') || '' }}
