@@ -2,16 +2,21 @@
 # Заменяет ci.yml, cd.yml, deploy.yml (удалены).
 # T1710 — добавлены E2E job'ы (e2e-local + e2e-staging).
 # T2311 — добавлен job e2e-integration (реальный OIDC flow через Keycloak).
+# ADR-043 — двухветочная стратегия: dev → staging, main → production.
 #
 # Все job'ы на self-hosted runner `lkfl` (serverAi: 192.168.1.27).
+#
+# Стратегия веток:
+#   dev   — рабочая ветка, все мержат сюда → авто-деploy на staging (project)
+#   main  — стабильная ветка → production (dev.april.ukituki.tech)
 #
 # Pipeline:
 #   1. lint-test            → Go + Frontend + OpenAPI + Config validation
 #   2. e2e-local            → Playwright local mock tests (chromium)
 #   3. build-push           → Docker Buildx + GHCR (matrix: server, proxy, frontend, deploy-worker)
-#   4. deploy-staging       → docker compose на serverAi (auto on main push)
+#   4. deploy-staging       → docker compose на serverAi (auto on dev push)
 #   5. smoke-test-staging   → infra/smoke-test.sh с retry polling
-#   6. e2e-staging          → Playwright staging tests (real browser, main push only)
+#   6. e2e-staging          → Playwright staging tests (real browser, dev push only)
 #   7. e2e-integration      → Playwright integration tests (реальный OIDC, T2311)
 #   8. deploy-production    → docker compose prod (manual workflow_dispatch)
 
@@ -19,7 +24,7 @@ name: Build & Deploy
 
 on:
   push:
-    branches: [main, 'feature/*']
+    branches: [main, dev]
   pull_request:
     types: [opened, synchronize, reopened]
   workflow_dispatch:
@@ -253,6 +258,8 @@ jobs:
             echo "tag=pr-${{ github.event.pull_request.number }}-${SHORT_SHA}" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "tag=main-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "tag=dev-${SHORT_SHA}" >> $GITHUB_OUTPUT
           else
             BRANCH=$(echo "${{ github.ref_name }}" | sed 's/[\/]/-/g')
             echo "tag=${BRANCH}-${SHORT_SHA}" >> $GITHUB_OUTPUT
@@ -289,6 +296,7 @@ jobs:
           tags: |
             ${{ env.GHCR_REGISTRY }}/${{ matrix.service }}:${{ steps.tag.outputs.tag }}
             ${{ (github.ref == 'refs/heads/main' && format('{0}/{1}:main-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
+            ${{ (github.ref == 'refs/heads/dev' && format('{0}/{1}:dev-latest', env.GHCR_REGISTRY, matrix.service)) || '' }}
 
       - name: Update Docker cache (T2310 R2)
         run: |
@@ -296,13 +304,13 @@ jobs:
           rm -rf /home/ukituki/docker-cache/${{ matrix.service }}
           mv /home/ukituki/docker-cache/${{ matrix.service }}-new /home/ukituki/docker-cache/${{ matrix.service }} 2>/dev/null || true
 
-  # =========================================================================
-  # Job 4: DEPLOY STAGING — auto on main push
-  # =========================================================================
-  deploy-staging:
-    name: Deploy Staging
-    needs: [build-push]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+ # =========================================================================
+   # Job 4: DEPLOY STAGING — auto on dev push (ADR-043)
+   # =========================================================================
+   deploy-staging:
+     name: Deploy Staging
+     needs: [build-push]
+     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     concurrency:
       group: deploy-staging
@@ -322,7 +330,7 @@ jobs:
         id: tag
         run: |
           SHORT_SHA=${GITHUB_SHA::7}
-          echo "tag=main-${SHORT_SHA}" >> $GITHUB_OUTPUT
+          echo "tag=dev-${SHORT_SHA}" >> $GITHUB_OUTPUT
 
       - name: Sync compose + env + nginx to serverAi
         run: |
@@ -485,9 +493,9 @@ jobs:
   # Job 5: SMOKE TEST STAGING — после deploy-staging
   # =========================================================================
   smoke-test-staging:
-    name: Smoke Test Staging
-    needs: [deploy-staging]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+     name: Smoke Test Staging
+     needs: [deploy-staging]
+     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     steps:
       - name: Checkout
@@ -502,10 +510,10 @@ jobs:
   # =========================================================================
   # Job 6: E2E STAGING TESTS — real browser against staging (cookie-based auth)
   # =========================================================================
-  e2e-staging:
-    name: E2E Staging Tests
-    needs: [smoke-test-staging]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+ e2e-staging:
+     name: E2E Staging Tests
+     needs: [smoke-test-staging]
+     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     continue-on-error: true # T1710: новые E2E тесты — не ломать pipeline
     steps:
@@ -578,10 +586,10 @@ jobs:
   # =========================================================================
   # Job 7: E2E INTEGRATION TESTS — реальный OIDC flow через Keycloak
   # =========================================================================
-  e2e-integration:
-    name: E2E Integration Tests
-    needs: [deploy-staging]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+ e2e-integration:
+     name: E2E Integration Tests
+     needs: [deploy-staging]
+     if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
     runs-on: lkfl
     continue-on-error: true # T2311: новые интеграционные тесты — не ломать pipeline
     steps:

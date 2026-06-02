@@ -1,6 +1,6 @@
 # ADR — Архитектурные решения
 
-> **45 файлов.** 31 Accepted, 4 Superseded, 5 Note.
+> **46 файлов.** 32 Accepted, 4 Superseded, 5 Note.
 
 ---
 
@@ -52,6 +52,7 @@
 | [042](./042-zero-downtime-deployment.md) | Zero-Downtime Deployment | ✅ Accepted | ~150 |
 | [043](./043-two-environment-strategy.md) | Two-Environment Strategy — Dev (manual) + Staging (CI/CD) | ✅ Accepted | ~160 |
 | [044](./044-ci-cd-deploy-worker.md) | CI/CD — serverAI self-hosted runners + Deploy Worker | ✅ Accepted | 172 |
+| [045](./045-branch-strategy-dev-main.md) | Двухветочная стратегия — dev → staging, main → production | ✅ Accepted | ~180 |
 
 ---
 
@@ -81,6 +82,7 @@
 | **042** | Zero-Downtime Deploy | Expand/contract pattern для миграций |
 | **043** | Two-Environment Strategy | Dev (ручной) + Staging (CI/CD) на serverAi |
 | **044** | CI/CD Deploy Worker | Self-hosted runner + webhook auto-deploy |
+| **045** | Branch Strategy (dev + main) | Две ветки: dev → staging, main → production |
 
 ## Устаревшие (не использовать)
 
