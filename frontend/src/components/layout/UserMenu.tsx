@@ -26,6 +26,7 @@ export function UserMenu() {
 		<Menu shadow="md" width={220} position="bottom-end">
 			<Menu.Target>
 				<Avatar
+					data-testid="user-avatar"
 					size={34}
 					color="brand"
 					style={{

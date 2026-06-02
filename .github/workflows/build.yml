@@ -1,17 +1,19 @@
 # T1708 — CI/CD Foundation: единый production-grade pipeline
 # Заменяет ci.yml, cd.yml, deploy.yml (удалены).
 # T1710 — добавлены E2E job'ы (e2e-local + e2e-staging).
+# T2311 — добавлен job e2e-integration (реальный OIDC flow через Keycloak).
 #
 # Все job'ы на self-hosted runner `lkfl` (serverAi: 192.168.1.27).
 #
 # Pipeline:
-#   1. lint-test       → Go + Frontend + OpenAPI + Config validation
-#   2. e2e-local       → Playwright local mock tests (chromium)
-#   3. build-push      → Docker Buildx + GHCR (matrix: server, proxy, frontend, deploy-worker)
-#   4. deploy-staging  → docker compose на serverAi (auto on main push)
-#   5. smoke-test-staging → infra/smoke-test.sh с retry polling
-#   6. e2e-staging     → Playwright staging tests (real browser, main push only)
-#   7. deploy-production → docker compose prod (manual workflow_dispatch)
+#   1. lint-test            → Go + Frontend + OpenAPI + Config validation
+#   2. e2e-local            → Playwright local mock tests (chromium)
+#   3. build-push           → Docker Buildx + GHCR (matrix: server, proxy, frontend, deploy-worker)
+#   4. deploy-staging       → docker compose на serverAi (auto on main push)
+#   5. smoke-test-staging   → infra/smoke-test.sh с retry polling
+#   6. e2e-staging          → Playwright staging tests (real browser, main push only)
+#   7. e2e-integration      → Playwright integration tests (реальный OIDC, T2311)
+#   8. deploy-production    → docker compose prod (manual workflow_dispatch)
 
 name: Build & Deploy
 
@@ -564,7 +566,45 @@ jobs:
         timeout-minutes: 15
 
   # =========================================================================
-  # Job 7: DEPLOY PRODUCTION — manual workflow_dispatch
+  # Job 7: E2E INTEGRATION TESTS — реальный OIDC flow через Keycloak
+  # =========================================================================
+  e2e-integration:
+    name: E2E Integration Tests
+    needs: [deploy-staging]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: lkfl
+    continue-on-error: true # T2311: новые интеграционные тесты — не ломать pipeline
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure npm registry for @ukituki-ps packages
+        working-directory: frontend
+        run: |
+          echo "@ukituki-ps:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ github.token }}" >> .npmrc
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install chromium
+
+      - name: Run E2E Integration Tests (real OIDC)
+        working-directory: frontend
+        run: E2E_BASE_URL=https://dev.april.ukituki.tech npx playwright test --project=integration
+        continue-on-error: true # T2311: новые интеграционные тесты — не ломать pipeline
+        timeout-minutes: 10
+
+  # =========================================================================
+  # Job 8: DEPLOY PRODUCTION — manual workflow_dispatch
   # =========================================================================
   deploy-production:
     name: Deploy Production

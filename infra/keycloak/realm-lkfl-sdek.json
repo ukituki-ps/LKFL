@@ -12,6 +12,7 @@
       "enabled": true,
       "publicClient": true,
       "redirectUris": [
+        "http://localhost:80/*",
         "http://localhost:5173/*",
         "http://localhost:8080/*",
         "http://host.docker.internal:5173/*",
@@ -21,6 +22,7 @@
         "http://lkfl-staging.example.com/*"
       ],
       "webOrigins": [
+        "http://localhost:80",
         "http://localhost:5173",
         "http://localhost:8080",
         "http://host.docker.internal:5173",
@@ -216,6 +218,22 @@
         {
           "type": "password",
           "value": "dev-password",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["employee"]
+    },
+    {
+      "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaah1",
+      "username": "test.employee",
+      "enabled": true,
+      "email": "test.employee@sdek.local",
+      "firstName": "Тест",
+      "lastName": "Сотрудник",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "employee123",
           "temporary": false
         }
       ],

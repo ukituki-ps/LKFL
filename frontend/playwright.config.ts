@@ -3,12 +3,14 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright конфигурация для E2E тестов LKFL.
  *
- * Тесты запускаются в трёх браузерах: Chromium, Firefox, Webkit.
- * API-запросы мокаются через page.route() — backend не требуется.
+ * Проекты:
+ * - chromium/firefox/webkit — локальные mock-тесты через Zustand store
+ * - chaos — тесты устойчивости (только chromium)
+ * - integration — реальный OIDC flow через Keycloak (без моков)
  */
 export default defineConfig({
 	testDir: './e2e',
-	testIgnore: ['**/staging/**/*.spec.ts', '**/chaos/**/*.spec.ts'],
+	testIgnore: ['**/staging/**/*.spec.ts', '**/chaos/**/*.spec.ts', '**/integration/**/*.spec.ts'],
 	timeout: 30_000,
 	expect: {
 		timeout: 5000,
@@ -56,6 +58,23 @@ export default defineConfig({
 				video: 'on',
 				trace: 'on',
 			},
+		},
+		{
+			name: 'integration',
+			testDir: './e2e/integration',
+			testIgnore: [], // Сбрасываем глобальные игноры — проект работает только с e2e/integration/
+			use: {
+				...devices['Desktop Chrome'],
+				baseURL: process.env.E2E_BASE_URL || 'http://localhost:80',
+				ignoreHTTPSErrors: true,
+				storageState: { cookies: [], origins: [] },
+				screenshot: 'on',
+				trace: 'retain-on-failure',
+				video: 'retain-on-failure',
+				locale: 'ru-RU',
+				timezoneId: 'Europe/Moscow',
+			},
+			timeout: 60_000,
 		},
 	],
 });
