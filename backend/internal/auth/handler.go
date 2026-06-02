@@ -780,15 +780,24 @@ func isValidPostLogoutRedirect(uri string) bool {
 }
 
 // Me — текущий пользователь с provisioning.
+// GET /api/v1/auth/me
+// Требует JWT middleware (токен в Authorization: Bearer <token> или cookie lkfl_session).
+//
+// При первом входе создаёт запись в БД из OIDC claims + назначает роли.
+// При повторных входах обновляет email/имя/фамилию из Keycloak.
+// Гарантирует существование аккаунта (баланс 0).
 func (h *Handler) Me(w http.ResponseWriter, r *http.Request) {
+	// Извлекаем claims из context (установлен JWTMiddleware).
 	claims, ok := r.Context().Value(sharedauth.ClaimsKey{}).(sharedauth.Claims)
 	if !ok || claims.Subject == "" {
 		shhttp.WriteJSONError(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
+	// Извлекаем роли из context (установлен JWTMiddleware).
 	roles := sharedauth.RolesFromContext(r.Context())
 
+	// Provisioning: create или update + ensure account + sync roles.
 	user, err := h.service.CreateOrUpdateUser(r.Context(), &claims, roles)
 	if err != nil {
 		shhttp.WriteJSONError(w, http.StatusInternalServerError, "failed to resolve user: "+err.Error())
