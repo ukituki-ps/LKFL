@@ -61,7 +61,7 @@ Docker compose: 12 сервисов (lkfl_*, open-webui)
 
 | Путь | Описание |
 |------|----------|
-| `/home/ukituki/lkfl/.env` | Реальные секреты (POSTGRES_PASSWORD, REDIS_PASSWORD, KEYCLOAK_*, JWT_SECRET) |
+| `/home/ukituki/lkfl/.env` | Реальные секреты (POSTGRES_PASSWORD, REDIS_PASSWORD, KEYCLOAK_*, GHCR_PAT) |
 | `/home/ukituki/LKFL-staging/.env.staging` | Staging конфиг (weak passwords: lkfl/lkfl, changeme-staging) |
 | `/home/ukituki/LKFL-staging/docker-compose.staging.yml` | Staging compose (с deploy-worker service) |
 | `/home/ukituki/lkfl/docker-compose.prod.yml` | Prod compose (без KEYCLOAK_PUBLIC_URL) |
@@ -303,7 +303,6 @@ POSTGRES_PASSWORD=<из .env>
 REDIS_PASSWORD=<из .env>
 KEYCLOAK_ADMIN=kcadmin
 KEYCLOAK_ADMIN_PASSWORD=<из .env>
-JWT_SECRET=<из .env>
 IMAGE_TAG=main-latest
 GHCR_REGISTRY=ghcr.io/ukituki-ps/lkfl
 KEYCLOAK_PUBLIC_URL=https://dev.april.ukituki.tech/realms/lkfl-sdek
@@ -323,7 +322,7 @@ SENTRY_DSN=
 
 **Env на serverAi (`.env` файлы):**
 - `WEBHOOK_SECRET` — Bearer token для deploy-worker (читается `os.Getenv`)
-- Остальные секреты: `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`, `JWT_SECRET`
+- Остальные секреты: `POSTGRES_PASSWORD`, `REDIS_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`, `GHCR_PAT`
 
 **Environments:** НЕ используются. Deploy staging — `if: push to main`. Deploy production — `if: workflow_dispatch`.
 

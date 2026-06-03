@@ -40,7 +40,8 @@
 | **Инфраструктура деплоя + баги dev-стенда** | `архитектура/инфраструктура.md` | §Баги dev-стенда | ~350 стр |
 | **TagResolver (теги пользователя для CEL)** | `архитектура/теги.md` | весь | 168 стр |
 | **Стек технологий (таблица всех deps)** | `архитектура/стек.md` | весь | 150 стр |
-| **Баг на dev-стенде (502, 500, healthcheck, Keycloak)** | `архитектура/инфраструктура.md` | §Сводная таблица багов | — |
+| **Окружения (dev/staging/prod) + сетевая архитектура** | `архитектура/adr/043-two-environment-strategy.md` | весь | 152 стр |
+| **Деплой и операции** | `архитектура/deploy-operations.md` | §TL;DR (таблица окружений) | — |
 | **Схема БД (47 таблиц)** | `архитектура/schema.md` | §TL;DR | 1426 стр |
 | **Устаревшие файлы (не использовать!)** | `архитектура/legacy/` | — | — |
 
@@ -217,6 +218,8 @@
 | ADR-034 (i18n — YAGNI) | `архитектура/adr/034-i18n-yagni.md` |
 | ADR-035 (Integration Proxy) | `архитектура/adr/035-integration-proxy.md` |
 | ADR-036 (Authorization System) | `архитектура/adr/036-authorization-system.md` |
+| ADR-043 (Окружения — dev + staging на serverAi) | `архитектура/adr/043-two-environment-strategy.md` |
+| ADR-045 (Branch strategy — dev → staging, main → production) | `архитектура/adr/045-branch-strategy-dev-main.md` |
 | ⚠️ Устаревшие ADR (NATS, LLM Proxy) | `архитектура/adr/020-*.md`, `022-*.md` |
 
 ---

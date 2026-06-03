@@ -40,7 +40,7 @@ LKFL — white-label multi-tenant платформа, требующая:
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
 │                        Nginx (:80)                                   │
-│  / → lkfl-frontend:4173                                             │
+│  / → lkfl-frontend:80                                               │
 │  /auth → keycloak:8080                                              │
 │  /api/ → lkfl-server:8080                                           │
 │  /healthz → lkfl-server:8080                                        │
@@ -50,10 +50,10 @@ LKFL — white-label multi-tenant платформа, требующая:
        ▼                      ▼                          ▼
 ┌──────────────┐    ┌──────────────────┐     ┌──────────────────────┐
 │ LKFL Frontend│    │ lkfl-server      │     │ Keycloak             │
-│ React+Vite   │───►│ :8080            │     │ OIDC IdP             │
-│ keycloak-js  │    │ TenantResolver   │     │ Realm per tenant     │
-│ React Query  │    │ JWT Validate     │     │ JWKS per realm       │
-│ Zustand      │    │ RBAC Guard       │     │                      │
+│ nginx:80     │───►│ :8080            │     │ OIDC IdP             │
+│ (SPA dist)   │    │ TenantResolver   │     │ Realm per tenant     │
+│ (Vite:5173   │    │ JWT Validate     │     │ JWKS per realm       │
+│  только dev) │    │ RBAC Guard       │     │                      │
 └──────────────┘    └──────┬───────────┘     └──────────────────────┘
                            │ gRPC localhost
                            ▼
@@ -63,6 +63,8 @@ LKFL — white-label multi-tenant платформа, требующая:
                   │ :8091 webhooks   │
                   └──────────────────┘
 ```
+
+> **Примечание:** фронтенд на production — nginx:80 (SPA dist из Docker). Vite dev server (порт 5173) — только локальная разработка.
 
 ### Три слоя авторизации
 
@@ -534,7 +536,7 @@ Redis key: {tenant_id}:{identifier}
 
 ```
 STEP 1: USER OPENS APPLICATION
-  Browser → Nginx (:80) → lkfl-frontend:4173
+  Browser → Nginx (:80) → lkfl-frontend:80 (nginx, production)
   Result: React SPA loaded, keycloak-js initializes
 
 STEP 2: TENANT RESOLUTION (frontend)
@@ -582,8 +584,10 @@ STEP 7: SUBSEQUENT API REQUESTS
 
 ```nginx
 # Route table
+# Production: nginx serve SPA dist on port 80
+# Dev: Vite dev server on port 5173 (не используется в Docker)
 location = / {
-    proxy_pass http://lkfl-frontend:4173;
+    proxy_pass http://lkfl-frontend:80;
     # SPA fallback
     try_files $uri $uri/ /index.html;
 }

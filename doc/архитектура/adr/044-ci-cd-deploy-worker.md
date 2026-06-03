@@ -1,4 +1,4 @@
-# ADR-044: CI/CD — serverAI self-hosted runners + Deploy Worker
+# ADR-044: CI/CD — serverAi self-hosted runners + Deploy Worker
 
 | Поле     | Значение |
 |----------|----------|
@@ -46,35 +46,35 @@ GitHub (push / PR)
   │
   │ .github/workflows/build.yml
   │   ├── lint + test          → runs-on: ubuntu-latest (public)
-  │   ├── docker buildx        → runs-on: lkfl (serverAI, self-hosted)
+  │   ├── docker buildx        → runs-on: lkfl (serverAi, self-hosted)
   │   │   ├── docker login GHCR (до build — для cache pull!)
   │   │   ├── server   → ghcr.io/ukituki-ps/lkfl/server:{tag}
   │   │   ├── proxy    → ghcr.io/ukituki-ps/lkfl/proxy:{tag}
   │   │   ├── frontend → ghcr.io/ukituki-ps/lkfl/frontend:{tag}
   │   │   └── deploy-worker → ghcr.io/ukituki-ps/lkfl/deploy-worker:latest
   │   │
-  │   .github/workflows/deploy.yml (только main)
-  │     └── POST → https://dev.april.ukituki.tech/deploy-webhook/deploy
+  │   deploy-staging job (push dev)
+  │     └── docker compose pull → migrate → seed → up → healthcheck
   │
   ▼
-serverAI — Deploy Worker (docker-compose.staging.yml)
-  ├── deploy-worker (:9091) ← webhook receiver
+serverAi — Deploy Worker (docker-compose.staging.yml)
+  ├── deploy-worker (:9092) ← webhook receiver
   ├── lkfl-server           ← pull ghcr.io/.../server:{tag}
   ├── lkfl-integration-proxy← pull ghcr.io/.../proxy:{tag}
   ├── lkfl-frontend         ← pull ghcr.io/.../frontend:{tag}
   ├── lkfl-migrate          ← one-shot из образа server
   ├── lkfl-seed             ← one-shot из образа server
-  ├── lkfl-postgres, redis, keycloak, nginx
+  ├── lkfl-postgres, redis, keycloak
   └── prometheus (profile: monitoring)
 ```
 
 ### Ключевые решения
 
-1. **serverAI** — 7 self-hosted GitHub Actions runner'ов (Debian 13, 30GB RAM, 16 CPU)
+1. **serverAi** — 7 self-hosted GitHub Actions runner'ов (Debian 13, 30GB RAM, 16 CPU)
 2. **4 Dockerfile** — server, proxy, frontend, deploy-worker (разделены из monolithic)
 3. **2 compose файла** — dev (build:) и staging (image: из GHCR)
 4. **Docker profiles** — monitoring не на staging по умолчанию
-5. **Deploy Worker** — Go HTTP API (порт 9091), webhook validation, serial deploy
+5. **Deploy Worker** — Go HTTP API (порт 9092), webhook validation, serial deploy
 6. **CLI subcommands** — `server migrate` + `server seed` в одном бинарнике
 7. **Nginx** — upstream lkfl_frontend, /nginx-health, rate limiting
 8. **Secrets** — .env.staging в .gitignore, .env.staging.example как шаблон
@@ -101,7 +101,7 @@ serverAI — Deploy Worker (docker-compose.staging.yml)
 
 ### Положительные
 
-- Сборка на мощном сервере (serverAI) с кэшем Docker layers
+- Сборка на мощном сервере (serverAi) с кэшем Docker layers
 - Repeatable: любая ветка деплоится через webhook
 - Secrets вне репозитория (.env.staging в .gitignore)
 - Мониторинг опционален (Docker profile)
@@ -111,26 +111,26 @@ serverAI — Deploy Worker (docker-compose.staging.yml)
 
 ### Отрицательные
 
-- Зависимость от self-hosted runners (serverAI down = no builds)
+- Зависимость от self-hosted runners (serverAi down = no builds)
 - Deploy Worker требует Docker socket mount (безопасность)
 - X-Tenant-ID sdek остаётся hardcoded (staging-only limitation, M23+)
 
 ## Operational decisions (2026-05-28)
 
-Решения, принятые при деплое staging на serverAI.
+Решения, принятые при деплое staging на serverAi.
 
-### max-parallel: 2 в build-push matrix
+### max-parallel: 1 в build-push matrix
 
 | Поле | Значение |
 |------|----------|
-| Проблема | serverAI имеет 1 Docker daemon, 4 параллельных buildx перегружают его → buildx connection error |
-| Решение | `max-parallel: 2` в `strategy.matrix` build.yml → не более 2 одновременных buildx |
+| Проблема | serverAi имеет 1 Docker daemon, параллельные buildx перегружают его → OOM / buildx connection error |
+| Решение | `max-parallel: 1` в `strategy.matrix` build.yml → не более 1 одновременного buildx |
 | Файл | `.github/workflows/build.yml` |
 
 ```yaml
 strategy:
   fail-fast: false
-  max-parallel: 2  # serverAI: 1 Docker daemon, не перегружать buildx
+  max-parallel: 1  # serverAi: 1 Docker daemon, не перегружать buildx
   matrix:
     service: [server, proxy, frontend, deploy-worker]
 ```
@@ -140,8 +140,8 @@ strategy:
 | Поле | Значение |
 |------|----------|
 | Причина | serverAI (arm64) не мог использовать amd64-образы из GHCR, QEMU emulation недоступна |
-| Решение | Staging переведён на serverAi (192.168.1.46, amd64, 30GB RAM), где уже работают CI runners |
-| Внешний nginx | serverPr01 → upstream 192.168.1.46:8888 |
+| Решение | Staging переведён на serverAi (192.168.1.27, amd64, 30GB RAM), где уже работают CI runners |
+| Внешний nginx | serverPr01 (192.168.1.46) → upstream 192.168.1.27:18000 |
 
 ### Порт deploy-worker: 9091 → 9092
 
@@ -163,7 +163,7 @@ strategy:
 | Поле | Значение |
 |------|----------|
 | Причина | Deploy-worker не может залогиниться в GHCR из контейнера (Docker daemon на хосте) |
-| Решение | `gh auth login` на serverAI → Docker daemon auth → deploy-worker pull без явного login |
+| Решение | `gh auth login` на serverAi → Docker daemon auth → deploy-worker pull без явного login |
 
 ## Зависимости
 

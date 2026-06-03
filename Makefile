@@ -14,7 +14,7 @@ FRONTEND_DIR := frontend
 DB_DSN := $(shell if [ -f .env ]; then grep -m1 '^DB_DSN=' .env | cut -d= -f2-; fi)
 
 # Deploy worker
-DEPLOY_WORKER_URL ?= http://serverDev:9091
+DEPLOY_WORKER_URL ?= http://serverAi:9092
 
 # ============================================================================
 # Build

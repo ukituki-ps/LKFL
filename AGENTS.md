@@ -34,7 +34,7 @@ Go modular monolith backend (`lkfl-server`) + React SPA frontend.
 
 ### Архитектура — Modular Monolith
 
-**Два бинарника (`lkfl-server` + `lkfl-integration-proxy`), один `go.mod`, 17 internal-пакетов монолита.**
+**Два бинарника (`lkfl-server` + `lkfl-integration-proxy`), один `go.mod`, 16 internal-пакетов монолита.**
 
 ```
 lkfl-server (:8080)

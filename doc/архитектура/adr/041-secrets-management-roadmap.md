@@ -15,7 +15,6 @@
 - `REDIS_PASSWORD` — пароль Redis (production)
 - `KEYCLOAK_ADMIN_PASSWORD` — пароль администратора Keycloak
 - `KEYCLOAK_CLIENT_SECRET` — OAuth2 client secret
-- `JWT_SECRET` — подпись JWT токенов
 - `SENTRY_DSN` — DSN для Sentry
 - `GHCR_PAT` — токен для Docker registry
 - `DEPLOY_TOKEN` — аутентификация Deploy Worker webhooks

@@ -9,11 +9,49 @@
 
 ### Окружения
 
-| Env | URL | Сервер | Compose | Мониторинг | Auto-deploy | Назначение |
-|-----|-----|--------|---------|-----------|-------------|-----------|
-| **Local/Dev** | `localhost:5173` + `localhost:8080` | Твой ноутбук | `docker-compose.dev.yml` | Нет | — | Разработка |
-| **Staging** | `dev.april.ukituki.tech` | serverAi (192.168.1.27) | `docker-compose.staging.yml` | Profile: monitoring | ✅ dev push | Интеграционные тесты, preview |
-| **Production** | `lkf.co` (план) | serverPr01 → serverAi | `docker-compose.prod.yml` | Profile: monitoring | ❌ manual | Production |
+> **Полная документация:** ADR-043 — Two-Environment Strategy. Этот раздел — краткая выжимка.
+
+| Env | URL | Сервер | Compose | Мониторинг | Деплой | Назначение |
+|-----|-----|--------|---------|-----------|--------|-----------|
+| **Local** | `localhost:5173` / `localhost:80` | Твой ноутбук | `docker-compose.dev.yml` | Нет | — | Разработка, hot-reload |
+| **Dev** | `https://project.ukituki.tech` | serverAi (192.168.1.27) | `docker-compose.dev-server.yml` | Profile: monitoring | Ручной (`dev-deploy.sh`) | Feature-ветки, эксперименты |
+| **Staging (preprod)** | `https://dev.april.ukituki.tech` | serverAi (192.168.1.27) | `docker-compose.staging.yml` | Profile: monitoring + Promtail | ✅ CI/CD (`deploy-worker`) | Интеграционные тесты, preview |
+| **Production** | — | — | `docker-compose.prod.yml` (существует) | Profile: monitoring | — | ⏸️ пока нет |
+
+#### Сетевая архитектура
+
+```
+Internet → serverPr01 (external nginx, TLS Let's Encrypt *.ukituki.tech)
+  ├── project.ukituki.tech    → serverAi :18002 → Docker dev services
+  └── dev.april.ukituki.tech  → serverAi :18000 → Docker staging services
+```
+
+#### Порт-маппинг на serverAi (ADR-043)
+
+| Сервис | Dev (port) | Staging (port) |
+|--------|-----------|----------------|
+| Backend (lkfl-server) | 18082 | 18080 |
+| Frontend | 8088 | 8086 |
+| Keycloak | 19083 | 19081 |
+| Proxy gRPC | 18094 | 18090 |
+| Proxy HTTP | 18095 | 18091 |
+| Postgres | 15434 | 15432 |
+| Redis | 16380 | 16379 |
+| Nginx internal | 18002 | 18000 |
+
+#### Базы данных
+
+| Стенд | Schema | Keycloak DB | Volume prefix | Network prefix |
+|-------|--------|-------------|---------------|----------------|
+| Dev | `lkfl_platform_dev` | `keycloak_dev` | `dev_` | `lkfl_*_dev` |
+| Staging | `lkfl_platform` | `keycloak` | `staging_` | `lkfl_backend_staging` / `lkfl_frontend_staging` |
+
+#### Директории на serverAi
+
+| Стенд | Путь |
+|-------|------|
+| Dev | `/home/ukituki/LKFL-dev/` (git clone, ручной pull) |
+| Staging | `/home/ukituki/LKFL-staging/` (CI/CD sync compose + env) |
 
 ### Быстрый справочник: «что делать когда…»
 
@@ -30,7 +68,9 @@
 | Migration hang | `docker exec lkfl-staging-postgres-1 psql -U lkfl -c "SELECT * FROM pg_locks;"` |
 | Need rollback | §3.4 — Rollback |
 
-### Deploy checklist (staging)
+### Deploy checklist
+
+#### Staging (автоматический при push в `dev`)
 
 ```
 Pre:
@@ -38,7 +78,7 @@ Pre:
   □ Миграции backward-compatible (§4)
   □ .env.staging актуален (секреты не истекли)
 
-Deploy (автоматический при push в dev):
+Deploy:
   □ build.yml → build-push → deploy-staging → smoke-test → e2e-staging
 
 Post:
@@ -46,6 +86,16 @@ Post:
   □ Login flow работает (Keycloak → callback → dashboard)
   □ Grafana дашборды обновляются
 ```
+
+#### Dev (ручной на serverAi)
+
+```bash
+ssh serverAi "cd /home/ukituki/LKFL-dev && bash infra/deploy/dev-deploy.sh main-latest"
+# Или feature-ветку:
+ssh serverAi "cd /home/ukituki/LKFL-dev && bash infra/deploy/dev-deploy.sh feature-x-login-a1b2c3d feature-x-login"
+```
+
+Скрипт делает: git pull → migration → seed → down → up → healthcheck. Idempotent.
 
 ---
 
@@ -123,7 +173,7 @@ Internet → serverPr01 (external nginx, TLS) → serverAi (192.168.1.27:8086)
 |----------|-----|---------|------------|
 | Build | `build:` local | `image:` GHCR | `image:` GHCR |
 | Keycloak mode | start-dev | start-dev | start |
-| Keycloak version | 26.x | 25.0 | 26.0 |
+| Keycloak version | 26.x | 25.0 ⚠️ (устарел, обновить до 26.x) | 26.0 |
 | Redis password | Нет | Нет | Обязателен |
 | Nginx | External (serverPr01) | External (serverPr01) | Internal + External |
 | Monitoring | Optional | Profile | Profile |
@@ -439,7 +489,6 @@ docker compose -f docker-compose.staging.yml -p lkfl-staging run --rm postgres p
 | `REDIS_PASSWORD` | `.env.prod` | Redis (production only) |
 | `KEYCLOAK_ADMIN_PASSWORD` | `.env.*` | Keycloak admin |
 | `KEYCLOAK_CLIENT_SECRET` | `.env.*` | OAuth2 client credentials flow |
-| `JWT_SECRET` | `.env.*` | JWT token signing |
 | `SENTRY_DSN` | `.env.*` | Sentry error tracking |
 | `GHCR_PAT` | GH Actions secrets | Docker registry auth в CI |
 | `DEPLOY_TOKEN` | `.env.*` + GH Actions | Deploy Worker webhook auth |
@@ -456,21 +505,18 @@ docker compose -f docker-compose.staging.yml -p lkfl-staging run --rm postgres p
 ### Rotation procedure
 
 ```bash
-# Пример: ротация JWT_SECRET
+# Пример: ротация REDIS_PASSWORD
 
-# 1. Сгенерировать новый секрет
+# 1. Сгенерировать новый пароль
 openssl rand -hex 32
 
 # 2. Обновить .env.staging на serverAi
-echo "JWT_SECRET=новый_секрет" >> /home/ukituki/LKFL-staging/.env.staging
+#    REDIS_PASSWORD=новый_пароль
 
 # 3. Обновить .env.prod на serverAi (если production)
 
 # 4. Перезапустить сервисы
-docker compose -f docker-compose.staging.yml -p lkfl-staging restart lkfl-server
-
-# 5. Все существующие JWT токены становятся невалидными → users need to re-login
-#    Принято для security incident. Для planned rotation — использовать dual-secret period.
+docker compose -f docker-compose.staging.yml -p lkfl-staging restart
 ```
 
 ### Roadmap
@@ -629,7 +675,7 @@ docker compose -f docker-compose.staging.yml -p lkfl-staging ps
 # postgres, redis, keycloak должны быть healthy
 
 # 3. Проверить env
-grep -E "DB_DSN|KEYCLOAK_ISSUER|JWT_SECRET" /home/ukituki/LKFL-staging/.env.staging
+grep -E "DB_DSN|KEYCLOAK_ISSUER|REDIS_URL" /home/ukituki/LKFL-staging/.env.staging
 
 # 4. Проверить миграции
 docker compose -f docker-compose.staging.yml -p lkfl-staging run --rm lkfl-migrate
@@ -1019,3 +1065,24 @@ docker run --rm -v lkfl-staging_staging_pg_data:/data -v $(pwd):/backup alpine t
 | `infra/deploy/` | Provisioning + deploy scripts |
 | `infra/smoke-test.sh` | Smoke test script |
 | `infra/postgres/` | Init scripts |
+
+---
+
+## §15 — Факт vs План
+
+> **Цель:** избежать путаницы между тем, что работает сейчас, и тем, что должно работать в production.
+
+| Параметр | Сейчас (staging) | План (production) | Когда |
+|----------|-----------------|-------------------|-------|
+| **Branch strategy** | `dev` → staging auto, `main` → manual | Та же | ✅ сейчас |
+| **Deploy worker port** | 9092 | 9092 | ✅ сейчас |
+| **Keycloak version** | 25.0 ⚠️ | 26.0 | Обновить staging |
+| **Keycloak mode** | start-dev | start | Production |
+| **Redis password** | Нет | Обязателен | Production |
+| **RPO PostgreSQL** | 1h (daily backup) | < 5 min (WAL archiving) | M44+ |
+| **RTO PostgreSQL** | 4h (manual restore) | 1h | M44+ |
+| **Secrets management** | .env files + GH Actions | HashiCorp Vault | M44 |
+| **Blue-green deploy** | Нет (down → up, ~30s downtime) | Blue-green via port switch | M44+ |
+| **Monitoring** | Docker profile (optional) | Always on + alerting | Production |
+| **Internal nginx** | Нет (external nginx on serverPr01) | Internal + external | Production |
+| **Server** | Один serverAi (192.168.1.27) | 2+ серверов, LB | M44+ |

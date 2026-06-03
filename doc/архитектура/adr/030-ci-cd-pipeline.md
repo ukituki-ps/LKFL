@@ -175,7 +175,7 @@ git push main
 | `docker-compose.prod.yml` | production compose (ghcr.io images) |
 | `infra/deploy/provision-server.sh` | один раз: volumes, .env, repo clone |
 | `infra/deploy/deploy-on-server.sh` | deploy script на сервере |
-| `.env` на сервере | секреты (POSTGRES_PASSWORD, KEYCLOAK_*, JWT_SECRET) |
+| `.env` на сервере | секреты (POSTGRES_PASSWORD, KEYCLOAK_*, REDIS_PASSWORD, GHCR_PAT) |
 
 ### Secrets
 

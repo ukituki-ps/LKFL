@@ -44,7 +44,7 @@ testcontainers для integration tests, **автоматический депл
 ### Staging deployment
 - `infra/deploy/provision-server.sh` — один раз: volumes, .env, подготовка serverAi
 - `infra/deploy/deploy-on-server.sh` — deploy script на сервере
-- `.env` на serverAi — секреты (POSTGRES_PASSWORD, KEYCLOAK_*, JWT_SECRET)
+- `.env` на serverAi — секреты (POSTGRES_PASSWORD, KEYCLOAK_*, REDIS_PASSWORD, GHCR_PAT)
 
 ## Результат
 

@@ -197,7 +197,6 @@ State management: Zustand. API: `fetch` через Nginx `/api/v1/`.
 | Sudo-пароль | `Da40BV...` | `sshpass`, `sudoers NOPASSWD` |
 | DB пароль | `postgres://user:pass@...` | `.env.staging` (в `.gitignore`) |
 | API key | `sk-xxx`, `key_xxx` | `.env.staging`, GH Actions secrets |
-| JWT secret | `JWT_SECRET=xxx` | `.env.staging` (в `.gitignore`) |
 | Webhook secret | `WEBHOOK_SECRET=xxx` | `.env.staging` (в `.gitignore`) |
 
 **Правила:**

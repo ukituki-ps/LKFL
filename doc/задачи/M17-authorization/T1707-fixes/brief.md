@@ -37,7 +37,7 @@
 - `docker-compose.yml` — lkfl-frontend запускает `npm run dev` реально
 
 ### 8. Конфигурация через .env
-- Секреты (KeycloakURL, KeycloakPassword, JWT_SECRET) — через `.env` и `os.Getenv`, НЕ через GitHub Secrets
+- Секреты (KeycloakURL, KeycloakPassword, REDIS_PASSWORD) — через `.env` и `os.Getenv`, НЕ через GitHub Secrets
 
 ## Результат
 
